@@ -2,95 +2,150 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Eisenhower Matrix Design System
+   Contemporary 2025 SaaS — calm, confident, intentional
+   Colors are HSL for proper theming */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Base palette - warm neutrals */
+    --background: 40 20% 98%;
+    --foreground: 220 25% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 25% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 25% 12%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - sophisticated teal */
+    --primary: 172 50% 40%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - soft warm gray */
+    --secondary: 40 15% 94%;
+    --secondary-foreground: 220 25% 20%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted surfaces */
+    --muted: 40 15% 94%;
+    --muted-foreground: 220 10% 46%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - subtle highlight */
+    --accent: 172 40% 94%;
+    --accent-foreground: 172 50% 30%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 172 50% 40%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Quadrant colors - contemporary, harmonious */
+    /* Q1: Important & Urgent - warm coral (action) */
+    --quadrant-1: 4 78% 60%;
+    --quadrant-1-light: 4 85% 96%;
+    --quadrant-1-border: 4 70% 85%;
+    --quadrant-1-foreground: 4 80% 25%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Q2: Important & Not Urgent - teal (growth) */
+    --quadrant-2: 172 55% 42%;
+    --quadrant-2-light: 172 50% 95%;
+    --quadrant-2-border: 172 45% 80%;
+    --quadrant-2-foreground: 172 60% 22%;
 
-    --sidebar-primary: 240 5.9% 10%;
+    /* Q3: Not Important & Urgent - amber (delegate) */
+    --quadrant-3: 38 92% 50%;
+    --quadrant-3-light: 40 90% 95%;
+    --quadrant-3-border: 38 80% 80%;
+    --quadrant-3-foreground: 30 85% 22%;
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    /* Q4: Not Important & Not Urgent - cool slate */
+    --quadrant-4: 220 15% 55%;
+    --quadrant-4-light: 220 20% 96%;
+    --quadrant-4-border: 220 15% 85%;
+    --quadrant-4-foreground: 220 20% 30%;
 
-    --sidebar-accent: 240 4.8% 95.9%;
+    /* Task card */
+    --task-card: 0 0% 100%;
+    --task-card-shadow: 0 4px 12px -2px hsl(220 25% 12% / 0.06);
+    --task-card-hover-shadow: 0 8px 24px -4px hsl(220 25% 12% / 0.1);
 
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar */
+    --sidebar-background: 40 20% 97%;
+    --sidebar-foreground: 220 25% 12%;
+    --sidebar-primary: 172 50% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 172 40% 94%;
+    --sidebar-accent-foreground: 172 50% 30%;
+    --sidebar-border: 40 15% 90%;
+    --sidebar-ring: 172 50% 40%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 222 25% 8%;
+    --foreground: 40 15% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 222 20% 12%;
+    --card-foreground: 40 15% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 222 20% 12%;
+    --popover-foreground: 40 15% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 172 50% 50%;
+    --primary-foreground: 222 25% 8%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 222 20% 16%;
+    --secondary-foreground: 40 15% 90%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 222 20% 16%;
+    --muted-foreground: 220 10% 60%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 172 40% 15%;
+    --accent-foreground: 172 50% 70%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 222 20% 18%;
+    --input: 222 20% 18%;
+    --ring: 172 50% 50%;
+
+    /* Dark mode quadrant colors */
+    --quadrant-1: 4 70% 55%;
+    --quadrant-1-light: 4 50% 12%;
+    --quadrant-1-border: 4 50% 25%;
+    --quadrant-1-foreground: 4 70% 80%;
+
+    --quadrant-2: 172 50% 45%;
+    --quadrant-2-light: 172 40% 12%;
+    --quadrant-2-border: 172 40% 25%;
+    --quadrant-2-foreground: 172 50% 80%;
+
+    --quadrant-3: 38 80% 50%;
+    --quadrant-3-light: 38 50% 12%;
+    --quadrant-3-border: 38 50% 25%;
+    --quadrant-3-foreground: 38 80% 80%;
+
+    --quadrant-4: 220 15% 50%;
+    --quadrant-4-light: 220 20% 12%;
+    --quadrant-4-border: 220 15% 25%;
+    --quadrant-4-foreground: 220 20% 75%;
+
+    --task-card: 222 20% 14%;
+    --task-card-shadow: 0 4px 12px -2px hsl(0 0% 0% / 0.3);
+    --task-card-hover-shadow: 0 8px 24px -4px hsl(0 0% 0% / 0.4);
+
+    --sidebar-background: 222 25% 10%;
+    --sidebar-foreground: 40 15% 95%;
+    --sidebar-primary: 172 50% 50%;
+    --sidebar-primary-foreground: 222 25% 8%;
+    --sidebar-accent: 172 40% 15%;
+    --sidebar-accent-foreground: 172 50% 70%;
+    --sidebar-border: 222 20% 18%;
+    --sidebar-ring: 172 50% 50%;
   }
 }
 
@@ -100,6 +155,113 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "ss02", "cv01";
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Task card base styles */
+  .task-card {
+    @apply bg-task-card rounded-xl transition-all duration-200 ease-out;
+    box-shadow: var(--task-card-shadow);
+  }
+
+  .task-card:hover {
+    box-shadow: var(--task-card-hover-shadow);
+  }
+
+  /* Quadrant containers */
+  .quadrant-1 {
+    @apply bg-quadrant-1-light border-quadrant-1-border;
+  }
+
+  .quadrant-2 {
+    @apply bg-quadrant-2-light border-quadrant-2-border;
+  }
+
+  .quadrant-3 {
+    @apply bg-quadrant-3-light border-quadrant-3-border;
+  }
+
+  .quadrant-4 {
+    @apply bg-quadrant-4-light border-quadrant-4-border;
+  }
+
+  /* Quadrant badges */
+  .quadrant-badge-1 {
+    @apply bg-quadrant-1 text-white;
+  }
+
+  .quadrant-badge-2 {
+    @apply bg-quadrant-2 text-white;
+  }
+
+  .quadrant-badge-3 {
+    @apply bg-quadrant-3 text-white;
+  }
+
+  .quadrant-badge-4 {
+    @apply bg-quadrant-4 text-white;
+  }
+
+  /* Inline task input */
+  .task-input {
+    @apply w-full bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground;
+  }
+
+  /* View toggle */
+  .view-toggle {
+    @apply inline-flex items-center gap-1 p-1 rounded-xl bg-secondary;
+  }
+
+  .view-toggle-item {
+    @apply px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200;
+  }
+
+  .view-toggle-item[data-state="active"] {
+    @apply bg-card text-foreground shadow-sm;
+  }
+
+  .view-toggle-item[data-state="inactive"] {
+    @apply text-muted-foreground hover:text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Focus ring utility */
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-quadrant-2;
+  }
+
+  /* Breathable spacing */
+  .breathable {
+    @apply p-6 md:p-8 lg:p-10;
+  }
+
+  /* Subtle glass effect */
+  .glass {
+    @apply backdrop-blur-sm bg-card/80;
+  }
+}
+
+/* PWA safe area support */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
   }
 }
