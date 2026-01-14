@@ -1,0 +1,234 @@
+import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Filter, ChevronDown } from "lucide-react";
+import { Task, Quadrant, QUADRANT_MAP, TaskStatus } from "@/types/task";
+import { TaskCard } from "./TaskCard";
+import { TaskInput } from "./TaskInput";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+
+interface ListViewProps {
+  tasks: Task[];
+  categories: string[];
+  onToggleStatus: (id: string) => void;
+  onDeleteTask: (id: string) => void;
+  onAddTask: (
+    name: string,
+    quadrant: Quadrant,
+    options?: { description?: string; category?: string; dueDate?: string }
+  ) => void;
+}
+
+export function ListView({
+  tasks,
+  categories,
+  onToggleStatus,
+  onDeleteTask,
+  onAddTask,
+}: ListViewProps) {
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      if (categoryFilter !== "all" && task.category !== categoryFilter) {
+        return false;
+      }
+      if (statusFilter !== "all" && task.status !== statusFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [tasks, categoryFilter, statusFilter]);
+
+  // Group by quadrant
+  const groupedTasks = useMemo(() => {
+    const groups: Record<Quadrant, Task[]> = {
+      "important-urgent": [],
+      "important-not-urgent": [],
+      "not-important-urgent": [],
+      "not-important-not-urgent": [],
+    };
+
+    filteredTasks.forEach((task) => {
+      groups[task.quadrant].push(task);
+    });
+
+    return groups;
+  }, [filteredTasks]);
+
+  const activeFilters = [
+    categoryFilter !== "all" ? categoryFilter : null,
+    statusFilter !== "all"
+      ? statusFilter === "open"
+        ? "Open"
+        : "Done"
+      : null,
+  ].filter(Boolean);
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Task Input */}
+      <div className="mb-6 max-w-2xl mx-auto w-full">
+        <TaskInput onAddTask={onAddTask} placeholder="Add a new task..." />
+      </div>
+
+      {/* Filters */}
+      <div className="flex items-center gap-3 mb-6">
+        <Filter className="w-4 h-4 text-muted-foreground" />
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="rounded-xl gap-2">
+              Category
+              <ChevronDown className="w-3 h-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[160px]">
+            <DropdownMenuLabel>Filter by category</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuRadioGroup
+              value={categoryFilter}
+              onValueChange={setCategoryFilter}
+            >
+              <DropdownMenuRadioItem value="all">
+                All categories
+              </DropdownMenuRadioItem>
+              {categories.map((cat) => (
+                <DropdownMenuRadioItem key={cat} value={cat}>
+                  {cat}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="rounded-xl gap-2">
+              Status
+              <ChevronDown className="w-3 h-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[160px]">
+            <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuRadioGroup
+              value={statusFilter}
+              onValueChange={setStatusFilter}
+            >
+              <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="open">Open</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="done">Done</DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Active filters */}
+        {activeFilters.length > 0 && (
+          <div className="flex items-center gap-2 ml-2">
+            {activeFilters.map((filter) => (
+              <span
+                key={filter}
+                className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full"
+              >
+                {filter}
+              </span>
+            ))}
+            <button
+              onClick={() => {
+                setCategoryFilter("all");
+                setStatusFilter("all");
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
+        <span className="text-sm text-muted-foreground ml-auto">
+          {filteredTasks.length} task{filteredTasks.length !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      {/* Task List */}
+      <div className="flex-1 overflow-y-auto space-y-8">
+        {Object.entries(groupedTasks).map(([quadrantId, quadrantTasks]) => {
+          if (quadrantTasks.length === 0) return null;
+          const info = QUADRANT_MAP[quadrantId as Quadrant];
+
+          return (
+            <motion.div
+              key={quadrantId}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-3"
+            >
+              <div className="flex items-center gap-2 px-1">
+                <span
+                  className={cn(
+                    "w-2 h-2 rounded-full",
+                    info.color === 1 && "bg-quadrant-1",
+                    info.color === 2 && "bg-quadrant-2",
+                    info.color === 3 && "bg-quadrant-3",
+                    info.color === 4 && "bg-quadrant-4"
+                  )}
+                />
+                <h3 className="font-medium text-sm">{info.title}</h3>
+                <span className="text-xs text-muted-foreground">
+                  {info.subtitle}
+                </span>
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {quadrantTasks.length}
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                <AnimatePresence mode="popLayout">
+                  {quadrantTasks.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onToggleStatus={onToggleStatus}
+                      onDelete={onDeleteTask}
+                      showQuadrantBadge={false}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          );
+        })}
+
+        {/* Empty State */}
+        {filteredTasks.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center justify-center h-64 text-center"
+          >
+            <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+              <Filter className="w-6 h-6 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground font-medium">No tasks found</p>
+            <p className="text-sm text-muted-foreground/60 mt-1">
+              {tasks.length === 0
+                ? "Add your first task above"
+                : "Try adjusting your filters"}
+            </p>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+}
