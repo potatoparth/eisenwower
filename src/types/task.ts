@@ -16,6 +16,7 @@ export interface Task {
   status: TaskStatus;
   createdAt: string;
   updatedAt: string;
+  deadlineThresholdOverride?: number; // per-task override for deadline warning days
 }
 
 export interface QuadrantInfo {
