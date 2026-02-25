@@ -46,26 +46,26 @@
     /* Quadrant colors - contemporary, harmonious */
     /* Q1: Important & Urgent - warm coral (action) */
     --quadrant-1: 4 78% 60%;
-    --quadrant-1-light: 4 85% 96%;
-    --quadrant-1-border: 4 70% 85%;
+    --quadrant-1-light: 4 60% 94%;
+    --quadrant-1-border: 4 55% 80%;
     --quadrant-1-foreground: 4 80% 25%;
 
     /* Q2: Important & Not Urgent - teal (growth) */
     --quadrant-2: 172 55% 42%;
-    --quadrant-2-light: 172 50% 95%;
-    --quadrant-2-border: 172 45% 80%;
+    --quadrant-2-light: 172 40% 92%;
+    --quadrant-2-border: 172 35% 76%;
     --quadrant-2-foreground: 172 60% 22%;
 
     /* Q3: Not Important & Urgent - amber (delegate) */
     --quadrant-3: 38 92% 50%;
-    --quadrant-3-light: 40 90% 95%;
-    --quadrant-3-border: 38 80% 80%;
+    --quadrant-3-light: 40 65% 92%;
+    --quadrant-3-border: 38 55% 76%;
     --quadrant-3-foreground: 30 85% 22%;
 
     /* Q4: Not Important & Not Urgent - cool slate */
     --quadrant-4: 220 15% 55%;
-    --quadrant-4-light: 220 20% 96%;
-    --quadrant-4-border: 220 15% 85%;
+    --quadrant-4-light: 220 15% 93%;
+    --quadrant-4-border: 220 12% 80%;
     --quadrant-4-foreground: 220 20% 30%;
 
     /* Task card */
