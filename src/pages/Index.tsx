@@ -1,29 +1,76 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTasks } from "@/hooks/useTasks";
+import { useSettings } from "@/hooks/useSettings";
+import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
 import { MatrixView } from "@/components/MatrixView";
 import { ListView } from "@/components/ListView";
+import { TaskDetailPanel } from "@/components/TaskDetailPanel";
+import { SettingsPanel } from "@/components/SettingsPanel";
+import { LoginPage } from "@/components/LoginPage";
 import { ViewMode } from "@/components/ViewToggle";
+import { Task } from "@/types/task";
 
 const Index = () => {
-  const [viewMode, setViewMode] = useState<ViewMode>("matrix");
-  
+  const {
+    currentUser,
+    users,
+    isInitialized,
+    needsSetup,
+    isAdmin,
+    signup,
+    login,
+    logout,
+    deleteUser,
+  } = useAuth();
+
+  const {
+    settings,
+    updateSettings,
+    updateQuadrantColor,
+    addCategoryColor,
+    removeCategoryColor,
+    getCategoryColor,
+    resetToDefaults,
+  } = useSettings();
+
+  const [viewMode, setViewMode] = useState<ViewMode>(settings.defaultView);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+
   const {
     tasks,
     addTask,
+    updateTask,
     deleteTask,
     moveTask,
     toggleStatus,
     getCategories,
-  } = useTasks();
+    setTasks,
+  } = useTasks(currentUser?.id);
+
+  // Update viewMode when settings change
+  useEffect(() => {
+    setViewMode(settings.defaultView);
+  }, [settings.defaultView]);
+
+  if (!isInitialized) return null;
+
+  if (needsSetup || !currentUser) {
+    return <LoginPage needsSetup={needsSetup} onLogin={login} onSignup={signup} />;
+  }
+
+  const fontSizeClass = settings.fontSize === "small" ? "text-xs" : settings.fontSize === "large" ? "text-base" : "text-sm";
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className={`min-h-screen bg-background flex flex-col ${fontSizeClass}`}>
       <Header
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         taskCount={tasks.filter((t) => t.status === "open").length}
+        onSettingsClick={() => setShowSettings(true)}
+        username={currentUser.username}
       />
 
       <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-hidden">
@@ -44,6 +91,10 @@ const Index = () => {
                 onToggleStatus={toggleStatus}
                 onDeleteTask={deleteTask}
                 onAddTask={addTask}
+                onReorderTasks={setTasks}
+                onTaskClick={setSelectedTask}
+                getCategoryColor={getCategoryColor}
+                deadlineThresholdDays={settings.deadlineThresholdDays}
               />
             </motion.div>
           ) : (
@@ -61,11 +112,47 @@ const Index = () => {
                 onToggleStatus={toggleStatus}
                 onDeleteTask={deleteTask}
                 onAddTask={addTask}
+                onTaskClick={setSelectedTask}
+                getCategoryColor={getCategoryColor}
+                deadlineThresholdDays={settings.deadlineThresholdDays}
               />
             </motion.div>
           )}
         </AnimatePresence>
       </main>
+
+      {/* Task Detail Panel */}
+      {selectedTask && (
+        <TaskDetailPanel
+          task={selectedTask}
+          deadlineThresholdDays={settings.deadlineThresholdDays}
+          onUpdate={(id, updates) => {
+            updateTask(id, updates);
+            // Update selectedTask with new data
+            setSelectedTask(prev => prev ? { ...prev, ...updates, updatedAt: new Date().toISOString() } : null);
+          }}
+          onClose={() => setSelectedTask(null)}
+          getCategoryColor={getCategoryColor}
+        />
+      )}
+
+      {/* Settings Panel */}
+      {showSettings && (
+        <SettingsPanel
+          settings={settings}
+          onUpdateSettings={updateSettings}
+          onUpdateQuadrantColor={updateQuadrantColor}
+          onAddCategoryColor={addCategoryColor}
+          onRemoveCategoryColor={removeCategoryColor}
+          onResetToDefaults={resetToDefaults}
+          onClose={() => setShowSettings(false)}
+          currentUser={currentUser}
+          users={users}
+          isAdmin={isAdmin}
+          onLogout={logout}
+          onDeleteUser={deleteUser}
+        />
+      )}
     </div>
   );
 };

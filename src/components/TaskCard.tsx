@@ -1,29 +1,33 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, Calendar, Tag, Trash2, GripVertical, ChevronDown } from "lucide-react";
+import { Check, Trash2, ChevronDown } from "lucide-react";
 import { Task, QUADRANT_MAP } from "@/types/task";
 import { cn } from "@/lib/utils";
-import { format, isToday, isTomorrow, isPast, parseISO } from "date-fns";
+import { format, isToday, isTomorrow, isPast, parseISO, differenceInDays } from "date-fns";
 
 interface TaskCardProps {
   task: Task;
   onToggleStatus: (id: string) => void;
   onDelete: (id: string) => void;
+  onTaskClick?: (task: Task) => void;
   showQuadrantBadge?: boolean;
   isDragging?: boolean;
+  getCategoryColor?: (name: string) => string | undefined;
+  deadlineThresholdDays?: number;
 }
 
 export function TaskCard({
   task,
   onToggleStatus,
   onDelete,
+  onTaskClick,
   showQuadrantBadge = false,
   isDragging = false,
+  getCategoryColor,
+  deadlineThresholdDays = 2,
 }: TaskCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
 
   const {
     attributes,
@@ -42,6 +46,8 @@ export function TaskCard({
   const quadrantInfo = QUADRANT_MAP[task.quadrant];
   const isDone = task.status === "done";
 
+  const effectiveThreshold = task.deadlineThresholdOverride ?? deadlineThresholdDays;
+
   const formatDueDate = (dateStr: string) => {
     const date = parseISO(dateStr);
     if (isToday(date)) return "Today";
@@ -49,46 +55,49 @@ export function TaskCard({
     return format(date, "MMM d");
   };
 
-  const isDueDateOverdue = task.dueDate && isPast(parseISO(task.dueDate)) && !isToday(parseISO(task.dueDate));
+  const isDueDateWarning = task.dueDate && (() => {
+    const date = parseISO(task.dueDate!);
+    if (isPast(date) && !isToday(date)) return true;
+    const daysLeft = differenceInDays(date, new Date());
+    return daysLeft <= effectiveThreshold;
+  })();
+
+  const categoryColor = getCategoryColor?.(task.category);
 
   const getBadgeClass = () => {
-    const colorMap = {
-      1: "quadrant-badge-1",
-      2: "quadrant-badge-2",
-      3: "quadrant-badge-3",
-      4: "quadrant-badge-4",
-    };
+    const colorMap = { 1: "quadrant-badge-1", 2: "quadrant-badge-2", 3: "quadrant-badge-3", 4: "quadrant-badge-4" };
     return colorMap[quadrantInfo.color];
   };
-
-  const hasMeta = (task.category !== "General") || task.dueDate || showQuadrantBadge || task.description;
 
   return (
     <div
       ref={setNodeRef}
       style={style}
+      {...attributes}
+      {...listeners}
       className={cn(
-        "task-card px-3 py-2 group cursor-grab active:cursor-grabbing",
+        "task-card px-3 py-1.5 group cursor-grab active:cursor-grabbing select-none",
         isDone && "opacity-60",
         isSortableDragging && "opacity-50",
         isDragging && "shadow-medium"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={(e) => {
+        // Don't open detail panel if clicking checkbox or delete
+        if ((e.target as HTMLElement).closest("button")) return;
+        onTaskClick?.(task);
+      }}
     >
       <div className="flex items-center gap-2">
-        {/* Drag Handle */}
-        <div
-          {...attributes}
-          {...listeners}
-          className="opacity-0 group-hover:opacity-40 hover:!opacity-100 transition-opacity cursor-grab flex-shrink-0"
-        >
-          <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
-        </div>
+        {/* Category color dot */}
+        {categoryColor && (
+          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: categoryColor }} />
+        )}
 
         {/* Checkbox */}
         <button
-          onClick={() => onToggleStatus(task.id)}
+          onClick={(e) => { e.stopPropagation(); onToggleStatus(task.id); }}
           className={cn(
             "w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0",
             isDone
@@ -102,7 +111,7 @@ export function TaskCard({
         {/* Task name */}
         <span
           className={cn(
-            "text-sm leading-tight flex-1 min-w-0 truncate",
+            "leading-tight flex-1 min-w-0 truncate text-sm",
             isDone && "line-through text-muted-foreground"
           )}
         >
@@ -115,8 +124,8 @@ export function TaskCard({
             <span
               className={cn(
                 "text-[10px]",
-                isDueDateOverdue && !isDone
-                  ? "text-destructive font-medium"
+                isDueDateWarning && !isDone
+                  ? "text-destructive font-semibold"
                   : "text-muted-foreground"
               )}
             >
@@ -125,28 +134,14 @@ export function TaskCard({
           )}
 
           {showQuadrantBadge && (
-            <span
-              className={cn(
-                "text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full",
-                getBadgeClass()
-              )}
-            >
+            <span className={cn("text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full", getBadgeClass())}>
               {quadrantInfo.title}
             </span>
           )}
 
-          {task.description && (
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ChevronDown className={cn("w-3 h-3 transition-transform", isExpanded && "rotate-180")} />
-            </button>
-          )}
-
           {/* Delete Button */}
           <button
-            onClick={() => onDelete(task.id)}
+            onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
             className={cn(
               "p-0.5 rounded text-muted-foreground hover:text-destructive transition-all",
               isHovered ? "opacity-100" : "opacity-0"
@@ -156,13 +151,6 @@ export function TaskCard({
           </button>
         </div>
       </div>
-
-      {/* Expanded description */}
-      {isExpanded && task.description && (
-        <div className="mt-1.5 ml-[52px] text-xs text-muted-foreground leading-relaxed">
-          {task.description}
-        </div>
-      )}
     </div>
   );
 }

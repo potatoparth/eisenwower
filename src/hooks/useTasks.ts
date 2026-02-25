@@ -5,25 +5,32 @@ const STORAGE_KEY = "eisenhower-tasks";
 
 const generateId = () => crypto.randomUUID();
 
-const loadTasks = (): Task[] => {
+const getStorageKey = (userId?: string) => userId ? `${STORAGE_KEY}-${userId}` : STORAGE_KEY;
+
+const loadTasks = (userId?: string): Task[] => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(getStorageKey(userId));
     return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
   }
 };
 
-const saveTasks = (tasks: Task[]) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+const saveTasks = (tasks: Task[], userId?: string) => {
+  localStorage.setItem(getStorageKey(userId), JSON.stringify(tasks));
 };
 
-export function useTasks() {
-  const [tasks, setTasks] = useState<Task[]>(() => loadTasks());
+export function useTasks(userId?: string) {
+  const [tasks, setTasks] = useState<Task[]>(() => loadTasks(userId));
+
+  // Reload tasks when userId changes
+  useEffect(() => {
+    setTasks(loadTasks(userId));
+  }, [userId]);
 
   useEffect(() => {
-    saveTasks(tasks);
-  }, [tasks]);
+    saveTasks(tasks, userId);
+  }, [tasks, userId]);
 
   const addTask = useCallback((
     name: string,
@@ -79,11 +86,6 @@ export function useTasks() {
     );
   }, []);
 
-  const getTasksByQuadrant = useCallback(
-    (quadrant: Quadrant) => tasks.filter((t) => t.quadrant === quadrant),
-    [tasks]
-  );
-
   const getCategories = useCallback(() => {
     const categories = new Set(tasks.map((t) => t.category));
     return Array.from(categories).sort();
@@ -102,12 +104,12 @@ export function useTasks() {
 
   return {
     tasks,
+    setTasks,
     addTask,
     updateTask,
     deleteTask,
     moveTask,
     toggleStatus,
-    getTasksByQuadrant,
     getCategories,
     filterTasks,
   };

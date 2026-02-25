@@ -1,0 +1,96 @@
+import { X } from "lucide-react";
+import { Task, QuadrantInfo, Quadrant } from "@/types/task";
+import { TaskCard } from "./TaskCard";
+import { TaskInput } from "./TaskInput";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+interface QuadrantExpandDialogProps {
+  quadrant: QuadrantInfo;
+  tasks: Task[];
+  onToggleStatus: (id: string) => void;
+  onDelete: (id: string) => void;
+  onAddTask: (name: string, quadrant: Quadrant, options?: { description?: string; category?: string; dueDate?: string }) => void;
+  onClose: () => void;
+  onTaskClick: (task: Task) => void;
+  getCategoryColor?: (name: string) => string | undefined;
+  deadlineThresholdDays: number;
+}
+
+export function QuadrantExpandDialog({
+  quadrant,
+  tasks,
+  onToggleStatus,
+  onDelete,
+  onAddTask,
+  onClose,
+  onTaskClick,
+  getCategoryColor,
+  deadlineThresholdDays,
+}: QuadrantExpandDialogProps) {
+  const openTasks = tasks.filter(t => t.status === "open");
+  const doneTasks = tasks.filter(t => t.status === "done");
+
+  const getDotClass = () => {
+    const dots = { 1: "bg-quadrant-1", 2: "bg-quadrant-2", 3: "bg-quadrant-3", 4: "bg-quadrant-4" };
+    return dots[quadrant.color];
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl max-h-[85vh] bg-card rounded-2xl border shadow-medium flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center gap-2">
+            <span className={cn("w-3 h-3 rounded-full", getDotClass())} />
+            <h2 className="font-semibold text-lg text-foreground">{quadrant.title}</h2>
+            <span className="text-sm text-muted-foreground">— {quadrant.subtitle}</span>
+            <span className="text-xs text-muted-foreground ml-2">{openTasks.length} open</span>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onClose} className="rounded-lg">
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Input */}
+        <div className="p-3">
+          <TaskInput onAddTask={onAddTask} defaultQuadrant={quadrant.id} placeholder={`Add to ${quadrant.title.toLowerCase()}...`} compact />
+        </div>
+
+        {/* Tasks */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-1">
+          {openTasks.map(task => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onToggleStatus={onToggleStatus}
+              onDelete={onDelete}
+              onTaskClick={onTaskClick}
+              getCategoryColor={getCategoryColor}
+              deadlineThresholdDays={deadlineThresholdDays}
+            />
+          ))}
+          {doneTasks.length > 0 && (
+            <div className="pt-2">
+              <p className="text-[10px] text-muted-foreground font-medium mb-1 px-1">Done ({doneTasks.length})</p>
+              {doneTasks.map(task => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onToggleStatus={onToggleStatus}
+                  onDelete={onDelete}
+                  onTaskClick={onTaskClick}
+                  getCategoryColor={getCategoryColor}
+                  deadlineThresholdDays={deadlineThresholdDays}
+                />
+              ))}
+            </div>
+          )}
+          {tasks.length === 0 && (
+            <div className="flex items-center justify-center h-32 text-sm text-muted-foreground/60">No tasks yet</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
