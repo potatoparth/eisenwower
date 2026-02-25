@@ -39,6 +39,7 @@ const Index = () => {
             >
               <MatrixView
                 tasks={tasks}
+                categories={getCategories()}
                 onMoveTask={moveTask}
                 onToggleStatus={toggleStatus}
                 onDeleteTask={deleteTask}

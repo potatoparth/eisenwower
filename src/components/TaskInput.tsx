@@ -15,6 +15,7 @@ interface TaskInputProps {
   defaultQuadrant?: Quadrant;
   placeholder?: string;
   className?: string;
+  compact?: boolean;
 }
 
 type InputStep = "name" | "quadrant" | "details";
@@ -24,6 +25,7 @@ export function TaskInput({
   defaultQuadrant,
   placeholder = "Add a new task...",
   className,
+  compact = false,
 }: TaskInputProps) {
   const [step, setStep] = useState<InputStep>("name");
   const [name, setName] = useState("");
@@ -32,6 +34,7 @@ export function TaskInput({
   );
   const [category, setCategory] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [description, setDescription] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -43,6 +46,7 @@ export function TaskInput({
     setSelectedQuadrant(defaultQuadrant || null);
     setCategory("");
     setDueDate("");
+    setDescription("");
     setIsFocused(false);
   };
 
@@ -50,12 +54,7 @@ export function TaskInput({
     if (!name.trim()) return;
     
     if (defaultQuadrant) {
-      // If we have a default quadrant, skip quadrant selection
-      onAddTask(name, defaultQuadrant, {
-        category: category || undefined,
-        dueDate: dueDate || undefined,
-      });
-      reset();
+      setStep("details");
     } else {
       setStep("quadrant");
     }
@@ -67,12 +66,22 @@ export function TaskInput({
   };
 
   const handleComplete = () => {
-    if (!name.trim() || !selectedQuadrant) return;
+    const q = selectedQuadrant || defaultQuadrant;
+    if (!name.trim() || !q) return;
     
-    onAddTask(name, selectedQuadrant, {
+    onAddTask(name, q, {
+      description: description || undefined,
       category: category || undefined,
       dueDate: dueDate || undefined,
     });
+    reset();
+    inputRef.current?.focus();
+  };
+
+  const handleQuickAdd = () => {
+    const q = selectedQuadrant || defaultQuadrant;
+    if (!name.trim() || !q) return;
+    onAddTask(name, q);
     reset();
     inputRef.current?.focus();
   };
@@ -91,11 +100,10 @@ export function TaskInput({
     }
   };
 
-  // Click outside to close expanded state
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        if (step !== "name" && name.trim() && selectedQuadrant) {
+        if (step !== "name" && name.trim()) {
           handleComplete();
         } else if (step !== "name") {
           reset();
@@ -105,34 +113,37 @@ export function TaskInput({
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [step, name, selectedQuadrant]);
+  }, [step, name, selectedQuadrant, category, dueDate, description]);
 
   const getQuadrantButtonClass = (q: QuadrantInfo) => {
-    const baseClass = "flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 border-2";
+    const baseClass = "flex-1 py-2.5 px-3 rounded-xl text-sm font-medium transition-all duration-200 border";
     const colorClasses = {
-      1: "border-quadrant-1 bg-quadrant-1-light text-quadrant-1-foreground hover:bg-quadrant-1 hover:text-white",
-      2: "border-quadrant-2 bg-quadrant-2-light text-quadrant-2-foreground hover:bg-quadrant-2 hover:text-white",
-      3: "border-quadrant-3 bg-quadrant-3-light text-quadrant-3-foreground hover:bg-quadrant-3 hover:text-white",
-      4: "border-quadrant-4 bg-quadrant-4-light text-quadrant-4-foreground hover:bg-quadrant-4 hover:text-white",
+      1: "border-quadrant-1-border bg-quadrant-1-light text-quadrant-1-foreground hover:bg-quadrant-1 hover:text-primary-foreground",
+      2: "border-quadrant-2-border bg-quadrant-2-light text-quadrant-2-foreground hover:bg-quadrant-2 hover:text-primary-foreground",
+      3: "border-quadrant-3-border bg-quadrant-3-light text-quadrant-3-foreground hover:bg-quadrant-3 hover:text-primary-foreground",
+      4: "border-quadrant-4-border bg-quadrant-4-light text-quadrant-4-foreground hover:bg-quadrant-4 hover:text-primary-foreground",
     };
     return cn(baseClass, colorClasses[q.color]);
   };
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>
-      <motion.div
-        layout
+      <div
         className={cn(
-          "bg-card rounded-2xl border transition-all duration-200",
+          "bg-card rounded-xl border transition-all duration-200",
           isFocused || step !== "name"
             ? "border-primary/20 shadow-medium"
-            : "border-border shadow-soft"
+            : "border-border shadow-soft",
+          compact && "rounded-lg"
         )}
       >
         {/* Name Input */}
-        <div className="flex items-center gap-3 p-4">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Plus className="w-4 h-4 text-primary" />
+        <div className={cn("flex items-center gap-2", compact ? "p-2" : "p-3")}>
+          <div className={cn(
+            "rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0",
+            compact ? "w-6 h-6" : "w-7 h-7"
+          )}>
+            <Plus className={cn(compact ? "w-3 h-3" : "w-3.5 h-3.5", "text-primary")} />
           </div>
           <Input
             ref={inputRef}
@@ -142,21 +153,19 @@ export function TaskInput({
             onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}
             placeholder={placeholder}
-            className="border-0 shadow-none p-0 h-auto text-base placeholder:text-muted-foreground/60 focus-visible:ring-0"
+            className={cn(
+              "border-0 shadow-none p-0 h-auto placeholder:text-muted-foreground/60 focus-visible:ring-0",
+              compact ? "text-sm" : "text-base"
+            )}
           />
           {name.trim() && step === "name" && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
+            <Button
+              size="sm"
+              onClick={handleNameSubmit}
+              className="rounded-lg h-7 w-7 p-0"
             >
-              <Button
-                size="sm"
-                onClick={handleNameSubmit}
-                className="rounded-xl"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </motion.div>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Button>
           )}
         </div>
 
@@ -170,21 +179,19 @@ export function TaskInput({
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="px-4 pb-4 space-y-3">
-                <p className="text-sm text-muted-foreground font-medium">
-                  Select priority quadrant
+              <div className="px-3 pb-3 space-y-2">
+                <p className="text-xs text-muted-foreground font-medium">
+                  Select quadrant
                 </p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-1.5">
                   {QUADRANTS.map((q) => (
                     <button
                       key={q.id}
                       onClick={() => handleQuadrantSelect(q.id)}
                       className={getQuadrantButtonClass(q)}
                     >
-                      <span className="block font-semibold">{q.title}</span>
-                      <span className="block text-xs opacity-75 mt-0.5">
-                        {q.subtitle}
-                      </span>
+                      <span className="block font-semibold text-xs">{q.title}</span>
+                      <span className="block text-[10px] opacity-75">{q.subtitle}</span>
                     </button>
                   ))}
                 </div>
@@ -193,7 +200,7 @@ export function TaskInput({
           )}
         </AnimatePresence>
 
-        {/* Optional Details */}
+        {/* Details (description, category, due date) */}
         <AnimatePresence>
           {step === "details" && (
             <motion.div
@@ -203,56 +210,74 @@ export function TaskInput({
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="px-4 pb-4 space-y-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="px-3 pb-3 space-y-2">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="font-medium">Optional details</span>
-                  <span className="text-xs opacity-60">Press Enter to save</span>
+                  <span className="text-[10px] opacity-60">Enter to save, Esc to cancel</span>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <div className="flex items-center gap-2 flex-1 min-w-[140px]">
-                    <Tag className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <Input
-                      type="text"
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Category"
-                      className="border-0 bg-secondary/50 h-9 text-sm rounded-lg"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2 flex-1 min-w-[140px]">
-                    <Calendar className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <Input
-                      type="date"
-                      value={dueDate}
-                      onChange={(e) => setDueDate(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      className="border-0 bg-secondary/50 h-9 text-sm rounded-lg"
-                    />
+                <div className="space-y-1.5">
+                  <Input
+                    type="text"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Description (optional)"
+                    className="border-0 bg-secondary/50 h-8 text-sm rounded-lg"
+                  />
+                  <div className="flex gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-1">
+                      <Tag className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                      <Input
+                        type="text"
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Category"
+                        className="border-0 bg-secondary/50 h-8 text-sm rounded-lg"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-1">
+                      <Calendar className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                      <Input
+                        type="date"
+                        value={dueDate}
+                        onChange={(e) => setDueDate(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="border-0 bg-secondary/50 h-8 text-sm rounded-lg"
+                      />
+                    </div>
                   </div>
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
+                <div className="flex justify-end gap-1.5 pt-1">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={reset}
-                    className="rounded-xl"
+                    className="rounded-lg h-7 text-xs"
                   >
                     Cancel
                   </Button>
                   <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleQuickAdd}
+                    className="rounded-lg h-7 text-xs"
+                  >
+                    Skip details
+                  </Button>
+                  <Button
                     size="sm"
                     onClick={handleComplete}
-                    className="rounded-xl"
+                    className="rounded-lg h-7 text-xs"
                   >
-                    Add Task
+                    Add
                   </Button>
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
+      </div>
     </div>
   );
 }
