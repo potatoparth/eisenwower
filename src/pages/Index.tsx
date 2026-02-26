@@ -70,6 +70,7 @@ const Index = () => {
         onViewModeChange={setViewMode}
         taskCount={tasks.filter((t) => t.status === "open").length}
         onSettingsClick={() => setShowSettings(true)}
+        onLogout={logout}
         username={currentUser.username}
       />
 
