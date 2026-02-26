@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { LayoutGrid, Moon, Sun, Settings } from "lucide-react";
+import { LayoutGrid, Moon, Sun, Settings, LogOut } from "lucide-react";
 import { ViewToggle, ViewMode } from "./ViewToggle";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,11 @@ interface HeaderProps {
   onViewModeChange: (mode: ViewMode) => void;
   taskCount: number;
   onSettingsClick?: () => void;
+  onLogout?: () => void;
   username?: string;
 }
 
-export function Header({ viewMode, onViewModeChange, taskCount, onSettingsClick, username }: HeaderProps) {
+export function Header({ viewMode, onViewModeChange, taskCount, onSettingsClick, onLogout, username }: HeaderProps) {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== "undefined") {
       return document.documentElement.classList.contains("dark") ||
@@ -58,6 +59,11 @@ export function Header({ viewMode, onViewModeChange, taskCount, onSettingsClick,
         {onSettingsClick && (
           <Button variant="ghost" size="icon" onClick={onSettingsClick} className="rounded-xl w-8 h-8">
             <Settings className="w-4 h-4" />
+          </Button>
+        )}
+        {onLogout && (
+          <Button variant="ghost" size="icon" onClick={onLogout} className="rounded-xl w-8 h-8" title="Sign Out">
+            <LogOut className="w-4 h-4" />
           </Button>
         )}
       </div>
