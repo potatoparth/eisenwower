@@ -18,7 +18,7 @@ export interface AppSettings {
     4: QuadrantColors;
   };
   fontSize: "small" | "medium" | "large";
-  defaultView: "matrix" | "list";
+  defaultView: "matrix" | "list" | "kanban" | "gantt" | "projects";
   deadlineThresholdDays: number; // days before due date to show red warning
   categoryColors: CategoryColor[];
   colorCodingEnabled: boolean;
