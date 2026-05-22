@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { AppSettings, DEFAULT_SETTINGS } from "@/types/settings";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 const SETTINGS_KEY = "eisenhower-settings";
 
@@ -83,7 +84,7 @@ export function useSettings(userId?: string) {
   useEffect(() => {
     saveSettings(settings);
     if (userId && hasLoaded) {
-      supabase.from("app_settings").upsert({ user_id: userId, settings }).then(() => undefined);
+      supabase.from("app_settings").upsert({ user_id: userId, settings: settings as unknown as Json }).then(() => undefined);
     }
     applyQuadrantColors(settings);
   }, [settings, userId, hasLoaded]);
