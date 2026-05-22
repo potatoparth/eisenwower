@@ -42,8 +42,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
 
 export interface UserAccount {
   id: string;
+  email: string;
   username: string;
-  password: string; // In real app, this would be hashed
   role: "admin" | "user";
   createdAt: string;
 }
