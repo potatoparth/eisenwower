@@ -20,13 +20,13 @@ import { Task } from "@/types/task";
 const Index = () => {
   const {
     currentUser, users, isInitialized, needsSetup, isAdmin,
-    signup, login, logout, deleteUser,
+    signup, login, loginWithGoogle, logout, deleteUser,
   } = useAuth();
 
   const {
     settings, updateSettings, updateQuadrantColor,
     addCategoryColor, removeCategoryColor, getCategoryColor, resetToDefaults,
-  } = useSettings();
+  } = useSettings(currentUser?.id);
 
   const [viewMode, setViewMode] = useState<ViewMode>(settings.defaultView as ViewMode);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -50,7 +50,7 @@ const Index = () => {
   if (!isInitialized) return null;
 
   if (needsSetup || !currentUser) {
-    return <LoginPage needsSetup={needsSetup} onLogin={login} onSignup={signup} />;
+    return <LoginPage needsSetup={needsSetup} onLogin={login} onSignup={signup} onGoogleLogin={loginWithGoogle} />;
   }
 
   const fontSizeClass = settings.fontSize === "small" ? "text-xs" : settings.fontSize === "large" ? "text-base" : "text-sm";

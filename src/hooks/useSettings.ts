@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { AppSettings, DEFAULT_SETTINGS } from "@/types/settings";
+import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 const SETTINGS_KEY = "eisenhower-settings";
 
@@ -55,13 +57,37 @@ function applyQuadrantColors(settings: AppSettings) {
   }
 }
 
-export function useSettings() {
+export function useSettings(userId?: string) {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setHasLoaded(false);
+
+    if (!userId) {
+      setSettings(loadSettings());
+      setHasLoaded(true);
+      return;
+    }
+
+    supabase.from("app_settings").select("settings").eq("user_id", userId).maybeSingle().then(({ data }) => {
+      if (cancelled) return;
+      const cloudSettings = data?.settings as Partial<AppSettings> | undefined;
+      setSettings(cloudSettings ? { ...DEFAULT_SETTINGS, ...cloudSettings } : DEFAULT_SETTINGS);
+      setHasLoaded(true);
+    });
+
+    return () => { cancelled = true; };
+  }, [userId]);
 
   useEffect(() => {
     saveSettings(settings);
+    if (userId && hasLoaded) {
+      supabase.from("app_settings").upsert({ user_id: userId, settings: settings as unknown as Json }).then(() => undefined);
+    }
     applyQuadrantColors(settings);
-  }, [settings]);
+  }, [settings, userId, hasLoaded]);
 
   // Apply on mount
   useEffect(() => {
