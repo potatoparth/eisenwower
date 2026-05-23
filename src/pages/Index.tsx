@@ -58,7 +58,7 @@ const Index = () => {
   const viewAnimation = { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -10 }, transition: { duration: 0.2 } };
 
   return (
-    <div className={`min-h-screen bg-background flex flex-col ${fontSizeClass}`}>
+    <div className={`h-screen bg-background flex flex-col overflow-hidden ${fontSizeClass}`}>
       <Header
         viewMode={viewMode}
         onViewModeChange={setViewMode}
