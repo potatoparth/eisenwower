@@ -115,15 +115,15 @@ export function MatrixView({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0">
       {/* Global Task Input */}
-      <div className="mb-4 max-w-2xl mx-auto w-full">
+      <div className="mb-3 max-w-2xl mx-auto w-full flex-shrink-0">
         <TaskInput onAddTask={onAddTask} placeholder="Add a new task..." />
       </div>
 
       {/* Category Filter Toggle */}
       {categories.length > 1 && (
-        <div className="mb-4 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <div className="mb-3 flex flex-shrink-0 items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           <button
             onClick={() => setSelectedCategory("all")}
             className={cn(
@@ -163,7 +163,7 @@ export function MatrixView({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 gap-3 flex-1 min-h-0">
+        <div className="grid flex-1 grid-cols-1 gap-3 min-h-0 auto-rows-[minmax(17rem,auto)] md:grid-cols-2 md:grid-rows-2 md:auto-rows-fr md:gap-4">
           {QUADRANTS.map((quadrant) => (
             <QuadrantColumn
               key={quadrant.id}

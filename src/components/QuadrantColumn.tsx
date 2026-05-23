@@ -62,18 +62,18 @@ export function QuadrantColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex flex-col rounded-2xl border transition-all duration-200 overflow-hidden",
+        "flex flex-col rounded-xl border transition-all duration-200 overflow-hidden shadow-sm",
         getBorderClass(),
         getHeaderBg(),
         isOver && "ring-2 ring-primary/30 scale-[1.005]",
-        "h-full min-h-0"
+        "h-full min-h-[17rem] md:min-h-0"
       )}
     >
       {/* Header */}
-      <div className="p-3 pb-2 flex-shrink-0">
+      <div className="p-3 sm:p-4 sm:pb-2 flex-shrink-0">
         <div className="flex items-center gap-2">
           <span className={cn("w-2 h-2 rounded-full", getDotClass())} />
-          <h3 className="font-semibold text-sm text-foreground">{quadrant.title}</h3>
+          <h3 className="font-semibold text-sm sm:text-base text-foreground">{quadrant.title}</h3>
           <span className="text-xs text-muted-foreground ml-auto">{openTasks.length}</span>
           {onExpand && (
             <button
@@ -84,16 +84,16 @@ export function QuadrantColumn({
             </button>
           )}
         </div>
-        <p className="text-[11px] text-muted-foreground mt-0.5 ml-[16px]">{quadrant.subtitle}</p>
+        <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 ml-[16px]">{quadrant.subtitle}</p>
       </div>
 
       {/* Task Input */}
-      <div className="px-2 pb-1 flex-shrink-0">
+      <div className="px-2 sm:px-3 pb-2 flex-shrink-0">
         <TaskInput onAddTask={onAddTask} defaultQuadrant={quadrant.id} placeholder={`Add to ${quadrant.title.toLowerCase()}...`} compact />
       </div>
 
       {/* Tasks */}
-      <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5 min-h-0">
+      <div className="flex-1 overflow-y-auto px-2 sm:px-3 pb-3 space-y-1 min-h-0">
         <SortableContext items={openTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           {openTasks.map((task) => (
             <TaskCard
