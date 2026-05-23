@@ -65,9 +65,9 @@ export function QuadrantColumn({
         "flex flex-col rounded-2xl border transition-all duration-200 overflow-hidden",
         getBorderClass(),
         getHeaderBg(),
-        isOver && "ring-2 ring-primary/30 scale-[1.005]"
+        isOver && "ring-2 ring-primary/30 scale-[1.005]",
+        "h-full min-h-0"
       )}
-      style={{ maxHeight: "calc(50vh - 80px)", minHeight: "200px" }}
     >
       {/* Header */}
       <div className="p-3 pb-2 flex-shrink-0">
