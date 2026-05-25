@@ -191,6 +191,7 @@ export type Database = {
           id: string
           kanban_column: string | null
           name: string
+          project_id: string | null
           quadrant: string
           sort_order: number
           status: string
@@ -206,6 +207,7 @@ export type Database = {
           id?: string
           kanban_column?: string | null
           name: string
+          project_id?: string | null
           quadrant?: string
           sort_order?: number
           status?: string
@@ -221,6 +223,7 @@ export type Database = {
           id?: string
           kanban_column?: string | null
           name?: string
+          project_id?: string | null
           quadrant?: string
           sort_order?: number
           status?: string

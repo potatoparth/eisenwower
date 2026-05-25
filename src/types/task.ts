@@ -18,6 +18,7 @@ export interface Task {
   updatedAt: string;
   deadlineThresholdOverride?: number; // per-task override for deadline warning days
   kanbanColumn?: string; // which kanban column this task belongs to
+  projectId?: string; // optional project association
 }
 
 export interface QuadrantInfo {
