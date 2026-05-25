@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink } from "lucide-react";
 import { ProjectTemplate, ProjectTask, TaskDependencyType } from "@/types/project";
+import { Task } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +17,7 @@ import {
 
 interface ProjectBuilderProps {
   projects: ProjectTemplate[];
+  allTasks?: Task[];
   onAddProject: (name: string, description?: string) => ProjectTemplate;
   onUpdateProject: (id: string, updates: Partial<Omit<ProjectTemplate, "id" | "createdAt">>) => void;
   onDeleteProject: (id: string) => void;
@@ -25,7 +27,7 @@ interface ProjectBuilderProps {
 }
 
 export function ProjectBuilder({
-  projects, onAddProject, onUpdateProject, onDeleteProject,
+  projects, allTasks = [], onAddProject, onUpdateProject, onDeleteProject,
   onAddTask, onUpdateTask, onDeleteTask,
 }: ProjectBuilderProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -38,6 +40,7 @@ export function ProjectBuilder({
   const [newTaskDependsOn, setNewTaskDependsOn] = useState<string>("");
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
+  const mappedTasks = selectedProject ? allTasks.filter(t => t.projectId === selectedProject.id) : [];
 
   const handleCreateProject = () => {
     if (!newProjectName.trim()) return;
@@ -80,7 +83,9 @@ export function ProjectBuilder({
             )}
           >
             {p.name}
-            <span className="ml-1.5 text-xs opacity-70">{p.tasks.length}</span>
+            <span className="ml-1.5 text-xs opacity-70">
+              {p.tasks.length + allTasks.filter(t => t.projectId === p.id).length}
+            </span>
           </button>
         ))}
         {!showNewProject && (
