@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { X, Calendar, Tag, AlertCircle } from "lucide-react";
+import { X, Calendar, Tag, AlertCircle, FolderKanban } from "lucide-react";
 import { Task, Quadrant, QUADRANTS, QUADRANT_MAP } from "@/types/task";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ProjectTemplate } from "@/types/project";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays, isPast, isToday } from "date-fns";
 
@@ -12,15 +14,17 @@ interface TaskDetailPanelProps {
   onUpdate: (id: string, updates: Partial<Omit<Task, "id" | "createdAt">>) => void;
   onClose: () => void;
   getCategoryColor?: (name: string) => string | undefined;
+  projects?: ProjectTemplate[];
 }
 
-export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose, getCategoryColor }: TaskDetailPanelProps) {
+export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose, getCategoryColor, projects = [] }: TaskDetailPanelProps) {
   const [name, setName] = useState(task.name);
   const [description, setDescription] = useState(task.description || "");
   const [category, setCategory] = useState(task.category);
   const [dueDate, setDueDate] = useState(task.dueDate || "");
   const [quadrant, setQuadrant] = useState<Quadrant>(task.quadrant);
   const [deadlineThreshold, setDeadlineThreshold] = useState<number | undefined>(task.deadlineThresholdOverride);
+  const [projectId, setProjectId] = useState<string | undefined>(task.projectId);
 
   useEffect(() => {
     setName(task.name);
@@ -29,6 +33,7 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
     setDueDate(task.dueDate || "");
     setQuadrant(task.quadrant);
     setDeadlineThreshold(task.deadlineThresholdOverride);
+    setProjectId(task.projectId);
   }, [task]);
 
   const handleSave = () => {
@@ -154,6 +159,32 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
               className="border-0 bg-secondary/50 rounded-xl"
             />
           </div>
+        </div>
+
+        {/* Project */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+            <FolderKanban className="w-3.5 h-3.5" />
+            Project
+          </label>
+          <Select
+            value={projectId ?? "__none__"}
+            onValueChange={(v) => {
+              const next = v === "__none__" ? undefined : v;
+              setProjectId(next);
+              onUpdate(task.id, { projectId: next });
+            }}
+          >
+            <SelectTrigger className="border-0 bg-secondary/50 rounded-xl">
+              <SelectValue placeholder="No project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">No project</SelectItem>
+              {projects.map(p => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Per-task deadline threshold override */}
