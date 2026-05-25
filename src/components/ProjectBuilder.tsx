@@ -182,7 +182,31 @@ export function ProjectBuilder({
             {selectedProject.tasks.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <FolderOpen className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No tasks yet. Add your first task below.</p>
+                <p className="text-sm">No project tasks yet. Add your first task below.</p>
+              </div>
+            )}
+
+            {mappedTasks.length > 0 && (
+              <div className="pt-4 mt-2 border-t border-border space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Mapped Tasks ({mappedTasks.length})
+                  </h4>
+                  <span className="text-[10px] text-muted-foreground">from Matrix / Kanban</span>
+                </div>
+                {mappedTasks.map(t => (
+                  <div key={t.id} className="flex items-center gap-3 bg-card rounded-xl border border-border p-3">
+                    <div className={cn("w-2 h-2 rounded-full flex-shrink-0", t.status === "done" ? "bg-emerald-500" : "bg-primary")} />
+                    <div className="flex-1 min-w-0">
+                      <p className={cn("text-sm font-medium truncate", t.status === "done" && "line-through text-muted-foreground")}>{t.name}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="capitalize">{t.quadrant.replace(/-/g, " ")}</span>
+                        {t.category && <span>• {t.category}</span>}
+                        {t.dueDate && <span>• due {t.dueDate}</span>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
