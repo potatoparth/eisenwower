@@ -5,6 +5,7 @@ import { Task, Quadrant, TaskStatus } from "@/types/task";
 type TaskRow = {
   id: string; name: string; description: string | null; category: string; quadrant: string; due_date: string | null;
   status: string; created_at: string; updated_at: string; deadline_threshold_override: number | null; kanban_column: string | null; sort_order: number;
+  project_id: string | null;
 };
 
 const fromRow = (row: TaskRow): Task => ({
@@ -19,6 +20,7 @@ const fromRow = (row: TaskRow): Task => ({
   updatedAt: row.updated_at,
   deadlineThresholdOverride: row.deadline_threshold_override ?? undefined,
   kanbanColumn: row.kanban_column || undefined,
+  projectId: row.project_id || undefined,
 });
 
 const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => ({
@@ -30,6 +32,7 @@ const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => ({
   status: updates.status,
   deadline_threshold_override: updates.deadlineThresholdOverride ?? null,
   kanban_column: updates.kanbanColumn ?? null,
+  project_id: updates.projectId ?? null,
 });
 
 export function useTasks(userId?: string) {
@@ -49,12 +52,12 @@ export function useTasks(userId?: string) {
     return () => { supabase.removeChannel(channel); };
   }, [userId, loadTasks]);
 
-  const addTask = useCallback((name: string, quadrant: Quadrant, options?: { description?: string; category?: string; dueDate?: string }): Task => {
+  const addTask = useCallback((name: string, quadrant: Quadrant, options?: { description?: string; category?: string; dueDate?: string; projectId?: string }): Task => {
     const now = new Date().toISOString();
-    const optimistic: Task = { id: crypto.randomUUID(), name: name.trim(), description: options?.description, category: options?.category || "General", quadrant, dueDate: options?.dueDate, status: "open", createdAt: now, updatedAt: now, kanbanColumn: "todo" };
+    const optimistic: Task = { id: crypto.randomUUID(), name: name.trim(), description: options?.description, category: options?.category || "General", quadrant, dueDate: options?.dueDate, status: "open", createdAt: now, updatedAt: now, kanbanColumn: "todo", projectId: options?.projectId };
     setTasksState(prev => [optimistic, ...prev]);
     if (userId) {
-      supabase.from("tasks").insert({ id: optimistic.id, user_id: userId, name: optimistic.name, description: optimistic.description || null, category: optimistic.category, quadrant, due_date: optimistic.dueDate || null, status: optimistic.status, kanban_column: optimistic.kanbanColumn, sort_order: 0 }).then(({ error }) => { if (error) loadTasks(); });
+      supabase.from("tasks").insert({ id: optimistic.id, user_id: userId, name: optimistic.name, description: optimistic.description || null, category: optimistic.category, quadrant, due_date: optimistic.dueDate || null, status: optimistic.status, kanban_column: optimistic.kanbanColumn, sort_order: 0, project_id: optimistic.projectId || null }).then(({ error }) => { if (error) loadTasks(); });
     }
     return optimistic;
   }, [userId, loadTasks]);
