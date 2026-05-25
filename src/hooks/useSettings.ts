@@ -84,7 +84,7 @@ export function useSettings(userId?: string) {
   useEffect(() => {
     saveSettings(settings);
     if (userId && hasLoaded) {
-      supabase.from("app_settings").upsert({ user_id: userId, settings: settings as unknown as Json }).then(() => undefined);
+      supabase.from("app_settings").upsert({ user_id: userId, settings: settings as unknown as Json }, { onConflict: "user_id" }).then(() => undefined);
     }
     applyQuadrantColors(settings);
   }, [settings, userId, hasLoaded]);

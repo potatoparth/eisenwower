@@ -10,7 +10,7 @@ export function useKanbanColumns(userId?: string) {
     const { data } = await supabase.from("kanban_columns").select("column_key,title,sort_order").eq("user_id", userId).order("sort_order");
     if (!data?.length) {
       setColumns(DEFAULT_KANBAN_COLUMNS);
-      await supabase.from("kanban_columns").upsert(DEFAULT_KANBAN_COLUMNS.map(c => ({ user_id: userId, column_key: c.id, title: c.title, sort_order: c.order })));
+      await supabase.from("kanban_columns").upsert(DEFAULT_KANBAN_COLUMNS.map(c => ({ user_id: userId, column_key: c.id, title: c.title, sort_order: c.order })), { onConflict: "user_id,column_key" });
       return;
     }
     setColumns(data.map(c => ({ id: c.column_key, title: c.title, order: c.sort_order })));
