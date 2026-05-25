@@ -31,6 +31,7 @@ const Index = () => {
   const [viewMode, setViewMode] = useState<ViewMode>(settings.defaultView as ViewMode);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
 
   const {
     tasks, addTask, updateTask, deleteTask, moveTask, toggleStatus, getCategories, setTasks,
@@ -57,15 +58,31 @@ const Index = () => {
 
   const viewAnimation = { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -10 }, transition: { duration: 0.2 } };
 
+  // Filter tasks by active project. null = all, "__none__" handled via activeProjectId === "__none__".
+  const filteredTasks = activeProjectId === null
+    ? tasks
+    : activeProjectId === "__none__"
+      ? tasks.filter(t => !t.projectId)
+      : tasks.filter(t => t.projectId === activeProjectId);
+
+  // Wrap addTask so new tasks inherit the active project (when a real project is selected).
+  const handleAddTask: typeof addTask = (name, quadrant, options) => {
+    const projectId = options?.projectId ?? (activeProjectId && activeProjectId !== "__none__" ? activeProjectId : undefined);
+    return addTask(name, quadrant, { ...options, projectId });
+  };
+
   return (
     <div className={`h-screen bg-background flex flex-col overflow-hidden ${fontSizeClass}`}>
       <Header
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        taskCount={tasks.filter((t) => t.status === "open").length}
+        taskCount={filteredTasks.filter((t) => t.status === "open").length}
         onSettingsClick={() => setShowSettings(true)}
         onLogout={logout}
         username={currentUser.username}
+        projects={projects}
+        activeProjectId={activeProjectId}
+        onActiveProjectChange={setActiveProjectId}
       />
 
       <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 overflow-y-auto md:overflow-hidden">
@@ -73,8 +90,8 @@ const Index = () => {
           {viewMode === "matrix" && (
             <motion.div key="matrix" {...viewAnimation} className="h-full">
               <MatrixView
-                tasks={tasks} categories={getCategories()} onMoveTask={moveTask}
-                onToggleStatus={toggleStatus} onDeleteTask={deleteTask} onAddTask={addTask}
+                tasks={filteredTasks} categories={getCategories()} onMoveTask={moveTask}
+                onToggleStatus={toggleStatus} onDeleteTask={deleteTask} onAddTask={handleAddTask}
                 onReorderTasks={setTasks} onTaskClick={setSelectedTask}
                 getCategoryColor={getCategoryColor} deadlineThresholdDays={settings.deadlineThresholdDays}
               />
@@ -83,8 +100,8 @@ const Index = () => {
           {viewMode === "list" && (
             <motion.div key="list" {...viewAnimation} className="h-full max-w-4xl mx-auto">
               <ListView
-                tasks={tasks} categories={getCategories()} onToggleStatus={toggleStatus}
-                onDeleteTask={deleteTask} onAddTask={addTask} onTaskClick={setSelectedTask}
+                tasks={filteredTasks} categories={getCategories()} onToggleStatus={toggleStatus}
+                onDeleteTask={deleteTask} onAddTask={handleAddTask} onTaskClick={setSelectedTask}
                 getCategoryColor={getCategoryColor} deadlineThresholdDays={settings.deadlineThresholdDays}
               />
             </motion.div>
@@ -92,10 +109,10 @@ const Index = () => {
           {viewMode === "kanban" && (
             <motion.div key="kanban" {...viewAnimation} className="h-full">
               <KanbanView
-                tasks={tasks} columns={columns} onAddColumn={addColumn}
+                tasks={filteredTasks} columns={columns} onAddColumn={addColumn}
                 onRemoveColumn={removeColumn} onRenameColumn={renameColumn}
                 onToggleStatus={toggleStatus} onDeleteTask={deleteTask}
-                onUpdateTask={updateTask} onAddTask={addTask}
+                onUpdateTask={updateTask} onAddTask={handleAddTask}
                 onTaskClick={setSelectedTask} getCategoryColor={getCategoryColor}
                 deadlineThresholdDays={settings.deadlineThresholdDays}
               />
@@ -103,7 +120,7 @@ const Index = () => {
           )}
           {viewMode === "gantt" && (
             <motion.div key="gantt" {...viewAnimation} className="h-full">
-              <GanttView tasks={tasks} onTaskClick={setSelectedTask} getCategoryColor={getCategoryColor} />
+              <GanttView tasks={filteredTasks} onTaskClick={setSelectedTask} getCategoryColor={getCategoryColor} />
             </motion.div>
           )}
           {viewMode === "projects" && (
@@ -128,6 +145,7 @@ const Index = () => {
           }}
           onClose={() => setSelectedTask(null)}
           getCategoryColor={getCategoryColor}
+          projects={projects}
         />
       )}
 
