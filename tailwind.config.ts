@@ -93,9 +93,9 @@ export default {
       },
       fontFamily: {
         sans: [
+          "Inter",
           "-apple-system",
           "BlinkMacSystemFont",
-          "SF Pro Display",
           "Segoe UI",
           "Roboto",
           "Helvetica Neue",

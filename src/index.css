@@ -2,158 +2,150 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Eisenhower — Redesigned tokens.
-   System font, refined neutrals, per-quadrant accent/bg/text/badge tokens.
-   Quadrant card backgrounds are computed live from accent + --quadrant-tint-alpha. */
+/* Eisenhower Matrix Design System
+   Contemporary 2025 SaaS — calm, confident, intentional
+   Colors are HSL for proper theming */
 
 @layer base {
   :root {
-    /* Base palette - light */
-    --background: 0 0% 98%;          /* #FAFAFA */
-    --foreground: 0 0% 8%;            /* near-black headings */
+    /* Base palette - warm neutrals */
+    --background: 40 20% 98%;
+    --foreground: 220 25% 12%;
 
-    --card: 0 0% 100%;                /* #FFFFFF */
-    --card-foreground: 0 0% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 8%;
+    --popover-foreground: 220 25% 12%;
 
-    /* Primary - quadrant-1 violet to match Do First */
-    --primary: 262 83% 50%;           /* #6D28D9-ish */
+    /* Primary - sophisticated teal */
+    --primary: 172 50% 40%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 0 0% 12%;
+    /* Secondary - soft warm gray */
+    --secondary: 40 15% 94%;
+    --secondary-foreground: 220 25% 20%;
 
-    --muted: 240 5% 96%;
-    --muted-foreground: 0 0% 53%;     /* #888 */
+    /* Muted surfaces */
+    --muted: 40 15% 94%;
+    --muted-foreground: 220 10% 46%;
 
-    --accent: 262 83% 95%;
-    --accent-foreground: 262 83% 35%;
+    /* Accent - subtle highlight */
+    --accent: 172 40% 94%;
+    --accent-foreground: 172 50% 30%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 6% 91%;             /* #E8E8ED */
-    --input: 240 6% 91%;
-    --ring: 262 83% 50%;
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 172 50% 40%;
 
-    --radius: 0.75rem;                /* 12px cards; inputs/buttons via tw rounded-lg = 8px */
+    --radius: 0.75rem;
 
-    /* Per-quadrant tokens (light) */
-    /* Do First - violet */
-    --quadrant-1: 262 83% 50%;            /* accent #6D28D9 */
-    --quadrant-1-light: 262 83% 50%;      /* legacy alias = accent (bg now computed via tint) */
-    --quadrant-1-border: 262 83% 50%;
-    --quadrant-1-foreground: 265 90% 21%; /* #3B0764 */
-    --quadrant-1-badge: 263 70% 92%;      /* #EDE9FE */
+    /* Quadrant colors - contemporary, harmonious */
+    /* Q1: Important & Urgent - warm coral (action) */
+    --quadrant-1: 4 78% 60%;
+    --quadrant-1-light: 4 60% 94%;
+    --quadrant-1-border: 4 55% 80%;
+    --quadrant-1-foreground: 4 80% 25%;
 
-    /* Schedule - blue */
-    --quadrant-2: 217 91% 54%;            /* #2563EB */
-    --quadrant-2-light: 217 91% 54%;
-    --quadrant-2-border: 217 91% 54%;
-    --quadrant-2-foreground: 224 64% 33%; /* #1E3A8A */
-    --quadrant-2-badge: 214 95% 92%;      /* #DBEAFE */
+    /* Q2: Important & Not Urgent - teal (growth) */
+    --quadrant-2: 172 55% 42%;
+    --quadrant-2-light: 172 40% 92%;
+    --quadrant-2-border: 172 35% 76%;
+    --quadrant-2-foreground: 172 60% 22%;
 
-    /* Delegate - amber */
-    --quadrant-3: 32 95% 44%;             /* #D97706 */
-    --quadrant-3-light: 32 95% 44%;
-    --quadrant-3-border: 32 95% 44%;
-    --quadrant-3-foreground: 26 83% 26%;  /* #78350F */
-    --quadrant-3-badge: 48 96% 76%;       /* #FDE68A */
+    /* Q3: Not Important & Urgent - amber (delegate) */
+    --quadrant-3: 38 92% 50%;
+    --quadrant-3-light: 40 65% 92%;
+    --quadrant-3-border: 38 55% 76%;
+    --quadrant-3-foreground: 30 85% 22%;
 
-    /* Eliminate - slate */
-    --quadrant-4: 220 9% 64%;             /* #9CA3AF */
-    --quadrant-4-light: 220 9% 64%;
-    --quadrant-4-border: 220 9% 64%;
-    --quadrant-4-foreground: 217 19% 27%; /* #374151 */
-    --quadrant-4-badge: 220 14% 96%;      /* #F3F4F6 */
-
-    /* Quadrant tint alpha (0.00 - 0.30) for card bg */
-    --quadrant-tint-alpha: 0.10;
+    /* Q4: Not Important & Not Urgent - cool slate */
+    --quadrant-4: 220 15% 55%;
+    --quadrant-4-light: 220 15% 93%;
+    --quadrant-4-border: 220 12% 80%;
+    --quadrant-4-foreground: 220 20% 30%;
 
     /* Task card */
     --task-card: 0 0% 100%;
-    --task-card-shadow: 0 1px 2px -1px hsl(0 0% 0% / 0.04);
-    --task-card-hover-shadow: 0 4px 16px -4px hsl(0 0% 0% / 0.08);
+    --task-card-shadow: 0 4px 12px -2px hsl(220 25% 12% / 0.06);
+    --task-card-hover-shadow: 0 8px 24px -4px hsl(220 25% 12% / 0.1);
 
     /* Sidebar */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 8%;
-    --sidebar-primary: 262 83% 50%;
+    --sidebar-background: 40 20% 97%;
+    --sidebar-foreground: 220 25% 12%;
+    --sidebar-primary: 172 50% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 262 83% 95%;
-    --sidebar-accent-foreground: 262 83% 35%;
-    --sidebar-border: 240 6% 91%;
-    --sidebar-ring: 262 83% 50%;
+    --sidebar-accent: 172 40% 94%;
+    --sidebar-accent-foreground: 172 50% 30%;
+    --sidebar-border: 40 15% 90%;
+    --sidebar-ring: 172 50% 40%;
   }
 
   .dark {
-    --background: 0 0% 7%;           /* #111111 */
-    --foreground: 0 0% 94%;          /* #F0F0F0 headings */
+    --background: 222 25% 8%;
+    --foreground: 40 15% 95%;
 
-    --card: 0 0% 9%;
-    --card-foreground: 0 0% 94%;
+    --card: 222 20% 12%;
+    --card-foreground: 40 15% 95%;
 
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 94%;
+    --popover: 222 20% 12%;
+    --popover-foreground: 40 15% 95%;
 
-    --primary: 258 90% 76%;          /* #A78BFA */
-    --primary-foreground: 0 0% 7%;
+    --primary: 172 50% 50%;
+    --primary-foreground: 222 25% 8%;
 
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 75%;
+    --secondary: 222 20% 16%;
+    --secondary-foreground: 40 15% 90%;
 
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 53%;    /* #888888 */
+    --muted: 222 20% 16%;
+    --muted-foreground: 220 10% 60%;
 
-    --accent: 258 50% 18%;
-    --accent-foreground: 258 90% 80%;
+    --accent: 172 40% 15%;
+    --accent-foreground: 172 50% 70%;
 
-    --destructive: 0 70% 55%;
+    --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 10%;              /* #1A1A1A separator */
-    --input: 0 0% 16%;
-    --ring: 258 90% 76%;
+    --border: 222 20% 18%;
+    --input: 222 20% 18%;
+    --ring: 172 50% 50%;
 
-    /* Dark per-quadrant */
-    --quadrant-1: 258 90% 76%;            /* #A78BFA */
-    --quadrant-1-light: 258 90% 76%;
-    --quadrant-1-border: 258 90% 76%;
-    --quadrant-1-foreground: 252 92% 85%; /* #C4B5FD */
-    --quadrant-1-badge: 257 56% 23%;      /* #2D1A5A */
+    /* Dark mode quadrant colors */
+    --quadrant-1: 4 70% 55%;
+    --quadrant-1-light: 4 50% 12%;
+    --quadrant-1-border: 4 50% 25%;
+    --quadrant-1-foreground: 4 70% 80%;
 
-    --quadrant-2: 199 92% 64%;            /* #4FC3F7 */
-    --quadrant-2-light: 199 92% 64%;
-    --quadrant-2-border: 199 92% 64%;
-    --quadrant-2-foreground: 199 95% 86%; /* #BAE6FD */
-    --quadrant-2-badge: 202 60% 14%;      /* #0F2A3A */
+    --quadrant-2: 172 50% 45%;
+    --quadrant-2-light: 172 40% 12%;
+    --quadrant-2-border: 172 40% 25%;
+    --quadrant-2-foreground: 172 50% 80%;
 
-    --quadrant-3: 41 100% 50%;            /* #FFB300 */
-    --quadrant-3-light: 41 100% 50%;
-    --quadrant-3-border: 41 100% 50%;
-    --quadrant-3-foreground: 48 96% 76%;  /* #FDE68A */
-    --quadrant-3-badge: 44 100% 8%;       /* #2A1F00 */
+    --quadrant-3: 38 80% 50%;
+    --quadrant-3-light: 38 50% 12%;
+    --quadrant-3-border: 38 50% 25%;
+    --quadrant-3-foreground: 38 80% 80%;
 
-    --quadrant-4: 220 9% 46%;             /* #6B7280 */
-    --quadrant-4-light: 220 9% 46%;
-    --quadrant-4-border: 220 9% 46%;
-    --quadrant-4-foreground: 220 9% 64%;  /* #9CA3AF */
-    --quadrant-4-badge: 217 19% 17%;      /* #1F2937 */
+    --quadrant-4: 220 15% 50%;
+    --quadrant-4-light: 220 20% 12%;
+    --quadrant-4-border: 220 15% 25%;
+    --quadrant-4-foreground: 220 20% 75%;
 
-    --task-card: 0 0% 11%;
-    --task-card-shadow: 0 1px 2px -1px hsl(0 0% 0% / 0.4);
-    --task-card-hover-shadow: 0 4px 16px -4px hsl(0 0% 0% / 0.5);
+    --task-card: 222 20% 14%;
+    --task-card-shadow: 0 4px 12px -2px hsl(0 0% 0% / 0.3);
+    --task-card-hover-shadow: 0 8px 24px -4px hsl(0 0% 0% / 0.4);
 
-    --sidebar-background: 0 0% 7%;
-    --sidebar-foreground: 0 0% 94%;
-    --sidebar-primary: 258 90% 76%;
-    --sidebar-primary-foreground: 0 0% 7%;
-    --sidebar-accent: 258 50% 18%;
-    --sidebar-accent-foreground: 258 90% 80%;
-    --sidebar-border: 0 0% 10%;
-    --sidebar-ring: 258 90% 76%;
+    --sidebar-background: 222 25% 10%;
+    --sidebar-foreground: 40 15% 95%;
+    --sidebar-primary: 172 50% 50%;
+    --sidebar-primary-foreground: 222 25% 8%;
+    --sidebar-accent: 172 40% 15%;
+    --sidebar-accent-foreground: 172 50% 70%;
+    --sidebar-border: 222 20% 18%;
+    --sidebar-ring: 172 50% 50%;
   }
 }
 
@@ -164,26 +156,12 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    letter-spacing: -0.02em;
+    font-feature-settings: "ss01", "ss02", "cv01";
   }
 
   /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
-  }
-
-  /* Hide Lovable badge per spec */
-  #lovable-badge,
-  [data-lovable-badge],
-  a[href*="lovable.dev"][target="_blank"] {
-    opacity: 0 !important;
-    pointer-events: none !important;
   }
 }
 
@@ -198,40 +176,38 @@
     box-shadow: var(--task-card-hover-shadow);
   }
 
-  /* Quadrant containers - bg is accent at low alpha */
+  /* Quadrant containers */
   .quadrant-1 {
-    background-color: hsl(var(--quadrant-1) / var(--quadrant-tint-alpha));
-    border-color: hsl(var(--border));
-  }
-  .quadrant-2 {
-    background-color: hsl(var(--quadrant-2) / var(--quadrant-tint-alpha));
-    border-color: hsl(var(--border));
-  }
-  .quadrant-3 {
-    background-color: hsl(var(--quadrant-3) / var(--quadrant-tint-alpha));
-    border-color: hsl(var(--border));
-  }
-  .quadrant-4 {
-    background-color: hsl(var(--quadrant-4) / var(--quadrant-tint-alpha));
-    border-color: hsl(var(--border));
+    @apply bg-quadrant-1-light border-quadrant-1-border;
   }
 
-  /* Quadrant badges - use dedicated badge tokens */
+  .quadrant-2 {
+    @apply bg-quadrant-2-light border-quadrant-2-border;
+  }
+
+  .quadrant-3 {
+    @apply bg-quadrant-3-light border-quadrant-3-border;
+  }
+
+  .quadrant-4 {
+    @apply bg-quadrant-4-light border-quadrant-4-border;
+  }
+
+  /* Quadrant badges */
   .quadrant-badge-1 {
-    background-color: hsl(var(--quadrant-1-badge));
-    color: hsl(var(--quadrant-1-foreground));
+    @apply bg-quadrant-1 text-white;
   }
+
   .quadrant-badge-2 {
-    background-color: hsl(var(--quadrant-2-badge));
-    color: hsl(var(--quadrant-2-foreground));
+    @apply bg-quadrant-2 text-white;
   }
+
   .quadrant-badge-3 {
-    background-color: hsl(var(--quadrant-3-badge));
-    color: hsl(var(--quadrant-3-foreground));
+    @apply bg-quadrant-3 text-white;
   }
+
   .quadrant-badge-4 {
-    background-color: hsl(var(--quadrant-4-badge));
-    color: hsl(var(--quadrant-4-foreground));
+    @apply bg-quadrant-4 text-white;
   }
 
   /* Inline task input */

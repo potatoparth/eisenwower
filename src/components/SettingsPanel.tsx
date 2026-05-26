@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { X, RotateCcw, Palette, Type, Eye, Clock, Tag, Users, LogOut, Trash2, User, Sliders } from "lucide-react";
+import { X, RotateCcw, Palette, Type, Eye, Clock, Tag, Users, LogOut, Trash2 } from "lucide-react";
 import { AppSettings, DEFAULT_SETTINGS, UserAccount } from "@/types/settings";
 import { QUADRANTS } from "@/types/task";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
 interface SettingsPanelProps {
@@ -39,7 +38,6 @@ export function SettingsPanel({
 }: SettingsPanelProps) {
   const [newCatName, setNewCatName] = useState("");
   const [newCatColor, setNewCatColor] = useState("#7a8599");
-  const [usernameDraft, setUsernameDraft] = useState(settings.localUsername || currentUser?.username || "");
 
   return (
     <div className="fixed inset-y-0 right-0 w-full max-w-md bg-card border-l shadow-medium z-50 flex flex-col">
@@ -51,68 +49,6 @@ export function SettingsPanel({
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
-        {/* Username (local) */}
-        <section className="space-y-2">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <User className="w-4 h-4" /> Display name
-          </h3>
-          <div className="flex gap-2">
-            <Input
-              value={usernameDraft}
-              onChange={(e) => setUsernameDraft(e.target.value)}
-              className="rounded-lg"
-            />
-            <Button
-              size="sm"
-              onClick={() => onUpdateSettings({ localUsername: usernameDraft.trim() || undefined })}
-              className="rounded-lg"
-            >
-              Save
-            </Button>
-          </div>
-          <p className="text-[11px] text-muted-foreground">Saved locally on this device.</p>
-        </section>
-
-        {/* Quadrant tint intensity */}
-        <section className="space-y-2">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Sliders className="w-4 h-4" /> Quadrant tint intensity
-          </h3>
-          <Slider
-            value={[settings.quadrantTintIntensity]}
-            min={0}
-            max={30}
-            step={1}
-            onValueChange={([v]) => onUpdateSettings({ quadrantTintIntensity: v })}
-          />
-          <p className="text-[11px] text-muted-foreground">
-            {settings.quadrantTintIntensity}% — 0% pure card, 30% strongest tint.
-          </p>
-        </section>
-
-        {/* Task detail view */}
-        <section className="space-y-2">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Eye className="w-4 h-4" /> Task detail view
-          </h3>
-          <div className="flex gap-2">
-            {(["popup", "sidebar"] as const).map((v) => (
-              <button
-                key={v}
-                onClick={() => onUpdateSettings({ taskDetailView: v })}
-                className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-medium transition-all border",
-                  settings.taskDetailView === v
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-secondary text-muted-foreground border-border hover:text-foreground"
-                )}
-              >
-                {v === "popup" ? "Popup" : "Sidebar"}
-              </button>
-            ))}
-          </div>
-        </section>
-
         {/* Quadrant Colors */}
         <section className="space-y-3">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">

@@ -22,11 +22,6 @@ export interface AppSettings {
   deadlineThresholdDays: number; // days before due date to show red warning
   categoryColors: CategoryColor[];
   colorCodingEnabled: boolean;
-  quadrantTintIntensity: number; // 0..30 percent
-  taskDetailView: "popup" | "sidebar";
-  showOverdue: boolean;
-  noDateTasksPosition: "top" | "bottom";
-  localUsername?: string;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -43,10 +38,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
     { name: "General", color: "#7a8599" },
   ],
   colorCodingEnabled: true,
-  quadrantTintIntensity: 10,
-  taskDetailView: "popup",
-  showOverdue: true,
-  noDateTasksPosition: "bottom",
 };
 
 export interface UserAccount {
