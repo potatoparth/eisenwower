@@ -45,11 +45,16 @@ export function Header({ viewMode, onViewModeChange, taskCount, onSettingsClick,
       className="flex items-center justify-between py-3 px-4 md:px-6 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40"
     >
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
           <LayoutGrid className="w-4 h-4 text-primary" />
         </div>
         <div>
-          <h1 className="font-bold text-base text-foreground leading-tight">Eisenhower</h1>
+          <h1
+            className="font-semibold text-[15px] text-foreground leading-tight"
+            style={{ letterSpacing: "-0.03em" }}
+          >
+            Eisenhower
+          </h1>
           <p className="text-[10px] text-muted-foreground leading-tight">
             {taskCount} open{username && <span> · {username}</span>}
           </p>
