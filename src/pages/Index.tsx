@@ -12,6 +12,8 @@ import { KanbanView } from "@/components/KanbanView";
 import { GanttView } from "@/components/GanttView";
 import { ProjectBuilder } from "@/components/ProjectBuilder";
 import { TaskDetailPanel } from "@/components/TaskDetailPanel";
+import { TaskDetailDialog } from "@/components/TaskDetailDialog";
+import { FilterBar, DateFilter } from "@/components/FilterBar";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { LoginPage } from "@/components/LoginPage";
 import { ViewMode } from "@/components/ViewToggle";
@@ -32,6 +34,8 @@ const Index = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [dateFilter, setDateFilter] = useState<DateFilter>("all");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const {
     tasks, addTask, updateTask, deleteTask, moveTask, toggleStatus, getCategories, setTasks,
@@ -71,6 +75,9 @@ const Index = () => {
     return addTask(name, quadrant, { ...options, projectId });
   };
 
+  const useSidebarDetail = settings.taskDetailView === "sidebar";
+  const displayUsername = settings.localUsername || currentUser.username;
+
   return (
     <div className={`h-screen bg-background flex flex-col overflow-hidden ${fontSizeClass}`}>
       <Header
@@ -79,13 +86,27 @@ const Index = () => {
         taskCount={filteredTasks.filter((t) => t.status === "open").length}
         onSettingsClick={() => setShowSettings(true)}
         onLogout={logout}
-        username={currentUser.username}
+        username={displayUsername}
         projects={projects}
         activeProjectId={activeProjectId}
         onActiveProjectChange={setActiveProjectId}
       />
 
       <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 overflow-y-auto md:overflow-hidden">
+        {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban") && (
+          <FilterBar
+            dateFilter={dateFilter}
+            onDateFilterChange={setDateFilter}
+            showOverdue={settings.showOverdue}
+            onShowOverdueChange={(v) => updateSettings({ showOverdue: v })}
+            noDatePosition={settings.noDateTasksPosition}
+            onNoDatePositionChange={(v) => updateSettings({ noDateTasksPosition: v })}
+            categories={getCategories()}
+            selectedCategories={selectedCategories}
+            onSelectedCategoriesChange={setSelectedCategories}
+            getCategoryColor={getCategoryColor}
+          />
+        )}
         <AnimatePresence mode="wait">
           {viewMode === "matrix" && (
             <motion.div key="matrix" {...viewAnimation} className="h-full">
@@ -94,6 +115,10 @@ const Index = () => {
                 onToggleStatus={toggleStatus} onDeleteTask={deleteTask} onAddTask={handleAddTask}
                 onReorderTasks={setTasks} onTaskClick={setSelectedTask}
                 getCategoryColor={getCategoryColor} deadlineThresholdDays={settings.deadlineThresholdDays}
+                dateFilter={dateFilter}
+                showOverdue={settings.showOverdue}
+                selectedCategories={selectedCategories}
+                noDatePosition={settings.noDateTasksPosition}
               />
             </motion.div>
           )}
@@ -135,7 +160,7 @@ const Index = () => {
         </AnimatePresence>
       </main>
 
-      {selectedTask && (
+      {selectedTask && useSidebarDetail && (
         <TaskDetailPanel
           task={selectedTask}
           deadlineThresholdDays={settings.deadlineThresholdDays}
@@ -144,6 +169,19 @@ const Index = () => {
             setSelectedTask(prev => prev ? { ...prev, ...updates, updatedAt: new Date().toISOString() } : null);
           }}
           onClose={() => setSelectedTask(null)}
+          getCategoryColor={getCategoryColor}
+          projects={projects}
+        />
+      )}
+      {selectedTask && !useSidebarDetail && (
+        <TaskDetailDialog
+          task={selectedTask}
+          onUpdate={(id, updates) => {
+            updateTask(id, updates);
+            setSelectedTask(prev => prev ? { ...prev, ...updates, updatedAt: new Date().toISOString() } : null);
+          }}
+          onClose={() => setSelectedTask(null)}
+          onSwitchToSidebar={() => updateSettings({ taskDetailView: "sidebar" })}
           getCategoryColor={getCategoryColor}
           projects={projects}
         />

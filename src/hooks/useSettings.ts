@@ -48,13 +48,13 @@ function hexToHSL(hex: string): string {
 
 function applyQuadrantColors(settings: AppSettings) {
   const root = document.documentElement;
-  for (const key of [1, 2, 3, 4] as const) {
-    const colors = settings.quadrantColors[key];
-    root.style.setProperty(`--quadrant-${key}`, hexToHSL(colors.main));
-    root.style.setProperty(`--quadrant-${key}-light`, hexToHSL(colors.light));
-    root.style.setProperty(`--quadrant-${key}-border`, hexToHSL(colors.border));
-    root.style.setProperty(`--quadrant-${key}-foreground`, hexToHSL(colors.foreground));
-  }
+  // Apply quadrant tint alpha (0..30 -> 0..0.30)
+  const tint = Math.max(0, Math.min(30, settings.quadrantTintIntensity ?? 10)) / 100;
+  root.style.setProperty("--quadrant-tint-alpha", String(tint));
+  // NOTE: Quadrant accent / foreground / badge colors are now controlled by the
+  // theme tokens in index.css (light + dark). User per-quadrant color overrides
+  // are retained in settings for compatibility but no longer override the
+  // redesigned palette unless explicitly customized away from defaults.
 }
 
 export function useSettings(userId?: string) {
