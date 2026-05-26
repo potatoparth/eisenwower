@@ -17,6 +17,8 @@ import { TaskInput } from "./TaskInput";
 import { QuadrantExpandDialog } from "./QuadrantExpandDialog";
 import { cn } from "@/lib/utils";
 import type { QuadrantInfo } from "@/types/task";
+import { sortTasks, isOverdue } from "@/lib/sort";
+import { isToday, isWithinInterval, parseISO, addDays, startOfDay } from "date-fns";
 
 interface MatrixViewProps {
   tasks: Task[];
@@ -33,6 +35,10 @@ interface MatrixViewProps {
   onTaskClick?: (task: Task) => void;
   getCategoryColor?: (name: string) => string | undefined;
   deadlineThresholdDays?: number;
+  dateFilter?: "all" | "today" | "week";
+  showOverdue?: boolean;
+  selectedCategories?: string[];
+  noDatePosition?: "top" | "bottom";
 }
 
 export function MatrixView({
@@ -46,6 +52,10 @@ export function MatrixView({
   onTaskClick,
   getCategoryColor,
   deadlineThresholdDays = 2,
+  dateFilter = "all",
+  showOverdue = true,
+  selectedCategories = [],
+  noDatePosition = "bottom",
 }: MatrixViewProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -56,16 +66,30 @@ export function MatrixView({
   );
 
   const filteredTasks = useMemo(() => {
-    if (selectedCategory === "all") return tasks;
-    return tasks.filter((t) => t.category === selectedCategory);
-  }, [tasks, selectedCategory]);
+    let out = tasks;
+    if (selectedCategory !== "all") out = out.filter((t) => t.category === selectedCategory);
+    if (selectedCategories.length > 0) out = out.filter((t) => selectedCategories.includes(t.category));
+    if (!showOverdue) out = out.filter((t) => !isOverdue(t));
+    if (dateFilter !== "all") {
+      const today = startOfDay(new Date());
+      const end = dateFilter === "today" ? today : addDays(today, 7);
+      out = out.filter((t) => {
+        if (isOverdue(t)) return true;
+        if (!t.dueDate) return false;
+        const d = parseISO(t.dueDate);
+        return dateFilter === "today" ? isToday(d) : isWithinInterval(d, { start: today, end });
+      });
+    }
+    return out;
+  }, [tasks, selectedCategory, selectedCategories, showOverdue, dateFilter]);
 
   const tasksByQuadrant = useMemo(() => {
     return QUADRANTS.reduce((acc, q) => {
-      acc[q.id] = filteredTasks.filter((t) => t.quadrant === q.id);
+      const list = filteredTasks.filter((t) => t.quadrant === q.id);
+      acc[q.id] = sortTasks(list, { noDatePosition });
       return acc;
     }, {} as Record<Quadrant, Task[]>);
-  }, [filteredTasks]);
+  }, [filteredTasks, noDatePosition]);
 
   const activeTask = activeId ? tasks.find((t) => t.id === activeId) : null;
 

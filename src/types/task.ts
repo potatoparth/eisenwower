@@ -32,25 +32,25 @@ export const QUADRANTS: QuadrantInfo[] = [
   {
     id: "important-urgent",
     title: "Do First",
-    subtitle: "Important & Urgent",
+    subtitle: "Crises, deadlines, and fires",
     color: 1,
   },
   {
     id: "important-not-urgent",
     title: "Schedule",
-    subtitle: "Important & Not Urgent",
+    subtitle: "Goals, growth, and planning",
     color: 2,
   },
   {
     id: "not-important-urgent",
     title: "Delegate",
-    subtitle: "Not Important & Urgent",
+    subtitle: "Interruptions and busy work",
     color: 3,
   },
   {
     id: "not-important-not-urgent",
     title: "Eliminate",
-    subtitle: "Not Important & Not Urgent",
+    subtitle: "Distractions and time wasters",
     color: 4,
   },
 ];

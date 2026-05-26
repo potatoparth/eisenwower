@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, Trash2, ChevronDown } from "lucide-react";
+import { Check, Trash2, GripVertical } from "lucide-react";
 import { Task, QUADRANT_MAP } from "@/types/task";
 import { cn } from "@/lib/utils";
-import { format, isToday, isTomorrow, isPast, parseISO, differenceInDays } from "date-fns";
+import { format, isToday, isTomorrow, isPast, parseISO } from "date-fns";
 
 interface TaskCardProps {
   task: Task;
@@ -46,8 +46,6 @@ export function TaskCard({
   const quadrantInfo = QUADRANT_MAP[task.quadrant];
   const isDone = task.status === "done";
 
-  const effectiveThreshold = task.deadlineThresholdOverride ?? deadlineThresholdDays;
-
   const formatDueDate = (dateStr: string) => {
     const date = parseISO(dateStr);
     if (isToday(date)) return "Today";
@@ -55,12 +53,10 @@ export function TaskCard({
     return format(date, "MMM d");
   };
 
-  const isDueDateWarning = task.dueDate && (() => {
-    const date = parseISO(task.dueDate!);
-    if (isPast(date) && !isToday(date)) return true;
-    const daysLeft = differenceInDays(date, new Date());
-    return daysLeft <= effectiveThreshold;
-  })();
+  const isDueToday = task.dueDate ? isToday(parseISO(task.dueDate)) : false;
+  const isOverdueTask = task.dueDate
+    ? isPast(parseISO(task.dueDate)) && !isToday(parseISO(task.dueDate))
+    : false;
 
   const categoryColor = getCategoryColor?.(task.category);
 
@@ -77,9 +73,10 @@ export function TaskCard({
       {...listeners}
       className={cn(
         "task-card px-3 py-1.5 group cursor-grab active:cursor-grabbing select-none",
-        isDone && "opacity-60",
+        isDone && "opacity-40",
         isSortableDragging && "opacity-50",
-        isDragging && "shadow-medium"
+        isDragging && "shadow-medium",
+        "transition-opacity duration-[600ms]"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -90,22 +87,19 @@ export function TaskCard({
       }}
     >
       <div className="flex items-center gap-2">
-        {/* Category color dot */}
-        {categoryColor && (
-          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: categoryColor }} />
-        )}
-
-        {/* Checkbox */}
+        {/* Checkbox - circular, stroke = quadrant accent */}
         <button
           onClick={(e) => { e.stopPropagation(); onToggleStatus(task.id); }}
           className={cn(
-            "w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0",
-            isDone
-              ? "bg-primary border-primary"
-              : "border-muted-foreground/30 hover:border-primary"
+            "w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0",
+            isDone && "bg-current"
           )}
+          style={{
+            borderColor: `hsl(var(--quadrant-${quadrantInfo.color}))`,
+            color: `hsl(var(--quadrant-${quadrantInfo.color}))`,
+          }}
         >
-          {isDone && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+          {isDone && <Check className="w-2.5 h-2.5 text-background" />}
         </button>
 
         {/* Task name */}
@@ -120,13 +114,25 @@ export function TaskCard({
 
         {/* Inline meta indicators */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
+          {categoryColor && (
+            <span
+              className="text-[10px] px-1.5 py-0.5 rounded-md font-medium"
+              style={{
+                backgroundColor: `${categoryColor}22`,
+                color: categoryColor,
+              }}
+            >
+              {task.category}
+            </span>
+          )}
+
           {task.dueDate && (
             <span
               className={cn(
-                "text-[10px]",
-                isDueDateWarning && !isDone
-                  ? "text-destructive font-semibold"
-                  : "text-muted-foreground"
+                "text-[10px] px-1.5 py-0.5 rounded-md font-medium",
+                isOverdueTask && !isDone && "text-destructive line-through bg-destructive/10",
+                isDueToday && !isOverdueTask && !isDone && "text-amber-600 dark:text-amber-400 bg-amber-500/10",
+                !isOverdueTask && !isDueToday && "text-muted-foreground"
               )}
             >
               {formatDueDate(task.dueDate)}
@@ -138,6 +144,16 @@ export function TaskCard({
               {quadrantInfo.title}
             </span>
           )}
+
+          {/* Drag handle - shown on hover */}
+          <span
+            className={cn(
+              "text-muted-foreground/50 transition-opacity",
+              isHovered ? "opacity-100" : "opacity-0"
+            )}
+          >
+            <GripVertical className="w-3 h-3" />
+          </span>
 
           {/* Delete Button */}
           <button
