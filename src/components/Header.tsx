@@ -1,10 +1,8 @@
 import { motion } from "framer-motion";
-import { LayoutGrid, Moon, Sun, Settings, LogOut, FolderKanban } from "lucide-react";
+import { LayoutGrid, Moon, Sun, Settings, LogOut } from "lucide-react";
 import { ViewToggle, ViewMode } from "./ViewToggle";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ProjectTemplate } from "@/types/project";
 
 interface HeaderProps {
   viewMode: ViewMode;
@@ -13,12 +11,9 @@ interface HeaderProps {
   onSettingsClick?: () => void;
   onLogout?: () => void;
   username?: string;
-  projects?: ProjectTemplate[];
-  activeProjectId?: string | null;
-  onActiveProjectChange?: (id: string | null) => void;
 }
 
-export function Header({ viewMode, onViewModeChange, taskCount, onSettingsClick, onLogout, username, projects, activeProjectId, onActiveProjectChange }: HeaderProps) {
+export function Header({ viewMode, onViewModeChange, taskCount, onSettingsClick, onLogout, username }: HeaderProps) {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== "undefined") {
       return document.documentElement.classList.contains("dark") ||
@@ -62,26 +57,6 @@ export function Header({ viewMode, onViewModeChange, taskCount, onSettingsClick,
       </div>
 
       <div className="flex items-center gap-2">
-        {projects !== undefined && onActiveProjectChange && (
-          <Select
-            value={activeProjectId ?? "__all__"}
-            onValueChange={(v) => onActiveProjectChange(v === "__all__" ? null : v)}
-          >
-            <SelectTrigger className="h-8 w-[160px] rounded-xl text-xs">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <FolderKanban className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                <SelectValue placeholder="All projects" />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">All projects</SelectItem>
-              <SelectItem value="__none__">No project</SelectItem>
-              {projects.map(p => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
         <ViewToggle value={viewMode} onChange={onViewModeChange} />
         <Button variant="ghost" size="icon" onClick={() => setIsDark(!isDark)} className="rounded-xl w-8 h-8">
           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}

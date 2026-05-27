@@ -13,7 +13,7 @@ import { GanttView } from "@/components/GanttView";
 import { ProjectBuilder } from "@/components/ProjectBuilder";
 import { TaskDetailPanel } from "@/components/TaskDetailPanel";
 import { TaskDetailDialog } from "@/components/TaskDetailDialog";
-import { FilterBar, DateFilter } from "@/components/FilterBar";
+import { FilterBar, DateFilter, OverdueMode } from "@/components/FilterBar";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { LoginPage } from "@/components/LoginPage";
 import { ViewMode } from "@/components/ViewToggle";
@@ -36,6 +36,17 @@ const Index = () => {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [overdueMode, setOverdueMode] = useState<OverdueMode>(() => {
+    const stored = typeof window !== "undefined" ? localStorage.getItem("overdueMode") : null;
+    return (stored as OverdueMode) || "all";
+  });
+  const [compactMode, setCompactMode] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("compactMode") === "1";
+  });
+
+  useEffect(() => { localStorage.setItem("overdueMode", overdueMode); }, [overdueMode]);
+  useEffect(() => { localStorage.setItem("compactMode", compactMode ? "1" : "0"); }, [compactMode]);
 
   const {
     tasks, addTask, updateTask, deleteTask, moveTask, toggleStatus, getCategories, setTasks,
@@ -87,9 +98,6 @@ const Index = () => {
         onSettingsClick={() => setShowSettings(true)}
         onLogout={logout}
         username={displayUsername}
-        projects={projects}
-        activeProjectId={activeProjectId}
-        onActiveProjectChange={setActiveProjectId}
       />
 
       <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 overflow-y-auto md:overflow-hidden">
@@ -97,14 +105,19 @@ const Index = () => {
           <FilterBar
             dateFilter={dateFilter}
             onDateFilterChange={setDateFilter}
-            showOverdue={settings.showOverdue}
-            onShowOverdueChange={(v) => updateSettings({ showOverdue: v })}
+            overdueMode={overdueMode}
+            onOverdueModeChange={setOverdueMode}
             noDatePosition={settings.noDateTasksPosition}
             onNoDatePositionChange={(v) => updateSettings({ noDateTasksPosition: v })}
             categories={getCategories()}
             selectedCategories={selectedCategories}
             onSelectedCategoriesChange={setSelectedCategories}
             getCategoryColor={getCategoryColor}
+            projects={projects}
+            activeProjectId={activeProjectId}
+            onActiveProjectChange={setActiveProjectId}
+            compactMode={compactMode}
+            onCompactModeChange={viewMode === "matrix" ? setCompactMode : undefined}
           />
         )}
         <AnimatePresence mode="wait">
@@ -116,9 +129,10 @@ const Index = () => {
                 onReorderTasks={setTasks} onTaskClick={setSelectedTask}
                 getCategoryColor={getCategoryColor} deadlineThresholdDays={settings.deadlineThresholdDays}
                 dateFilter={dateFilter}
-                showOverdue={settings.showOverdue}
+                overdueMode={overdueMode}
                 selectedCategories={selectedCategories}
                 noDatePosition={settings.noDateTasksPosition}
+                compactMode={compactMode}
               />
             </motion.div>
           )}
