@@ -21,6 +21,7 @@ interface SettingsPanelProps {
   isAdmin: boolean;
   onLogout: () => void;
   onDeleteUser: (id: string) => void;
+  allCategories?: string[];
 }
 
 export function SettingsPanel({
@@ -36,10 +37,20 @@ export function SettingsPanel({
   isAdmin,
   onLogout,
   onDeleteUser,
+  allCategories = [],
 }: SettingsPanelProps) {
   const [newCatName, setNewCatName] = useState("");
   const [newCatColor, setNewCatColor] = useState("#7a8599");
   const [usernameDraft, setUsernameDraft] = useState(settings.localUsername || currentUser?.username || "");
+
+  // Merge categories derived from tasks with stored color entries so user-created
+  // categories appear in settings even when they have no explicit color yet.
+  const mergedCategories = (() => {
+    const map = new Map<string, string>();
+    settings.categoryColors.forEach((c) => map.set(c.name, c.color));
+    allCategories.forEach((name) => { if (!map.has(name)) map.set(name, "#7a8599"); });
+    return Array.from(map.entries()).map(([name, color]) => ({ name, color }));
+  })();
 
   return (
     <div className="fixed inset-y-0 right-0 w-full max-w-md bg-card border-l shadow-medium z-50 flex flex-col">
@@ -113,54 +124,40 @@ export function SettingsPanel({
           </div>
         </section>
 
-        {/* Quadrant Colors */}
+        {/* Quadrant box & text colors */}
         <section className="space-y-3">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Palette className="w-4 h-4" /> Quadrant Colors
+            <Palette className="w-4 h-4" /> Quadrant box & text colors
           </h3>
-          {QUADRANTS.map(q => (
-            <div key={q.id} className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">{q.title} — {q.subtitle}</p>
-              <div className="flex gap-2">
-                <div className="flex items-center gap-1.5">
-                  <label className="text-[10px] text-muted-foreground">Main</label>
-                  <input
-                    type="color"
-                    value={settings.quadrantColors[q.color].main}
-                    onChange={e => onUpdateQuadrantColor(q.color, { main: e.target.value })}
-                    className="w-8 h-8 rounded-lg border cursor-pointer"
-                  />
+          {QUADRANTS.map(q => {
+            const c = settings.quadrantColors[q.color];
+            return (
+              <div key={q.id} className="flex items-center gap-3 p-2 rounded-lg bg-secondary/40">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-foreground truncate">{q.title}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{q.subtitle}</p>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <label className="text-[10px] text-muted-foreground">Light</label>
+                <label className="flex flex-col items-center gap-0.5">
+                  <span className="text-[9px] text-muted-foreground">Box</span>
                   <input
                     type="color"
-                    value={settings.quadrantColors[q.color].light}
-                    onChange={e => onUpdateQuadrantColor(q.color, { light: e.target.value })}
-                    className="w-8 h-8 rounded-lg border cursor-pointer"
+                    value={c.main}
+                    onChange={e => onUpdateQuadrantColor(q.color, { main: e.target.value, light: e.target.value, border: e.target.value })}
+                    className="w-7 h-7 rounded-md border cursor-pointer"
                   />
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <label className="text-[10px] text-muted-foreground">Border</label>
+                </label>
+                <label className="flex flex-col items-center gap-0.5">
+                  <span className="text-[9px] text-muted-foreground">Text</span>
                   <input
                     type="color"
-                    value={settings.quadrantColors[q.color].border}
-                    onChange={e => onUpdateQuadrantColor(q.color, { border: e.target.value })}
-                    className="w-8 h-8 rounded-lg border cursor-pointer"
-                  />
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <label className="text-[10px] text-muted-foreground">Text</label>
-                  <input
-                    type="color"
-                    value={settings.quadrantColors[q.color].foreground}
+                    value={c.foreground}
                     onChange={e => onUpdateQuadrantColor(q.color, { foreground: e.target.value })}
-                    className="w-8 h-8 rounded-lg border cursor-pointer"
+                    className="w-7 h-7 rounded-md border cursor-pointer"
                   />
-                </div>
+                </label>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </section>
 
         {/* Font Size */}
@@ -245,7 +242,7 @@ export function SettingsPanel({
               {settings.colorCodingEnabled ? "On" : "Off"}
             </button>
           </div>
-          {settings.categoryColors.map(cat => (
+          {mergedCategories.map(cat => (
             <div key={cat.name} className="flex items-center gap-2">
               <input
                 type="color"
