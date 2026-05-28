@@ -107,6 +107,7 @@ function OverdueButton({
 }
 
 export function FilterBar(p: FilterBarProps) {
+  const [catSearch, setCatSearch] = useState("");
   const toggleCat = (c: string) => {
     if (p.selectedCategories.includes(c)) {
       p.onSelectedCategoriesChange(p.selectedCategories.filter((x) => x !== c));
@@ -145,7 +146,7 @@ export function FilterBar(p: FilterBarProps) {
               <ChevronDown className="w-3 h-3 opacity-70" />
             </button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-56 p-2">
+          <PopoverContent align="start" className="w-64 p-2">
             <div className="flex items-center justify-between px-1 pb-2">
               <span className="text-[11px] font-medium text-muted-foreground">Filter by category</span>
               {p.selectedCategories.length > 0 && (
@@ -157,8 +158,20 @@ export function FilterBar(p: FilterBarProps) {
                 </button>
               )}
             </div>
+            <div className="relative mb-2">
+              <Search className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={catSearch}
+                onChange={(e) => setCatSearch(e.target.value)}
+                placeholder="Search categories..."
+                className="w-full h-8 pl-7 pr-2 text-xs bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            </div>
             <div className="max-h-64 overflow-y-auto space-y-1">
-              {p.categories.map((c) => {
+              {p.categories
+                .filter((c) => c.toLowerCase().includes(catSearch.toLowerCase()))
+                .map((c) => {
                 const color = p.getCategoryColor?.(c);
                 const checked = p.selectedCategories.includes(c);
                 return (
