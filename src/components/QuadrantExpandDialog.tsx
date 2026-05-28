@@ -15,6 +15,7 @@ interface QuadrantExpandDialogProps {
   onTaskClick: (task: Task) => void;
   getCategoryColor?: (name: string) => string | undefined;
   deadlineThresholdDays: number;
+  bottomSheet?: boolean;
 }
 
 export function QuadrantExpandDialog({
@@ -27,6 +28,7 @@ export function QuadrantExpandDialog({
   onTaskClick,
   getCategoryColor,
   deadlineThresholdDays,
+  bottomSheet = false,
 }: QuadrantExpandDialogProps) {
   const openTasks = tasks.filter(t => t.status === "open");
   const doneTasks = tasks.filter(t => t.status === "done");
@@ -36,9 +38,26 @@ export function QuadrantExpandDialog({
     return dots[quadrant.color];
   };
 
+  const accentVar = `hsl(var(--quadrant-${quadrant.color}))`;
+
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl max-h-[85vh] bg-card rounded-2xl border shadow-medium flex flex-col">
+    <div
+      className={cn(
+        "fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex",
+        bottomSheet ? "items-end justify-center" : "items-center justify-center p-4"
+      )}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={cn(
+          "w-full bg-card border flex flex-col animate-in",
+          bottomSheet
+            ? "max-w-full rounded-t-2xl h-[92vh] slide-in-from-bottom"
+            : "max-w-2xl max-h-[85vh] rounded-2xl shadow-medium"
+        )}
+        style={bottomSheet ? { borderTop: `3px solid ${accentVar}` } : undefined}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-2">

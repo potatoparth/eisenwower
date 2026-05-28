@@ -174,6 +174,8 @@ const Index = () => {
         </AnimatePresence>
       </main>
 
+      <footer className="flex-shrink-0 h-10 border-t border-border/50" aria-hidden />
+
       {selectedTask && useSidebarDetail && (
         <TaskDetailPanel
           task={selectedTask}
@@ -208,6 +210,7 @@ const Index = () => {
           onRemoveCategoryColor={removeCategoryColor} onResetToDefaults={resetToDefaults}
           onClose={() => setShowSettings(false)} currentUser={currentUser}
           users={users} isAdmin={isAdmin} onLogout={logout} onDeleteUser={deleteUser}
+          allCategories={getCategories()}
         />
       )}
     </div>
