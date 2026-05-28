@@ -15,6 +15,8 @@ import { QuadrantColumn } from "./QuadrantColumn";
 import { TaskCard } from "./TaskCard";
 import { TaskInput } from "./TaskInput";
 import { QuadrantExpandDialog } from "./QuadrantExpandDialog";
+import { CompactQuadrantTile } from "./CompactQuadrantTile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { QuadrantInfo } from "@/types/task";
 import { sortTasks, isOverdue } from "@/lib/sort";
@@ -61,6 +63,8 @@ export function MatrixView({
 }: MatrixViewProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [expandedQuadrant, setExpandedQuadrant] = useState<QuadrantInfo | null>(null);
+  const isMobile = useIsMobile();
+  const showCompact = compactMode || isMobile;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -146,7 +150,20 @@ export function MatrixView({
         <TaskInput onAddTask={onAddTask} placeholder="Add a new task..." />
       </div>
 
-      {/* Matrix Grid */}
+      {/* Compact 2x2 tiles */}
+      {showCompact ? (
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+          {QUADRANTS.map((quadrant) => (
+            <CompactQuadrantTile
+              key={quadrant.id}
+              quadrant={quadrant}
+              tasks={tasksByQuadrant[quadrant.id] || []}
+              onClick={() => setExpandedQuadrant(quadrant)}
+            />
+          ))}
+        </div>
+      ) : (
+      /* Matrix Grid */
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -183,6 +200,7 @@ export function MatrixView({
           )}
         </DragOverlay>
       </DndContext>
+      )}
 
       {/* Expanded Quadrant Dialog */}
       {expandedQuadrant && (
@@ -196,6 +214,7 @@ export function MatrixView({
           onTaskClick={(task) => { setExpandedQuadrant(null); onTaskClick?.(task); }}
           getCategoryColor={getCategoryColor}
           deadlineThresholdDays={deadlineThresholdDays}
+          bottomSheet={isMobile}
         />
       )}
     </div>
