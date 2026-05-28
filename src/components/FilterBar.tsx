@@ -1,4 +1,5 @@
-import { ChevronDown, LayoutGrid } from "lucide-react";
+import { ChevronDown, LayoutGrid, Search } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
