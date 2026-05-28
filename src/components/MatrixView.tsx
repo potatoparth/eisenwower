@@ -36,9 +36,10 @@ interface MatrixViewProps {
   getCategoryColor?: (name: string) => string | undefined;
   deadlineThresholdDays?: number;
   dateFilter?: "all" | "today" | "week";
-  showOverdue?: boolean;
+  overdueMode?: "all" | "only" | "hide";
   selectedCategories?: string[];
   noDatePosition?: "top" | "bottom";
+  compactMode?: boolean;
 }
 
 export function MatrixView({
@@ -53,12 +54,12 @@ export function MatrixView({
   getCategoryColor,
   deadlineThresholdDays = 2,
   dateFilter = "all",
-  showOverdue = true,
+  overdueMode = "all",
   selectedCategories = [],
   noDatePosition = "bottom",
+  compactMode = false,
 }: MatrixViewProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [expandedQuadrant, setExpandedQuadrant] = useState<QuadrantInfo | null>(null);
 
   const sensors = useSensors(
@@ -67,9 +68,9 @@ export function MatrixView({
 
   const filteredTasks = useMemo(() => {
     let out = tasks;
-    if (selectedCategory !== "all") out = out.filter((t) => t.category === selectedCategory);
     if (selectedCategories.length > 0) out = out.filter((t) => selectedCategories.includes(t.category));
-    if (!showOverdue) out = out.filter((t) => !isOverdue(t));
+    if (overdueMode === "only") out = out.filter((t) => isOverdue(t));
+    if (overdueMode === "hide") out = out.filter((t) => !isOverdue(t));
     if (dateFilter !== "all") {
       const today = startOfDay(new Date());
       const end = dateFilter === "today" ? today : addDays(today, 7);
@@ -81,7 +82,7 @@ export function MatrixView({
       });
     }
     return out;
-  }, [tasks, selectedCategory, selectedCategories, showOverdue, dateFilter]);
+  }, [tasks, selectedCategories, overdueMode, dateFilter]);
 
   const tasksByQuadrant = useMemo(() => {
     return QUADRANTS.reduce((acc, q) => {
@@ -144,41 +145,6 @@ export function MatrixView({
       <div className="mb-3 max-w-2xl mx-auto w-full flex-shrink-0">
         <TaskInput onAddTask={onAddTask} placeholder="Add a new task..." />
       </div>
-
-      {/* Category Filter Toggle */}
-      {categories.length > 1 && (
-        <div className="mb-3 flex flex-shrink-0 items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          <button
-            onClick={() => setSelectedCategory("all")}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap",
-              selectedCategory === "all"
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-muted-foreground hover:text-foreground"
-            )}
-          >
-            All
-          </button>
-          {categories.map((cat) => {
-            const catColor = getCategoryColor?.(cat);
-            return (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5",
-                  selectedCategory === cat
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {catColor && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: catColor }} />}
-                {cat}
-              </button>
-            );
-          })}
-        </div>
-      )}
 
       {/* Matrix Grid */}
       <DndContext
