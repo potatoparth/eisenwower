@@ -51,10 +51,26 @@ function applyQuadrantColors(settings: AppSettings) {
   // Apply quadrant tint alpha (0..30 -> 0..0.30)
   const tint = Math.max(0, Math.min(30, settings.quadrantTintIntensity ?? 10)) / 100;
   root.style.setProperty("--quadrant-tint-alpha", String(tint));
-  // NOTE: Quadrant accent / foreground / badge colors are now controlled by the
-  // theme tokens in index.css (light + dark). User per-quadrant color overrides
-  // are retained in settings for compatibility but no longer override the
-  // redesigned palette unless explicitly customized away from defaults.
+  // Apply user per-quadrant color overrides (box bg + text). Only override
+  // when the user has changed from defaults so the redesigned palette stays
+  // intact otherwise.
+  ([1, 2, 3, 4] as const).forEach((n) => {
+    const c = settings.quadrantColors[n];
+    const def = DEFAULT_SETTINGS.quadrantColors[n];
+    if (c.main !== def.main) {
+      const hsl = hexToHSL(c.main);
+      root.style.setProperty(`--quadrant-${n}`, hsl);
+      root.style.setProperty(`--quadrant-${n}-border`, hsl);
+    } else {
+      root.style.removeProperty(`--quadrant-${n}`);
+      root.style.removeProperty(`--quadrant-${n}-border`);
+    }
+    if (c.foreground !== def.foreground) {
+      root.style.setProperty(`--quadrant-${n}-foreground`, hexToHSL(c.foreground));
+    } else {
+      root.style.removeProperty(`--quadrant-${n}-foreground`);
+    }
+  });
 }
 
 export function useSettings(userId?: string) {
