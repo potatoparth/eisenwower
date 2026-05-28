@@ -61,7 +61,7 @@ export function QuadrantColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "relative flex flex-col rounded-xl border transition-all duration-200 overflow-hidden bg-card",
+        "relative flex flex-col rounded-xl border transition-all duration-200 overflow-hidden",
         quadClass,
         isOver && "ring-2 ring-primary/30 scale-[1.005]",
         "h-full min-h-[17rem] md:min-h-0"
