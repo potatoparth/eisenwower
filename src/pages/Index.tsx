@@ -100,7 +100,7 @@ const Index = () => {
         username={displayUsername}
       />
 
-      <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 overflow-y-auto md:overflow-hidden">
+      <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 overflow-y-auto">
         {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban") && (
           <FilterBar
             dateFilter={dateFilter}
