@@ -77,7 +77,7 @@ export function QuadrantExpandDialog({
         </div>
 
         {/* Tasks */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-1">
+        <div className="flex-1 overflow-y-auto scrollbar-none p-3 space-y-1">
           {openTasks.map(task => (
             <TaskCard
               key={task.id}

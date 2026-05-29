@@ -150,15 +150,25 @@ export function SettingsPanel({
                     className="h-8 text-[11px] rounded-lg"
                   />
                 </div>
-                <label className="flex flex-col items-center gap-0.5 flex-shrink-0 pt-0.5">
+                <div className="flex flex-col items-center gap-0.5 flex-shrink-0 pt-0.5">
                   <span className="text-[9px] text-muted-foreground">Color</span>
-                  <input
-                    type="color"
-                    value={c.main}
-                    onChange={e => onUpdateQuadrantAccent(q.color, e.target.value)}
-                    className="w-8 h-8 rounded-md border cursor-pointer"
-                  />
-                </label>
+                  <label
+                    className="relative block w-8 h-8 rounded-md border cursor-pointer overflow-hidden"
+                    title="Quadrant color"
+                  >
+                    <span
+                      className="absolute inset-0"
+                      style={{ backgroundColor: c.main }}
+                      aria-hidden
+                    />
+                    <input
+                      type="color"
+                      value={c.main}
+                      onChange={e => onUpdateQuadrantAccent(q.color, e.target.value)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </label>
+                </div>
               </div>
             );
           })}
