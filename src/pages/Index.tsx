@@ -26,7 +26,7 @@ const Index = () => {
   } = useAuth();
 
   const {
-    settings, updateSettings, updateQuadrantColor, updateQuadrantLabel,
+    settings, updateSettings, updateQuadrantAccent, updateQuadrantLabel,
     addCategoryColor, removeCategoryColor, getCategoryColor, resetToDefaults,
   } = useSettings(currentUser?.id);
 
@@ -216,7 +216,7 @@ const Index = () => {
       {showSettings && (
         <SettingsPanel
           settings={settings} onUpdateSettings={updateSettings}
-          onUpdateQuadrantColor={updateQuadrantColor} onUpdateQuadrantLabel={updateQuadrantLabel}
+          onUpdateQuadrantAccent={updateQuadrantAccent} onUpdateQuadrantLabel={updateQuadrantLabel}
           onAddCategoryColor={addCategoryColor}
           onRemoveCategoryColor={removeCategoryColor} onResetToDefaults={resetToDefaults}
           onClose={() => setShowSettings(false)} currentUser={currentUser}
