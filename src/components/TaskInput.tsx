@@ -16,6 +16,7 @@ interface TaskInputProps {
   placeholder?: string;
   className?: string;
   compact?: boolean;
+  quadrants?: QuadrantInfo[];
 }
 
 type InputStep = "name" | "quadrant" | "details";
@@ -26,6 +27,7 @@ export function TaskInput({
   placeholder = "Add a new task...",
   className,
   compact = false,
+  quadrants = QUADRANTS,
 }: TaskInputProps) {
   const [step, setStep] = useState<InputStep>("name");
   const [name, setName] = useState("");
@@ -184,7 +186,7 @@ export function TaskInput({
                   Select quadrant
                 </p>
                 <div className="grid grid-cols-2 gap-1.5">
-                  {QUADRANTS.map((q) => (
+                  {quadrants.map((q) => (
                     <button
                       key={q.id}
                       onClick={() => handleQuadrantSelect(q.id)}

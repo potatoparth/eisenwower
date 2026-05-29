@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Task, QUADRANT_MAP } from "@/types/task";
+import { Task, Quadrant, QuadrantInfo, QUADRANT_MAP } from "@/types/task";
 import { format, parseISO, differenceInDays, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isToday, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -8,9 +8,10 @@ interface GanttViewProps {
   tasks: Task[];
   onTaskClick?: (task: Task) => void;
   getCategoryColor?: (name: string) => string | undefined;
+  quadrantMap?: Record<Quadrant, QuadrantInfo>;
 }
 
-export function GanttView({ tasks, onTaskClick, getCategoryColor }: GanttViewProps) {
+export function GanttView({ tasks, onTaskClick, getCategoryColor, quadrantMap = QUADRANT_MAP }: GanttViewProps) {
   // Only show tasks with due dates
   const tasksWithDates = useMemo(() =>
     tasks.filter(t => t.dueDate).sort((a, b) => a.dueDate!.localeCompare(b.dueDate!)),
@@ -60,7 +61,7 @@ export function GanttView({ tasks, onTaskClick, getCategoryColor }: GanttViewPro
   const getBarColor = (task: Task) => {
     const catColor = getCategoryColor?.(task.category);
     if (catColor) return catColor;
-    const q = QUADRANT_MAP[task.quadrant];
+    const q = quadrantMap[task.quadrant];
     const colorMap: Record<number, string> = {
       1: "hsl(var(--quadrant-1))",
       2: "hsl(var(--quadrant-2))",

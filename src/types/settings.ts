@@ -1,3 +1,6 @@
+import type { QuadrantLabels } from "@/types/task";
+import { DEFAULT_QUADRANT_LABELS } from "@/types/task";
+
 export interface QuadrantColors {
   main: string; // hex
   light: string;
@@ -27,6 +30,7 @@ export interface AppSettings {
   showOverdue: boolean;
   noDateTasksPosition: "top" | "bottom";
   localUsername?: string;
+  quadrantLabels: QuadrantLabels;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -47,6 +51,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   taskDetailView: "popup",
   showOverdue: true,
   noDateTasksPosition: "bottom",
+  quadrantLabels: DEFAULT_QUADRANT_LABELS,
 };
 
 export interface UserAccount {

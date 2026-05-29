@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X, RotateCcw, Palette, Type, Eye, Clock, Tag, Users, LogOut, Trash2, User, Sliders } from "lucide-react";
 import { AppSettings, DEFAULT_SETTINGS, UserAccount } from "@/types/settings";
-import { QUADRANTS } from "@/types/task";
+import { QUADRANTS, Quadrant } from "@/types/task";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -11,6 +11,7 @@ interface SettingsPanelProps {
   settings: AppSettings;
   onUpdateSettings: (updates: Partial<AppSettings>) => void;
   onUpdateQuadrantColor: (quadrant: 1 | 2 | 3 | 4, colors: Partial<AppSettings["quadrantColors"][1]>) => void;
+  onUpdateQuadrantLabel: (quadrant: Quadrant, label: Partial<{ title: string; subtitle: string }>) => void;
   onAddCategoryColor: (name: string, color: string) => void;
   onRemoveCategoryColor: (name: string) => void;
   onResetToDefaults: () => void;
@@ -28,6 +29,7 @@ export function SettingsPanel({
   settings,
   onUpdateSettings,
   onUpdateQuadrantColor,
+  onUpdateQuadrantLabel,
   onAddCategoryColor,
   onRemoveCategoryColor,
   onResetToDefaults,
@@ -124,37 +126,50 @@ export function SettingsPanel({
           </div>
         </section>
 
-        {/* Quadrant box & text colors */}
+        {/* Quadrant labels & colors */}
         <section className="space-y-3">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Palette className="w-4 h-4" /> Quadrant box & text colors
+            <Palette className="w-4 h-4" /> Quadrant labels & colors
           </h3>
           {QUADRANTS.map(q => {
             const c = settings.quadrantColors[q.color];
+            const label = settings.quadrantLabels[q.id];
             return (
-              <div key={q.id} className="flex items-center gap-3 p-2 rounded-lg bg-secondary/40">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-foreground truncate">{q.title}</p>
-                  <p className="text-[10px] text-muted-foreground truncate">{q.subtitle}</p>
+              <div key={q.id} className="space-y-2 p-3 rounded-lg bg-secondary/40">
+                <div className="space-y-1.5">
+                  <Input
+                    value={label.title}
+                    onChange={e => onUpdateQuadrantLabel(q.id, { title: e.target.value })}
+                    placeholder="Title"
+                    className="h-8 text-xs font-semibold rounded-lg"
+                  />
+                  <Input
+                    value={label.subtitle}
+                    onChange={e => onUpdateQuadrantLabel(q.id, { subtitle: e.target.value })}
+                    placeholder="Description"
+                    className="h-8 text-[11px] rounded-lg"
+                  />
                 </div>
-                <label className="flex flex-col items-center gap-0.5">
-                  <span className="text-[9px] text-muted-foreground">Box</span>
-                  <input
-                    type="color"
-                    value={c.main}
-                    onChange={e => onUpdateQuadrantColor(q.color, { main: e.target.value, light: e.target.value, border: e.target.value })}
-                    className="w-7 h-7 rounded-md border cursor-pointer"
-                  />
-                </label>
-                <label className="flex flex-col items-center gap-0.5">
-                  <span className="text-[9px] text-muted-foreground">Text</span>
-                  <input
-                    type="color"
-                    value={c.foreground}
-                    onChange={e => onUpdateQuadrantColor(q.color, { foreground: e.target.value })}
-                    className="w-7 h-7 rounded-md border cursor-pointer"
-                  />
-                </label>
+                <div className="flex items-center gap-3">
+                  <label className="flex flex-col items-center gap-0.5">
+                    <span className="text-[9px] text-muted-foreground">Box</span>
+                    <input
+                      type="color"
+                      value={c.main}
+                      onChange={e => onUpdateQuadrantColor(q.color, { main: e.target.value, light: e.target.value, border: e.target.value })}
+                      className="w-7 h-7 rounded-md border cursor-pointer"
+                    />
+                  </label>
+                  <label className="flex flex-col items-center gap-0.5">
+                    <span className="text-[9px] text-muted-foreground">Text</span>
+                    <input
+                      type="color"
+                      value={c.foreground}
+                      onChange={e => onUpdateQuadrantColor(q.color, { foreground: e.target.value })}
+                      className="w-7 h-7 rounded-md border cursor-pointer"
+                    />
+                  </label>
+                </div>
               </div>
             );
           })}

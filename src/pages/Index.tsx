@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTasks } from "@/hooks/useTasks";
 import { useSettings } from "@/hooks/useSettings";
@@ -17,7 +17,7 @@ import { FilterBar, DateFilter, OverdueMode } from "@/components/FilterBar";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { LoginPage } from "@/components/LoginPage";
 import { ViewMode } from "@/components/ViewToggle";
-import { Task } from "@/types/task";
+import { Task, getQuadrants, getQuadrantMap } from "@/types/task";
 
 const Index = () => {
   const {
@@ -26,9 +26,12 @@ const Index = () => {
   } = useAuth();
 
   const {
-    settings, updateSettings, updateQuadrantColor,
+    settings, updateSettings, updateQuadrantColor, updateQuadrantLabel,
     addCategoryColor, removeCategoryColor, getCategoryColor, resetToDefaults,
   } = useSettings(currentUser?.id);
+
+  const quadrants = useMemo(() => getQuadrants(settings.quadrantLabels), [settings.quadrantLabels]);
+  const quadrantMap = useMemo(() => getQuadrantMap(settings.quadrantLabels), [settings.quadrantLabels]);
 
   const [viewMode, setViewMode] = useState<ViewMode>(settings.defaultView as ViewMode);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -133,6 +136,8 @@ const Index = () => {
                 selectedCategories={selectedCategories}
                 noDatePosition={settings.noDateTasksPosition}
                 compactMode={compactMode}
+                quadrants={quadrants}
+                quadrantMap={quadrantMap}
               />
             </motion.div>
           )}
@@ -142,6 +147,8 @@ const Index = () => {
                 tasks={filteredTasks} categories={getCategories()} onToggleStatus={toggleStatus}
                 onDeleteTask={deleteTask} onAddTask={handleAddTask} onTaskClick={setSelectedTask}
                 getCategoryColor={getCategoryColor} deadlineThresholdDays={settings.deadlineThresholdDays}
+                quadrants={quadrants}
+                quadrantMap={quadrantMap}
               />
             </motion.div>
           )}
@@ -159,7 +166,7 @@ const Index = () => {
           )}
           {viewMode === "gantt" && (
             <motion.div key="gantt" {...viewAnimation} className="h-full">
-              <GanttView tasks={filteredTasks} onTaskClick={setSelectedTask} getCategoryColor={getCategoryColor} />
+              <GanttView tasks={filteredTasks} onTaskClick={setSelectedTask} getCategoryColor={getCategoryColor} quadrantMap={quadrantMap} />
             </motion.div>
           )}
           {viewMode === "projects" && (
@@ -187,6 +194,7 @@ const Index = () => {
           onClose={() => setSelectedTask(null)}
           getCategoryColor={getCategoryColor}
           projects={projects}
+          quadrants={quadrants}
         />
       )}
       {selectedTask && !useSidebarDetail && (
@@ -200,13 +208,16 @@ const Index = () => {
           onSwitchToSidebar={() => updateSettings({ taskDetailView: "sidebar" })}
           getCategoryColor={getCategoryColor}
           projects={projects}
+          quadrants={quadrants}
+          quadrantMap={quadrantMap}
         />
       )}
 
       {showSettings && (
         <SettingsPanel
           settings={settings} onUpdateSettings={updateSettings}
-          onUpdateQuadrantColor={updateQuadrantColor} onAddCategoryColor={addCategoryColor}
+          onUpdateQuadrantColor={updateQuadrantColor} onUpdateQuadrantLabel={updateQuadrantLabel}
+          onAddCategoryColor={addCategoryColor}
           onRemoveCategoryColor={removeCategoryColor} onResetToDefaults={resetToDefaults}
           onClose={() => setShowSettings(false)} currentUser={currentUser}
           users={users} isAdmin={isAdmin} onLogout={logout} onDeleteUser={deleteUser}

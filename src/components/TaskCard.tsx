@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Check, Trash2, GripVertical } from "lucide-react";
-import { Task, QUADRANT_MAP } from "@/types/task";
+import { Task, Quadrant, QuadrantInfo, QUADRANT_MAP } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { format, isToday, isTomorrow, isPast, parseISO } from "date-fns";
 
@@ -15,6 +15,7 @@ interface TaskCardProps {
   isDragging?: boolean;
   getCategoryColor?: (name: string) => string | undefined;
   deadlineThresholdDays?: number;
+  quadrantMap?: Record<Quadrant, QuadrantInfo>;
 }
 
 export function TaskCard({
@@ -26,6 +27,7 @@ export function TaskCard({
   isDragging = false,
   getCategoryColor,
   deadlineThresholdDays = 2,
+  quadrantMap,
 }: TaskCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -43,7 +45,7 @@ export function TaskCard({
     transition,
   };
 
-  const quadrantInfo = QUADRANT_MAP[task.quadrant];
+  const quadrantInfo = (quadrantMap ?? QUADRANT_MAP)[task.quadrant];
   const isDone = task.status === "done";
 
   const formatDueDate = (dateStr: string) => {

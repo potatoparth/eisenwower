@@ -1,15 +1,28 @@
 import { useState, useEffect, useCallback } from "react";
 import { AppSettings, DEFAULT_SETTINGS } from "@/types/settings";
+import { Quadrant, DEFAULT_QUADRANT_LABELS } from "@/types/task";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 
 const SETTINGS_KEY = "eisenhower-settings";
 
+const mergeSettings = (partial: Partial<AppSettings>): AppSettings => {
+  const merged: AppSettings = { ...DEFAULT_SETTINGS, ...partial };
+  merged.quadrantLabels = { ...DEFAULT_QUADRANT_LABELS };
+  (Object.keys(DEFAULT_QUADRANT_LABELS) as Quadrant[]).forEach((id) => {
+    merged.quadrantLabels[id] = {
+      ...DEFAULT_QUADRANT_LABELS[id],
+      ...partial.quadrantLabels?.[id],
+    };
+  });
+  return merged;
+};
+
 const loadSettings = (): AppSettings => {
   try {
     const stored = localStorage.getItem(SETTINGS_KEY);
     if (stored) {
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+      return mergeSettings(JSON.parse(stored));
     }
     return DEFAULT_SETTINGS;
   } catch {
@@ -90,7 +103,7 @@ export function useSettings(userId?: string) {
     supabase.from("app_settings").select("settings").eq("user_id", userId).maybeSingle().then(({ data }) => {
       if (cancelled) return;
       const cloudSettings = data?.settings as Partial<AppSettings> | undefined;
-      setSettings(cloudSettings ? { ...DEFAULT_SETTINGS, ...cloudSettings } : DEFAULT_SETTINGS);
+      setSettings(cloudSettings ? mergeSettings(cloudSettings) : DEFAULT_SETTINGS);
       setHasLoaded(true);
     });
 
@@ -143,6 +156,16 @@ export function useSettings(userId?: string) {
     return settings.categoryColors.find(c => c.name === name)?.color;
   }, [settings.categoryColors, settings.colorCodingEnabled]);
 
+  const updateQuadrantLabel = useCallback((quadrant: Quadrant, label: Partial<{ title: string; subtitle: string }>) => {
+    setSettings(prev => ({
+      ...prev,
+      quadrantLabels: {
+        ...prev.quadrantLabels,
+        [quadrant]: { ...prev.quadrantLabels[quadrant], ...label },
+      },
+    }));
+  }, []);
+
   const resetToDefaults = useCallback(() => {
     setSettings(DEFAULT_SETTINGS);
   }, []);
@@ -153,6 +176,7 @@ export function useSettings(userId?: string) {
     updateQuadrantColor,
     addCategoryColor,
     removeCategoryColor,
+    updateQuadrantLabel,
     getCategoryColor,
     resetToDefaults,
   };

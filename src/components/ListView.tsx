@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Filter, ChevronDown } from "lucide-react";
-import { Task, Quadrant, QUADRANT_MAP, TaskStatus } from "@/types/task";
+import { Task, Quadrant, TaskStatus, QuadrantInfo } from "@/types/task";
 import { TaskCard } from "./TaskCard";
 import { TaskInput } from "./TaskInput";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,8 @@ interface ListViewProps {
   onTaskClick?: (task: Task) => void;
   getCategoryColor?: (name: string) => string | undefined;
   deadlineThresholdDays?: number;
+  quadrants: QuadrantInfo[];
+  quadrantMap: Record<Quadrant, QuadrantInfo>;
 }
 
 export function ListView({
@@ -40,6 +42,8 @@ export function ListView({
   onTaskClick,
   getCategoryColor,
   deadlineThresholdDays = 2,
+  quadrants,
+  quadrantMap,
 }: ListViewProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -71,7 +75,7 @@ export function ListView({
   return (
     <div className="flex flex-col h-full">
       <div className="mb-6 max-w-2xl mx-auto w-full">
-        <TaskInput onAddTask={onAddTask} placeholder="Add a new task..." />
+        <TaskInput onAddTask={onAddTask} placeholder="Add a new task..." quadrants={quadrants} />
       </div>
 
       <div className="flex items-center gap-3 mb-6">
@@ -121,7 +125,7 @@ export function ListView({
       <div className="flex-1 overflow-y-auto space-y-8">
         {Object.entries(groupedTasks).map(([quadrantId, quadrantTasks]) => {
           if (quadrantTasks.length === 0) return null;
-          const info = QUADRANT_MAP[quadrantId as Quadrant];
+          const info = quadrantMap[quadrantId as Quadrant];
           return (
             <motion.div key={quadrantId} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
               <div className="flex items-center gap-2 px-1">

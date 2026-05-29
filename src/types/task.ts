@@ -59,3 +59,27 @@ export const QUADRANT_MAP: Record<Quadrant, QuadrantInfo> = QUADRANTS.reduce(
   (acc, q) => ({ ...acc, [q.id]: q }),
   {} as Record<Quadrant, QuadrantInfo>
 );
+
+export type QuadrantLabel = { title: string; subtitle: string };
+
+export type QuadrantLabels = Record<Quadrant, QuadrantLabel>;
+
+export const DEFAULT_QUADRANT_LABELS: QuadrantLabels = QUADRANTS.reduce(
+  (acc, q) => ({ ...acc, [q.id]: { title: q.title, subtitle: q.subtitle } }),
+  {} as QuadrantLabels
+);
+
+export function getQuadrants(labels?: Partial<QuadrantLabels>): QuadrantInfo[] {
+  return QUADRANTS.map((q) => ({
+    ...q,
+    title: labels?.[q.id]?.title?.trim() || q.title,
+    subtitle: labels?.[q.id]?.subtitle?.trim() || q.subtitle,
+  }));
+}
+
+export function getQuadrantMap(labels?: Partial<QuadrantLabels>): Record<Quadrant, QuadrantInfo> {
+  return getQuadrants(labels).reduce(
+    (acc, q) => ({ ...acc, [q.id]: q }),
+    {} as Record<Quadrant, QuadrantInfo>
+  );
+}

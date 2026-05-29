@@ -10,7 +10,7 @@ import {
   closestCenter,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import { Task, Quadrant, QUADRANTS } from "@/types/task";
+import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { QuadrantColumn } from "./QuadrantColumn";
 import { TaskCard } from "./TaskCard";
 import { TaskInput } from "./TaskInput";
@@ -18,7 +18,6 @@ import { QuadrantExpandDialog } from "./QuadrantExpandDialog";
 import { CompactQuadrantTile } from "./CompactQuadrantTile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import type { QuadrantInfo } from "@/types/task";
 import { sortTasks, isOverdue } from "@/lib/sort";
 import { isToday, isWithinInterval, parseISO, addDays, startOfDay } from "date-fns";
 
@@ -42,6 +41,8 @@ interface MatrixViewProps {
   selectedCategories?: string[];
   noDatePosition?: "top" | "bottom";
   compactMode?: boolean;
+  quadrants: QuadrantInfo[];
+  quadrantMap: Record<Quadrant, QuadrantInfo>;
 }
 
 export function MatrixView({
@@ -60,6 +61,8 @@ export function MatrixView({
   selectedCategories = [],
   noDatePosition = "bottom",
   compactMode = false,
+  quadrants,
+  quadrantMap,
 }: MatrixViewProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [expandedQuadrant, setExpandedQuadrant] = useState<QuadrantInfo | null>(null);
@@ -89,12 +92,12 @@ export function MatrixView({
   }, [tasks, selectedCategories, overdueMode, dateFilter]);
 
   const tasksByQuadrant = useMemo(() => {
-    return QUADRANTS.reduce((acc, q) => {
+    return quadrants.reduce((acc, q) => {
       const list = filteredTasks.filter((t) => t.quadrant === q.id);
       acc[q.id] = sortTasks(list, { noDatePosition });
       return acc;
     }, {} as Record<Quadrant, Task[]>);
-  }, [filteredTasks, noDatePosition]);
+  }, [filteredTasks, noDatePosition, quadrants]);
 
   const activeTask = activeId ? tasks.find((t) => t.id === activeId) : null;
 
@@ -112,7 +115,7 @@ export function MatrixView({
     const overId = over.id as string;
 
     // Check if dropped on a quadrant
-    const isQuadrant = QUADRANTS.some((q) => q.id === overId);
+    const isQuadrant = quadrants.some((q) => q.id === overId);
     if (isQuadrant) {
       const task = tasks.find((t) => t.id === taskId);
       if (task && task.quadrant !== overId) {
@@ -147,13 +150,13 @@ export function MatrixView({
     <div className="flex flex-col h-full min-h-0">
       {/* Global Task Input */}
       <div className="mb-3 max-w-2xl mx-auto w-full flex-shrink-0">
-        <TaskInput onAddTask={onAddTask} placeholder="Add a new task..." />
+        <TaskInput onAddTask={onAddTask} placeholder="Add a new task..." quadrants={quadrants} />
       </div>
 
       {/* Compact 2x2 tiles */}
       {showCompact ? (
         <div className="grid grid-cols-2 gap-2 sm:gap-3">
-          {QUADRANTS.map((quadrant) => (
+          {quadrants.map((quadrant) => (
             <CompactQuadrantTile
               key={quadrant.id}
               quadrant={quadrant}
@@ -171,7 +174,7 @@ export function MatrixView({
         onDragEnd={handleDragEnd}
       >
         <div className="grid flex-1 grid-cols-1 gap-3 min-h-0 auto-rows-[minmax(17rem,auto)] md:grid-cols-2 md:grid-rows-2 md:auto-rows-fr md:gap-4">
-          {QUADRANTS.map((quadrant) => (
+          {quadrants.map((quadrant) => (
             <QuadrantColumn
               key={quadrant.id}
               quadrant={quadrant}
@@ -195,6 +198,7 @@ export function MatrixView({
                 onToggleStatus={() => {}}
                 onDelete={() => {}}
                 isDragging
+                quadrantMap={quadrantMap}
               />
             </div>
           )}

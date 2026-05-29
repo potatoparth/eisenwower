@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, Calendar, Tag, AlertCircle, FolderKanban } from "lucide-react";
-import { Task, Quadrant, QUADRANTS, QUADRANT_MAP } from "@/types/task";
+import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,9 +15,10 @@ interface TaskDetailPanelProps {
   onClose: () => void;
   getCategoryColor?: (name: string) => string | undefined;
   projects?: ProjectTemplate[];
+  quadrants: QuadrantInfo[];
 }
 
-export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose, getCategoryColor, projects = [] }: TaskDetailPanelProps) {
+export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose, getCategoryColor, projects = [], quadrants }: TaskDetailPanelProps) {
   const [name, setName] = useState(task.name);
   const [description, setDescription] = useState(task.description || "");
   const [category, setCategory] = useState(task.category);
@@ -50,7 +51,6 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
   // Auto-save on blur
   const handleBlur = () => handleSave();
 
-  const quadrantInfo = QUADRANT_MAP[task.quadrant];
   const effectiveThreshold = deadlineThreshold ?? deadlineThresholdDays;
   
   const isDeadlineWarning = task.dueDate && (() => {
@@ -98,7 +98,7 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">Quadrant</label>
           <div className="grid grid-cols-2 gap-1.5">
-            {QUADRANTS.map(q => (
+            {quadrants.map(q => (
               <button
                 key={q.id}
                 onClick={() => { setQuadrant(q.id); onUpdate(task.id, { quadrant: q.id }); }}

@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Task, Quadrant, QUADRANTS, QUADRANT_MAP } from "@/types/task";
+import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import { cn } from "@/lib/utils";
 import { isOverdue } from "@/lib/sort";
@@ -28,6 +28,8 @@ interface TaskDetailDialogProps {
   onSwitchToSidebar: () => void;
   getCategoryColor?: (name: string) => string | undefined;
   projects?: ProjectTemplate[];
+  quadrants: QuadrantInfo[];
+  quadrantMap: Record<Quadrant, QuadrantInfo>;
 }
 
 export function TaskDetailDialog({
@@ -37,6 +39,8 @@ export function TaskDetailDialog({
   onSwitchToSidebar,
   getCategoryColor,
   projects = [],
+  quadrants,
+  quadrantMap,
 }: TaskDetailDialogProps) {
   const [name, setName] = useState(task.name);
   const [description, setDescription] = useState(task.description || "");
@@ -65,7 +69,8 @@ export function TaskDetailDialog({
     });
 
   const overdue = isOverdue(task);
-  const qInfo = QUADRANT_MAP[quadrant];
+  const qInfo = quadrantMap[quadrant];
+  const doFirstLabel = quadrantMap["important-urgent"].title;
 
   const applyFormat = (kind: "bold" | "italic" | "bullet" | "check") => {
     const map = {
@@ -134,7 +139,7 @@ export function TaskDetailDialog({
                 }}
                 className="h-7 text-xs rounded-lg"
               >
-                Move to Do First
+                Move to {doFirstLabel}
               </Button>
             </div>
           )}
@@ -254,7 +259,7 @@ export function TaskDetailDialog({
 
           {/* Quadrant picker */}
           <div className="grid grid-cols-4 gap-1.5">
-            {QUADRANTS.map((q) => (
+            {quadrants.map((q) => (
               <button
                 key={q.id}
                 onClick={() => {
