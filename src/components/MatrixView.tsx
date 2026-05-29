@@ -11,6 +11,8 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
+import { ProjectTemplate } from "@/types/project";
+import type { TaskAddOptions } from "@/components/TaskInput";
 import { QuadrantColumn } from "./QuadrantColumn";
 import { TaskCard } from "./TaskCard";
 import { TaskInput } from "./TaskInput";
@@ -27,11 +29,9 @@ interface MatrixViewProps {
   onMoveTask: (id: string, quadrant: Quadrant) => void;
   onToggleStatus: (id: string) => void;
   onDeleteTask: (id: string) => void;
-  onAddTask: (
-    name: string,
-    quadrant: Quadrant,
-    options?: { description?: string; category?: string; dueDate?: string }
-  ) => void;
+  onAddTask: (name: string, quadrant: Quadrant, options?: TaskAddOptions) => void;
+  projects: ProjectTemplate[];
+  defaultProjectId?: string;
   onReorderTasks?: (reorderedTasks: Task[]) => void;
   onTaskClick?: (task: Task) => void;
   getCategoryColor?: (name: string) => string | undefined;
@@ -63,6 +63,8 @@ export function MatrixView({
   compactMode = false,
   quadrants,
   quadrantMap,
+  projects,
+  defaultProjectId,
 }: MatrixViewProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [expandedQuadrant, setExpandedQuadrant] = useState<QuadrantInfo | null>(null);
@@ -150,7 +152,14 @@ export function MatrixView({
     <div className="flex flex-col h-full min-h-0">
       {/* Global Task Input */}
       <div className="mb-3 max-w-2xl mx-auto w-full flex-shrink-0">
-        <TaskInput onAddTask={onAddTask} placeholder="Add a new task..." quadrants={quadrants} />
+        <TaskInput
+          onAddTask={onAddTask}
+          placeholder="Add a new task..."
+          quadrants={quadrants}
+          categories={categories}
+          projects={projects}
+          defaultProjectId={defaultProjectId}
+        />
       </div>
 
       {/* Compact 2x2 tiles */}
