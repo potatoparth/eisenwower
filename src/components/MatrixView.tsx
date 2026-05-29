@@ -12,7 +12,7 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
-import type { TaskAddOptions } from "@/components/TaskInput";
+import type { TaskAddOptions, TaskInputPickerProps } from "@/components/TaskInput";
 import { QuadrantColumn } from "./QuadrantColumn";
 import { TaskCard } from "./TaskCard";
 import { TaskInput } from "./TaskInput";
@@ -32,6 +32,8 @@ interface MatrixViewProps {
   onAddTask: (name: string, quadrant: Quadrant, options?: TaskAddOptions) => void;
   projects: ProjectTemplate[];
   defaultProjectId?: string;
+  onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
+  onCreateProject?: TaskInputPickerProps["onCreateProject"];
   onReorderTasks?: (reorderedTasks: Task[]) => void;
   onTaskClick?: (task: Task) => void;
   getCategoryColor?: (name: string) => string | undefined;
@@ -65,6 +67,8 @@ export function MatrixView({
   quadrantMap,
   projects,
   defaultProjectId,
+  onCreateCategory,
+  onCreateProject,
 }: MatrixViewProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [expandedQuadrant, setExpandedQuadrant] = useState<QuadrantInfo | null>(null);
@@ -159,6 +163,8 @@ export function MatrixView({
           categories={categories}
           projects={projects}
           defaultProjectId={defaultProjectId}
+          onCreateCategory={onCreateCategory}
+          onCreateProject={onCreateProject}
         />
       </div>
 
@@ -195,6 +201,11 @@ export function MatrixView({
               onTaskClick={onTaskClick}
               getCategoryColor={getCategoryColor}
               deadlineThresholdDays={deadlineThresholdDays}
+              categories={categories}
+              projects={projects}
+              defaultProjectId={defaultProjectId}
+              onCreateCategory={onCreateCategory}
+              onCreateProject={onCreateProject}
             />
           ))}
         </div>
@@ -228,6 +239,11 @@ export function MatrixView({
           getCategoryColor={getCategoryColor}
           deadlineThresholdDays={deadlineThresholdDays}
           bottomSheet={isMobile}
+          categories={categories}
+          projects={projects}
+          defaultProjectId={defaultProjectId}
+          onCreateCategory={onCreateCategory}
+          onCreateProject={onCreateProject}
         />
       )}
     </div>

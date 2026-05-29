@@ -1,5 +1,7 @@
 import { X } from "lucide-react";
 import { Task, QuadrantInfo, Quadrant } from "@/types/task";
+import { ProjectTemplate } from "@/types/project";
+import type { TaskAddOptions, TaskInputPickerProps } from "@/components/TaskInput";
 import { TaskCard } from "./TaskCard";
 import { TaskInput } from "./TaskInput";
 import { Button } from "@/components/ui/button";
@@ -10,7 +12,12 @@ interface QuadrantExpandDialogProps {
   tasks: Task[];
   onToggleStatus: (id: string) => void;
   onDelete: (id: string) => void;
-  onAddTask: (name: string, quadrant: Quadrant, options?: { description?: string; category?: string; dueDate?: string }) => void;
+  onAddTask: (name: string, quadrant: Quadrant, options?: TaskAddOptions) => void;
+  categories: string[];
+  projects: ProjectTemplate[];
+  defaultProjectId?: string;
+  onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
+  onCreateProject?: TaskInputPickerProps["onCreateProject"];
   onClose: () => void;
   onTaskClick: (task: Task) => void;
   getCategoryColor?: (name: string) => string | undefined;
@@ -29,6 +36,11 @@ export function QuadrantExpandDialog({
   getCategoryColor,
   deadlineThresholdDays,
   bottomSheet = false,
+  categories,
+  projects,
+  defaultProjectId,
+  onCreateCategory,
+  onCreateProject,
 }: QuadrantExpandDialogProps) {
   const openTasks = tasks.filter(t => t.status === "open");
   const doneTasks = tasks.filter(t => t.status === "done");
@@ -73,7 +85,17 @@ export function QuadrantExpandDialog({
 
         {/* Input */}
         <div className="p-3">
-          <TaskInput onAddTask={onAddTask} defaultQuadrant={quadrant.id} placeholder={`Add to ${quadrant.title.toLowerCase()}...`} compact />
+          <TaskInput
+            onAddTask={onAddTask}
+            defaultQuadrant={quadrant.id}
+            placeholder={`Add to ${quadrant.title.toLowerCase()}...`}
+            compact
+            categories={categories}
+            projects={projects}
+            defaultProjectId={defaultProjectId}
+            onCreateCategory={onCreateCategory}
+            onCreateProject={onCreateProject}
+          />
         </div>
 
         {/* Tasks */}

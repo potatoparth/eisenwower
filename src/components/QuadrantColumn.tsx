@@ -6,6 +6,8 @@ import {
 } from "@dnd-kit/sortable";
 import { Maximize2, ChevronDown, ChevronUp } from "lucide-react";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
+import { ProjectTemplate } from "@/types/project";
+import type { TaskAddOptions, TaskInputPickerProps } from "@/components/TaskInput";
 import { TaskCard } from "./TaskCard";
 import { TaskInput } from "./TaskInput";
 import { cn } from "@/lib/utils";
@@ -15,11 +17,12 @@ interface QuadrantColumnProps {
   tasks: Task[];
   onToggleStatus: (id: string) => void;
   onDelete: (id: string) => void;
-  onAddTask: (
-    name: string,
-    quadrant: Quadrant,
-    options?: { description?: string; category?: string; dueDate?: string }
-  ) => void;
+  onAddTask: (name: string, quadrant: Quadrant, options?: TaskAddOptions) => void;
+  categories: string[];
+  projects: ProjectTemplate[];
+  defaultProjectId?: string;
+  onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
+  onCreateProject?: TaskInputPickerProps["onCreateProject"];
   onExpand?: () => void;
   onTaskClick?: (task: Task) => void;
   getCategoryColor?: (name: string) => string | undefined;
@@ -36,6 +39,11 @@ export function QuadrantColumn({
   onTaskClick,
   getCategoryColor,
   deadlineThresholdDays = 2,
+  categories,
+  projects,
+  defaultProjectId,
+  onCreateCategory,
+  onCreateProject,
 }: QuadrantColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: quadrant.id,
@@ -116,7 +124,17 @@ export function QuadrantColumn({
 
       {/* Task Input */}
       <div className="px-2 sm:px-3 pb-2 flex-shrink-0">
-        <TaskInput onAddTask={onAddTask} defaultQuadrant={quadrant.id} placeholder={`Add to ${quadrant.title.toLowerCase()}...`} compact />
+        <TaskInput
+          onAddTask={onAddTask}
+          defaultQuadrant={quadrant.id}
+          placeholder={`Add to ${quadrant.title.toLowerCase()}...`}
+          compact
+          categories={categories}
+          projects={projects}
+          defaultProjectId={defaultProjectId}
+          onCreateCategory={onCreateCategory}
+          onCreateProject={onCreateProject}
+        />
       </div>
 
       {/* Tasks */}

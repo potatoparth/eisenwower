@@ -66,6 +66,12 @@ const Index = () => {
     setViewMode(settings.defaultView as ViewMode);
   }, [settings.defaultView]);
 
+  const taskCategories = useMemo(() => {
+    const names = new Set(getCategories());
+    settings.categoryColors.forEach((c) => names.add(c.name));
+    return Array.from(names).sort();
+  }, [getCategories, settings.categoryColors]);
+
   if (!isInitialized) return null;
 
   if (needsSetup || !currentUser) {
@@ -84,10 +90,24 @@ const Index = () => {
       : tasks.filter(t => t.projectId === activeProjectId);
 
   // Wrap addTask so new tasks inherit the active project (when a real project is selected).
+  const defaultProjectId =
+    activeProjectId && activeProjectId !== "__none__" ? activeProjectId : undefined;
+
   const handleAddTask: typeof addTask = (name, quadrant, options) => {
-    const projectId = options?.projectId ?? (activeProjectId && activeProjectId !== "__none__" ? activeProjectId : undefined);
+    // TaskInput always passes category when the user completed the details step.
+    const projectId = options?.category
+      ? options.projectId
+      : options?.projectId ??
+        (activeProjectId && activeProjectId !== "__none__" ? activeProjectId : undefined);
     return addTask(name, quadrant, { ...options, projectId });
   };
+
+  const handleCreateCategory = (name: string) => {
+    addCategoryColor(name, "#7a8599");
+    return name;
+  };
+
+  const handleCreateProject = (name: string) => addProject(name).id;
 
   const useSidebarDetail = settings.taskDetailView === "sidebar";
   const displayUsername = settings.localUsername || currentUser.username;
@@ -105,6 +125,7 @@ const Index = () => {
 
       <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 overflow-y-auto">
         {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban") && (
+          <div className="mb-4">
           <FilterBar
             dateFilter={dateFilter}
             onDateFilterChange={setDateFilter}
@@ -122,12 +143,13 @@ const Index = () => {
             compactMode={compactMode}
             onCompactModeChange={viewMode === "matrix" ? setCompactMode : undefined}
           />
+          </div>
         )}
         <AnimatePresence mode="wait">
           {viewMode === "matrix" && (
             <motion.div key="matrix" {...viewAnimation} className="h-full">
               <MatrixView
-                tasks={filteredTasks} categories={getCategories()} onMoveTask={moveTask}
+                tasks={filteredTasks} categories={taskCategories} onMoveTask={moveTask}
                 onToggleStatus={toggleStatus} onDeleteTask={deleteTask} onAddTask={handleAddTask}
                 onReorderTasks={setTasks} onTaskClick={setSelectedTask}
                 getCategoryColor={getCategoryColor} deadlineThresholdDays={settings.deadlineThresholdDays}
@@ -138,17 +160,25 @@ const Index = () => {
                 compactMode={compactMode}
                 quadrants={quadrants}
                 quadrantMap={quadrantMap}
+                projects={projects}
+                defaultProjectId={defaultProjectId}
+                onCreateCategory={handleCreateCategory}
+                onCreateProject={handleCreateProject}
               />
             </motion.div>
           )}
           {viewMode === "list" && (
             <motion.div key="list" {...viewAnimation} className="h-full max-w-4xl mx-auto">
               <ListView
-                tasks={filteredTasks} categories={getCategories()} onToggleStatus={toggleStatus}
+                tasks={filteredTasks} categories={taskCategories} onToggleStatus={toggleStatus}
                 onDeleteTask={deleteTask} onAddTask={handleAddTask} onTaskClick={setSelectedTask}
                 getCategoryColor={getCategoryColor} deadlineThresholdDays={settings.deadlineThresholdDays}
                 quadrants={quadrants}
                 quadrantMap={quadrantMap}
+                projects={projects}
+                defaultProjectId={defaultProjectId}
+                onCreateCategory={handleCreateCategory}
+                onCreateProject={handleCreateProject}
               />
             </motion.div>
           )}

@@ -5,7 +5,7 @@ import { Quadrant, QUADRANTS, QuadrantInfo } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { SearchableSelect } from "@/components/SearchableSelect";
+import { SelectorWithCreate } from "@/components/SelectorWithCreate";
 import { cn } from "@/lib/utils";
 
 export interface TaskAddOptions {
@@ -14,6 +14,11 @@ export interface TaskAddOptions {
   dueDate?: string;
   projectId?: string;
 }
+
+export type TaskInputPickerProps = Pick<
+  TaskInputProps,
+  "categories" | "projects" | "defaultProjectId" | "onCreateCategory" | "onCreateProject"
+>;
 
 interface TaskInputProps {
   onAddTask: (name: string, quadrant: Quadrant, options?: TaskAddOptions) => void;
@@ -25,6 +30,8 @@ interface TaskInputProps {
   categories?: string[];
   projects?: ProjectTemplate[];
   defaultProjectId?: string;
+  onCreateCategory?: (name: string) => string;
+  onCreateProject?: (name: string) => string;
 }
 
 type InputStep = "name" | "quadrant" | "details";
@@ -41,6 +48,8 @@ export function TaskInput({
   categories = [],
   projects = [],
   defaultProjectId,
+  onCreateCategory,
+  onCreateProject,
 }: TaskInputProps) {
   const [step, setStep] = useState<InputStep>("name");
   const [name, setName] = useState("");
@@ -150,7 +159,14 @@ export function TaskInput({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Element;
+      if (
+        target.closest("[data-radix-popper-content-wrapper]") ||
+        target.closest("[cmdk-root]")
+      ) {
+        return;
+      }
+      if (containerRef.current && !containerRef.current.contains(target)) {
         if (step === "details" && canComplete) {
           handleComplete();
         } else if (step !== "name") {
@@ -265,32 +281,29 @@ export function TaskInput({
                   <span className="font-medium">Category & project</span>
                   <span className="text-[10px] opacity-60">required</span>
                 </div>
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <Tag className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                    <SearchableSelect
-                      options={categoryOptions}
-                      value={category}
-                      onChange={setCategory}
-                      placeholder="Select category"
-                      searchPlaceholder="Search categories…"
-                      allowCreate
-                      compact
-                      className="flex-1"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <FolderKanban className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                    <SearchableSelect
-                      options={projectOptions}
-                      value={projectId}
-                      onChange={setProjectId}
-                      placeholder="Select project"
-                      searchPlaceholder="Search projects…"
-                      compact
-                      className="flex-1"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <SelectorWithCreate
+                    icon={<Tag className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
+                    options={categoryOptions}
+                    value={category}
+                    onChange={setCategory}
+                    onCreate={onCreateCategory}
+                    placeholder="Select category"
+                    searchPlaceholder="Search categories…"
+                    createPlaceholder="New category name…"
+                    compact
+                  />
+                  <SelectorWithCreate
+                    icon={<FolderKanban className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
+                    options={projectOptions}
+                    value={projectId}
+                    onChange={setProjectId}
+                    onCreate={onCreateProject}
+                    placeholder="Select project"
+                    searchPlaceholder="Search projects…"
+                    createPlaceholder="New project name…"
+                    compact
+                  />
                   <Input
                     type="text"
                     value={description}

@@ -2,6 +2,8 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Filter, ChevronDown } from "lucide-react";
 import { Task, Quadrant, TaskStatus, QuadrantInfo } from "@/types/task";
+import { ProjectTemplate } from "@/types/project";
+import type { TaskAddOptions, TaskInputPickerProps } from "@/components/TaskInput";
 import { TaskCard } from "./TaskCard";
 import { TaskInput } from "./TaskInput";
 import { Button } from "@/components/ui/button";
@@ -21,11 +23,11 @@ interface ListViewProps {
   categories: string[];
   onToggleStatus: (id: string) => void;
   onDeleteTask: (id: string) => void;
-  onAddTask: (
-    name: string,
-    quadrant: Quadrant,
-    options?: { description?: string; category?: string; dueDate?: string }
-  ) => void;
+  onAddTask: (name: string, quadrant: Quadrant, options?: TaskAddOptions) => void;
+  projects: ProjectTemplate[];
+  defaultProjectId?: string;
+  onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
+  onCreateProject?: TaskInputPickerProps["onCreateProject"];
   onTaskClick?: (task: Task) => void;
   getCategoryColor?: (name: string) => string | undefined;
   deadlineThresholdDays?: number;
@@ -44,6 +46,10 @@ export function ListView({
   deadlineThresholdDays = 2,
   quadrants,
   quadrantMap,
+  projects,
+  defaultProjectId,
+  onCreateCategory,
+  onCreateProject,
 }: ListViewProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -75,7 +81,16 @@ export function ListView({
   return (
     <div className="flex flex-col h-full">
       <div className="mb-6 max-w-2xl mx-auto w-full">
-        <TaskInput onAddTask={onAddTask} placeholder="Add a new task..." quadrants={quadrants} />
+        <TaskInput
+          onAddTask={onAddTask}
+          placeholder="Add a new task..."
+          quadrants={quadrants}
+          categories={categories}
+          projects={projects}
+          defaultProjectId={defaultProjectId}
+          onCreateCategory={onCreateCategory}
+          onCreateProject={onCreateProject}
+        />
       </div>
 
       <div className="flex items-center gap-3 mb-6">
