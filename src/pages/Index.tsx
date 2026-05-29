@@ -67,10 +67,15 @@ const Index = () => {
   }, [settings.defaultView]);
 
   const taskCategories = useMemo(() => {
-    const names = new Set(getCategories());
-    settings.categoryColors.forEach((c) => names.add(c.name));
-    return Array.from(names).sort();
-  }, [getCategories, settings.categoryColors]);
+    const names = new Set<string>();
+    tasks.forEach((t) => {
+      if (t.category?.trim()) names.add(t.category.trim());
+    });
+    settings.categoryColors.forEach((c) => {
+      if (c.name?.trim()) names.add(c.name.trim());
+    });
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [tasks, settings.categoryColors]);
 
   if (!isInitialized) return null;
 
@@ -133,7 +138,7 @@ const Index = () => {
             onOverdueModeChange={setOverdueMode}
             noDatePosition={settings.noDateTasksPosition}
             onNoDatePositionChange={(v) => updateSettings({ noDateTasksPosition: v })}
-            categories={getCategories()}
+            categories={taskCategories}
             selectedCategories={selectedCategories}
             onSelectedCategoriesChange={setSelectedCategories}
             getCategoryColor={getCategoryColor}

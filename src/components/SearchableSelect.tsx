@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +47,15 @@ export function SearchableSelect({
 
   const selected = options.find((o) => o.value === value);
   const trimmed = search.trim();
+  const filteredOptions = useMemo(() => {
+    if (!trimmed) return options;
+    const q = trimmed.toLowerCase();
+    return options.filter(
+      (o) =>
+        o.label.toLowerCase().includes(q) ||
+        o.value.toLowerCase().includes(q)
+    );
+  }, [options, trimmed]);
   const canCreate =
     allowCreate &&
     trimmed.length > 0 &&
@@ -83,8 +92,8 @@ export function SearchableSelect({
           <ChevronsUpDown className="ml-1 h-3.5 w-3.5 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <Command shouldFilter>
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 z-[100]" align="start">
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder={searchPlaceholder}
             value={search}
@@ -93,10 +102,11 @@ export function SearchableSelect({
           <CommandList>
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
-              {options.map((opt) => (
+              {filteredOptions.map((opt) => (
                 <CommandItem
                   key={opt.value}
-                  value={opt.label}
+                  value={opt.value}
+                  keywords={[opt.label]}
                   onSelect={() => handleSelect(opt.value)}
                 >
                   <Check
