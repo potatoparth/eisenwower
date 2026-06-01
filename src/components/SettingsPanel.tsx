@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { X, RotateCcw, Palette, Type, Eye, Clock, Tag, Users, LogOut, Trash2, User, Sliders } from "lucide-react";
-import { AppSettings, DEFAULT_SETTINGS, UserAccount } from "@/types/settings";
+import { AppSettings, DEFAULT_SETTINGS, DEFAULT_QUADRANT_ACCENTS, UserAccount } from "@/types/settings";
 import { QUADRANTS, Quadrant } from "@/types/task";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { QuadrantColorPicker } from "@/components/QuadrantColorPicker";
 import { cn } from "@/lib/utils";
 
 interface SettingsPanelProps {
   settings: AppSettings;
   onUpdateSettings: (updates: Partial<AppSettings>) => void;
-  onUpdateQuadrantAccent: (quadrant: 1 | 2 | 3 | 4, accent: string) => void;
+  onUpdateQuadrantAccent: (quadrant: 1 | 2 | 3 | 4, accent: string, mode?: "light" | "dark") => void;
   onUpdateQuadrantLabel: (quadrant: Quadrant, label: Partial<{ title: string; subtitle: string }>) => void;
   onAddCategoryColor: (name: string, color: string) => void;
   onRemoveCategoryColor: (name: string) => void;
@@ -44,6 +45,14 @@ export function SettingsPanel({
   const [newCatName, setNewCatName] = useState("");
   const [newCatColor, setNewCatColor] = useState("#7a8599");
   const [usernameDraft, setUsernameDraft] = useState(settings.localUsername || currentUser?.username || "");
+  const initialMode: "light" | "dark" =
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+      ? "dark"
+      : "light";
+  const [colorMode, setColorMode] = useState<"light" | "dark">(initialMode);
+
+  const accents =
+    settings.quadrantAccents?.[colorMode] ?? DEFAULT_QUADRANT_ACCENTS[colorMode];
 
   // Merge categories derived from tasks with stored color entries so user-created
   // categories appear in settings even when they have no explicit color yet.
@@ -131,8 +140,24 @@ export function SettingsPanel({
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Palette className="w-4 h-4" /> Quadrant labels & colors
           </h3>
+          <div className="inline-flex p-0.5 rounded-lg bg-secondary text-xs font-medium">
+            {(["light", "dark"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setColorMode(m)}
+                className={cn(
+                  "px-3 py-1 rounded-md transition-all",
+                  colorMode === m
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {m === "light" ? "Light mode" : "Dark mode"}
+              </button>
+            ))}
+          </div>
           {QUADRANTS.map(q => {
-            const c = settings.quadrantColors[q.color];
+            const accent = accents[q.color];
             const label = settings.quadrantLabels[q.id];
             return (
               <div key={q.id} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/40">
@@ -152,22 +177,11 @@ export function SettingsPanel({
                 </div>
                 <div className="flex flex-col items-center gap-0.5 flex-shrink-0 pt-0.5">
                   <span className="text-[9px] text-muted-foreground">Color</span>
-                  <label
-                    className="relative block w-8 h-8 rounded-md border cursor-pointer overflow-hidden"
-                    title="Quadrant color"
-                  >
-                    <span
-                      className="absolute inset-0"
-                      style={{ backgroundColor: c.main }}
-                      aria-hidden
-                    />
-                    <input
-                      type="color"
-                      value={c.main}
-                      onChange={e => onUpdateQuadrantAccent(q.color, e.target.value)}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                  </label>
+                  <QuadrantColorPicker
+                    value={accent}
+                    mode={colorMode}
+                    onChange={(hex) => onUpdateQuadrantAccent(q.color, hex, colorMode)}
+                  />
                 </div>
               </div>
             );
