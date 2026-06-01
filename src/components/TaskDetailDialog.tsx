@@ -20,6 +20,7 @@ import { ProjectTemplate } from "@/types/project";
 import { cn } from "@/lib/utils";
 import { isOverdue } from "@/lib/sort";
 import { format, parseISO } from "date-fns";
+import { DateTimePicker } from "@/components/DateTimePicker";
 
 interface TaskDetailDialogProps {
   task: Task;
@@ -181,32 +182,22 @@ export function TaskDetailDialog({
             />
           </div>
 
-          {/* Date + time */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <label className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
-                <Calendar className="w-3 h-3" /> Deadline
-              </label>
-              <Input
-                id={`tdd-date-${task.id}`}
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                onBlur={save}
-                className={cn(
-                  "rounded-lg bg-secondary/60 border-0",
-                  overdue && "text-destructive line-through"
-                )}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-medium text-muted-foreground">Time</label>
-              <Input
-                type="time"
-                defaultValue="22:00"
-                className="rounded-lg bg-secondary/60 border-0"
-              />
-            </div>
+          {/* Deadline */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
+              <Calendar className="w-3 h-3" /> Deadline
+            </label>
+            <DateTimePicker
+              id={`tdd-date-${task.id}`}
+              value={dueDate || undefined}
+              onChange={(v) => {
+                const next = v ?? "";
+                setDueDate(next);
+                onUpdate(task.id, { dueDate: next || undefined });
+              }}
+              accentColor={`hsl(var(--quadrant-${qInfo.color}))`}
+              className={cn(overdue && "text-destructive")}
+            />
           </div>
 
           {/* Category */}

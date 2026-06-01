@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ProjectTemplate } from "@/types/project";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays, isPast, isToday } from "date-fns";
+import { DateTimePicker } from "@/components/DateTimePicker";
 
 interface TaskDetailPanelProps {
   task: Task;
@@ -130,12 +131,17 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
               </span>
             )}
           </label>
-          <Input
-            type="date"
-            value={dueDate}
-            onChange={e => setDueDate(e.target.value)}
-            onBlur={handleBlur}
-            className="border-0 bg-secondary/50 rounded-xl"
+          <DateTimePicker
+            value={dueDate || undefined}
+            onChange={(v) => {
+              const next = v ?? "";
+              setDueDate(next);
+              onUpdate(task.id, { dueDate: next || undefined });
+            }}
+            accentColor={(() => {
+              const c = quadrants.find((q) => q.id === quadrant)?.color ?? 1;
+              return `hsl(var(--quadrant-${c}))`;
+            })()}
           />
         </div>
 
