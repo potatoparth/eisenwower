@@ -6,6 +6,7 @@ import { ProjectTemplate } from "@/types/project";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SelectorWithCreate } from "@/components/SelectorWithCreate";
+import { DateTimePicker } from "@/components/DateTimePicker";
 import { cn } from "@/lib/utils";
 
 export interface TaskAddOptions {
@@ -314,13 +315,19 @@ export function TaskInput({
                   />
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                    <Input
-                      type="date"
-                      value={dueDate}
-                      onChange={(e) => setDueDate(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      className="border-0 bg-secondary/50 h-8 text-sm rounded-lg flex-1"
-                    />
+                    <div className="flex-1">
+                      <DateTimePicker
+                        value={dueDate || undefined}
+                        onChange={(v) => setDueDate(v ?? "")}
+                        accentColor={
+                          selectedQuadrant
+                            ? `hsl(var(--quadrant-${
+                                quadrants.find((q) => q.id === selectedQuadrant)?.color ?? 1
+                              }))`
+                            : undefined
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
                 <div className="flex justify-end gap-1.5 pt-1">
