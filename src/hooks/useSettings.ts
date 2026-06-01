@@ -157,9 +157,6 @@ function applyQuadrantColors(settings: AppSettings) {
       root.style.setProperty(`--quadrant-${n}`, hsl);
       root.style.setProperty(`--quadrant-${n}-border`, hsl);
       root.style.setProperty(`--quadrant-${n}-foreground`, hsl);
-      // Badge bg = accent at 15% — use same hue/sat, alpha via tokens elsewhere.
-      // For badge, use a derived very light tint in light mode, deep in dark mode.
-      root.style.setProperty(`--quadrant-${n}-badge`, hsl);
     }
   });
 }
