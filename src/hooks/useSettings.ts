@@ -1,10 +1,37 @@
 import { useState, useEffect, useCallback } from "react";
-import { AppSettings, DEFAULT_SETTINGS } from "@/types/settings";
+import { AppSettings, DEFAULT_SETTINGS, DEFAULT_QUADRANT_ACCENTS } from "@/types/settings";
 import { Quadrant, DEFAULT_QUADRANT_LABELS } from "@/types/task";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 
 const SETTINGS_KEY = "eisenhower-settings";
+const ACCENTS_LIGHT_KEY = "quadrant_colors_light";
+const ACCENTS_DARK_KEY = "quadrant_colors_dark";
+
+type ThemeMode = "light" | "dark";
+
+const currentTheme = (): ThemeMode =>
+  typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+    ? "dark"
+    : "light";
+
+const loadAccents = (mode: ThemeMode) => {
+  try {
+    const raw = localStorage.getItem(mode === "dark" ? ACCENTS_DARK_KEY : ACCENTS_LIGHT_KEY);
+    if (!raw) return { ...DEFAULT_QUADRANT_ACCENTS[mode] };
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULT_QUADRANT_ACCENTS[mode], ...parsed };
+  } catch {
+    return { ...DEFAULT_QUADRANT_ACCENTS[mode] };
+  }
+};
+
+const saveAccents = (mode: ThemeMode, accents: Record<1|2|3|4, string>) => {
+  localStorage.setItem(
+    mode === "dark" ? ACCENTS_DARK_KEY : ACCENTS_LIGHT_KEY,
+    JSON.stringify(accents)
+  );
+};
 
 const mergeSettings = (partial: Partial<AppSettings>): AppSettings => {
   const merged: AppSettings = { ...DEFAULT_SETTINGS, ...partial };
@@ -15,6 +42,11 @@ const mergeSettings = (partial: Partial<AppSettings>): AppSettings => {
       ...partial.quadrantLabels?.[id],
     };
   });
+  // Always merge accents from localStorage (per-theme bucket is the source of truth)
+  merged.quadrantAccents = {
+    light: loadAccents("light"),
+    dark: loadAccents("dark"),
+  };
   return merged;
 };
 
@@ -107,21 +139,27 @@ function applyQuadrantColors(settings: AppSettings) {
   // Apply quadrant tint alpha (0..30 -> 0..0.30)
   const tint = Math.max(0, Math.min(30, settings.quadrantTintIntensity ?? 10)) / 100;
   root.style.setProperty("--quadrant-tint-alpha", String(tint));
-  // Apply user per-quadrant accent overrides (box + text). Only override when
-  // the user has changed from defaults so the redesigned palette stays intact.
+
+  // Apply per-theme accent overrides
+  const mode = currentTheme();
+  const accents = settings.quadrantAccents?.[mode] ?? DEFAULT_QUADRANT_ACCENTS[mode];
+  const defaults = DEFAULT_QUADRANT_ACCENTS[mode];
   ([1, 2, 3, 4] as const).forEach((n) => {
-    const c = settings.quadrantColors[n];
-    const def = DEFAULT_SETTINGS.quadrantColors[n];
-    const customized = c.main !== def.main || c.foreground !== def.foreground;
-    if (customized) {
-      const hsl = hexToHSL(c.main);
-      root.style.setProperty(`--quadrant-${n}`, hsl);
-      root.style.setProperty(`--quadrant-${n}-border`, hsl);
-      root.style.setProperty(`--quadrant-${n}-foreground`, hexToHSL(c.foreground));
-    } else {
+    const accent = accents[n] || defaults[n];
+    const isDefault = accent.toLowerCase() === defaults[n].toLowerCase();
+    if (isDefault) {
       root.style.removeProperty(`--quadrant-${n}`);
       root.style.removeProperty(`--quadrant-${n}-border`);
       root.style.removeProperty(`--quadrant-${n}-foreground`);
+      root.style.removeProperty(`--quadrant-${n}-badge`);
+    } else {
+      const hsl = hexToHSL(accent);
+      root.style.setProperty(`--quadrant-${n}`, hsl);
+      root.style.setProperty(`--quadrant-${n}-border`, hsl);
+      root.style.setProperty(`--quadrant-${n}-foreground`, hsl);
+      // Badge bg = accent at 15% — use same hue/sat, alpha via tokens elsewhere.
+      // For badge, use a derived very light tint in light mode, deep in dark mode.
+      root.style.setProperty(`--quadrant-${n}-badge`, hsl);
     }
   });
 }
@@ -158,10 +196,13 @@ export function useSettings(userId?: string) {
     applyQuadrantColors(settings);
   }, [settings, userId, hasLoaded]);
 
-  // Apply on mount
+  // Apply on mount + reapply whenever the theme class on <html> changes
   useEffect(() => {
     applyQuadrantColors(settings);
-  }, []);
+    const observer = new MutationObserver(() => applyQuadrantColors(settings));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, [settings]);
 
   const updateSettings = useCallback((updates: Partial<AppSettings>) => {
     setSettings(prev => ({ ...prev, ...updates }));
@@ -177,21 +218,35 @@ export function useSettings(userId?: string) {
     }));
   }, []);
 
-  const updateQuadrantAccent = useCallback((quadrant: 1 | 2 | 3 | 4, accent: string) => {
-    const foreground = accentToForeground(accent);
-    setSettings(prev => ({
-      ...prev,
-      quadrantColors: {
-        ...prev.quadrantColors,
-        [quadrant]: {
-          main: accent,
-          light: accent,
-          border: accent,
-          foreground,
-        },
-      },
-    }));
-  }, []);
+  const updateQuadrantAccent = useCallback(
+    (quadrant: 1 | 2 | 3 | 4, accent: string, mode?: ThemeMode) => {
+      const themeMode = mode ?? currentTheme();
+      setSettings(prev => {
+        const prevAccents = prev.quadrantAccents ?? {
+          light: { ...DEFAULT_QUADRANT_ACCENTS.light },
+          dark: { ...DEFAULT_QUADRANT_ACCENTS.dark },
+        };
+        const nextForMode = { ...prevAccents[themeMode], [quadrant]: accent };
+        saveAccents(themeMode, nextForMode);
+        const foreground = accentToForeground(accent);
+        return {
+          ...prev,
+          quadrantAccents: { ...prevAccents, [themeMode]: nextForMode },
+          // Keep legacy field roughly in sync so other code that reads it still works.
+          quadrantColors: {
+            ...prev.quadrantColors,
+            [quadrant]: {
+              main: accent,
+              light: accent,
+              border: accent,
+              foreground,
+            },
+          },
+        };
+      });
+    },
+    []
+  );
 
   const addCategoryColor = useCallback((name: string, color: string) => {
     setSettings(prev => ({
