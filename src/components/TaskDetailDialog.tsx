@@ -110,7 +110,7 @@ export function TaskDetailDialog({
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={save}
-            className="text-xl font-medium border-0 px-0 h-auto focus-visible:ring-0 shadow-none bg-transparent"
+            className="text-[18px] font-medium border-0 px-0 h-auto focus-visible:ring-1 focus-visible:ring-ring shadow-none bg-transparent"
             placeholder="Task name"
           />
 
