@@ -153,7 +153,7 @@ export function MatrixView({
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className={cn("flex flex-col min-h-0", showCompact ? "h-auto" : "h-full")}>
       {/* Global Task Input */}
       <div className="mb-3 max-w-2xl mx-auto w-full flex-shrink-0">
         <TaskInput
@@ -170,7 +170,10 @@ export function MatrixView({
 
       {/* Compact 2x2 tiles */}
       {showCompact ? (
-        <div className="grid flex-1 min-h-0 grid-cols-2 grid-rows-2 items-stretch gap-2.5 sm:gap-3">
+        <div
+          className="grid grid-cols-2 grid-rows-2 items-stretch gap-2.5 sm:gap-3"
+          style={{ height: "calc(100dvh - 260px)", minHeight: 360 }}
+        >
           {quadrants.map((quadrant) => (
             <CompactQuadrantTile
               key={quadrant.id}
