@@ -50,24 +50,24 @@ export function Header({ viewMode, onViewModeChange, taskCount, onSettingsClick,
           >
             Eisenhower
           </h1>
-          <p className="text-[10px] text-muted-foreground leading-tight">
+          <p className="text-[11px] leading-tight" style={{ color: "#9CA3AF" }}>
             {taskCount} open{username && <span> · {username}</span>}
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <ViewToggle value={viewMode} onChange={onViewModeChange} />
-        <Button variant="ghost" size="icon" onClick={() => setIsDark(!isDark)} className="rounded-xl w-8 h-8">
+        <Button variant="ghost" size="icon" onClick={() => setIsDark(!isDark)} className="rounded-xl w-10 h-10 min-w-[40px] min-h-[40px]">
           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </Button>
         {onSettingsClick && (
-          <Button variant="ghost" size="icon" onClick={onSettingsClick} className="rounded-xl w-8 h-8">
+          <Button variant="ghost" size="icon" onClick={onSettingsClick} className="rounded-xl w-10 h-10 min-w-[40px] min-h-[40px]">
             <Settings className="w-4 h-4" />
           </Button>
         )}
         {onLogout && (
-          <Button variant="ghost" size="icon" onClick={onLogout} className="rounded-xl w-8 h-8" title="Sign Out">
+          <Button variant="ghost" size="icon" onClick={onLogout} className="rounded-xl w-10 h-10 min-w-[40px] min-h-[40px]" title="Sign Out">
             <LogOut className="w-4 h-4" />
           </Button>
         )}
