@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Calendar, Tag, ChevronRight, FolderKanban } from "lucide-react";
+import { Plus, Calendar, Tag, ChevronRight, FolderKanban, AlignLeft } from "lucide-react";
 import { Quadrant, QUADRANTS, QuadrantInfo } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import { Input } from "@/components/ui/input";
@@ -62,6 +62,7 @@ export function TaskInput({
   const [dueDate, setDueDate] = useState("");
   const [description, setDescription] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [descOpen, setDescOpen] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -97,6 +98,7 @@ export function TaskInput({
     setDueDate("");
     setDescription("");
     setIsFocused(false);
+    setDescOpen(false);
   };
 
   const beginDetails = () => {
@@ -283,6 +285,43 @@ export function TaskInput({
                   <span className="text-[10px] opacity-60">required</span>
                 </div>
                 <div className="space-y-2">
+                  {/* Description (collapsed by default) */}
+                  {descOpen ? (
+                    <Input
+                      autoFocus
+                      type="text"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Description (optional)"
+                      className="border-0 bg-secondary/50 h-8 text-sm rounded-lg"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setDescOpen(true)}
+                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <AlignLeft className="w-3 h-3" /> Add description
+                    </button>
+                  )}
+                  {/* Deadline */}
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                    <div className="flex-1">
+                      <DateTimePicker
+                        value={dueDate || undefined}
+                        onChange={(v) => setDueDate(v ?? "")}
+                        accentColor={
+                          selectedQuadrant
+                            ? `hsl(var(--quadrant-${
+                                quadrants.find((q) => q.id === selectedQuadrant)?.color ?? 1
+                              }))`
+                            : undefined
+                        }
+                      />
+                    </div>
+                  </div>
                   <SelectorWithCreate
                     icon={<Tag className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
                     options={categoryOptions}
@@ -305,30 +344,6 @@ export function TaskInput({
                     createPlaceholder="New project name…"
                     compact
                   />
-                  <Input
-                    type="text"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Description (optional)"
-                    className="border-0 bg-secondary/50 h-8 text-sm rounded-lg"
-                  />
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                    <div className="flex-1">
-                      <DateTimePicker
-                        value={dueDate || undefined}
-                        onChange={(v) => setDueDate(v ?? "")}
-                        accentColor={
-                          selectedQuadrant
-                            ? `hsl(var(--quadrant-${
-                                quadrants.find((q) => q.id === selectedQuadrant)?.color ?? 1
-                              }))`
-                            : undefined
-                        }
-                      />
-                    </div>
-                  </div>
                 </div>
                 <div className="flex justify-end gap-1.5 pt-1">
                   <Button

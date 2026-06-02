@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from "lucide-react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   addMonths,
   endOfMonth,
@@ -90,30 +90,28 @@ export function DateTimePicker({
     emit(d, h, m);
   };
 
-  const bumpHour = (delta: number) => {
+  const setHour24 = (h: number) => {
     const base = parsed ?? new Date();
-    const nh = (hour + delta + 24) % 24;
-    emit(base, nh, minute);
+    emit(base, ((h % 24) + 24) % 24, minute);
   };
-  const bumpMinute = (delta: number) => {
+  const setMinuteValue = (m: number) => {
     const base = parsed ?? new Date();
-    const nm = (minute + delta + 60) % 60;
-    emit(base, hour, nm);
+    emit(base, hour, ((m % 60) + 60) % 60);
   };
 
-  const setHourValue = (v: number) => {
-    if (isNaN(v)) return;
-    const base = parsed ?? new Date();
-    emit(base, Math.max(0, Math.min(23, v)), minute);
+  const isPM = hour >= 12;
+  const hour12 = ((hour + 11) % 12) + 1;
+  const setHour12 = (h12: number) => {
+    const next = ((h12 % 12) + (isPM ? 12 : 0)) % 24;
+    setHour24(next);
   };
-  const setMinuteValue = (v: number) => {
-    if (isNaN(v)) return;
-    const base = parsed ?? new Date();
-    emit(base, hour, Math.max(0, Math.min(59, v)));
+  const setPeriod = (pm: boolean) => {
+    const next = pm ? (hour % 12) + 12 : hour % 12;
+    setHour24(next);
   };
 
   const triggerLabel = parsed
-    ? `${format(parsed, "d MMM yyyy")} · ${pad(hour)}:${pad(minute)}`
+    ? `${format(parsed, "d MMM yyyy")} · ${format(parsed, "h:mm a")}`
     : placeholder;
 
   return (
@@ -201,24 +199,49 @@ export function DateTimePicker({
           })}
         </div>
 
-        {/* Time row */}
-        <div className="mt-3 pt-3 border-t flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">Time</span>
-          <div className="flex items-center gap-1">
-            <TimeField
-              value={hour}
-              onChange={setHourValue}
-              onBump={bumpHour}
-              max={23}
-              aria="Hour"
+        {/* Time wheel */}
+        <div className="mt-3 pt-3 border-t">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs text-muted-foreground">Time</span>
+            <span className="text-xs font-medium tabular-nums" style={{ color: accentColor }}>
+              {pad(hour12)}:{pad(minute)} {isPM ? "PM" : "AM"}
+            </span>
+          </div>
+          <div
+            className="relative flex items-center justify-center gap-1 select-none"
+            style={{ height: ITEM_H * 5 }}
+          >
+            {/* Selection highlight */}
+            <div
+              className="absolute left-0 right-0 mx-auto rounded-lg pointer-events-none"
+              style={{
+                top: ITEM_H * 2,
+                height: ITEM_H,
+                background: `${accentColor.includes("hsl") ? accentColor.replace(")", " / 0.10)") : accentColor + "1A"}`,
+              }}
             />
-            <span className="text-base text-muted-foreground">:</span>
-            <TimeField
+            <WheelColumn
+              values={Array.from({ length: 12 }, (_, i) => i + 1)}
+              value={hour12}
+              onChange={setHour12}
+              format={pad}
+              ariaLabel="Hour"
+            />
+            <div className="text-base font-medium opacity-50">:</div>
+            <WheelColumn
+              values={Array.from({ length: 60 }, (_, i) => i)}
               value={minute}
               onChange={setMinuteValue}
-              onBump={bumpMinute}
-              max={59}
-              aria="Minute"
+              format={pad}
+              ariaLabel="Minute"
+            />
+            <WheelColumn
+              values={["AM", "PM"]}
+              value={isPM ? "PM" : "AM"}
+              onChange={(v) => setPeriod(v === "PM")}
+              format={(v) => String(v)}
+              ariaLabel="AM or PM"
+              wide
             />
           </div>
         </div>
@@ -250,53 +273,96 @@ export function DateTimePicker({
   );
 }
 
-interface TimeFieldProps {
-  value: number;
-  onChange: (n: number) => void;
-  onBump: (delta: number) => void;
-  max: number;
-  aria: string;
+const ITEM_H = 32;
+
+interface WheelColumnProps<T extends string | number> {
+  values: T[];
+  value: T;
+  onChange: (v: T) => void;
+  format: (v: T) => string;
+  ariaLabel: string;
+  wide?: boolean;
 }
 
-function TimeField({ value, onChange, onBump, aria }: TimeFieldProps) {
-  const ref = useRef<HTMLInputElement>(null);
+function WheelColumn<T extends string | number>({
+  values,
+  value,
+  onChange,
+  format,
+  ariaLabel,
+  wide,
+}: WheelColumnProps<T>) {
+  const ref = useRef<HTMLDivElement>(null);
+  const index = Math.max(0, values.indexOf(value));
+  const settleRef = useRef<number | null>(null);
+  const isInternalScroll = useRef(false);
+
+  // Sync scrollTop when value changes externally
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const target = index * ITEM_H;
+    if (Math.abs(el.scrollTop - target) > 1) {
+      isInternalScroll.current = true;
+      el.scrollTop = target;
+      requestAnimationFrame(() => {
+        isInternalScroll.current = false;
+      });
+    }
+  }, [index]);
+
+  const onScroll = () => {
+    const el = ref.current;
+    if (!el || isInternalScroll.current) return;
+    if (settleRef.current) window.clearTimeout(settleRef.current);
+    settleRef.current = window.setTimeout(() => {
+      const i = Math.round(el.scrollTop / ITEM_H);
+      const clamped = Math.max(0, Math.min(values.length - 1, i));
+      const v = values[clamped];
+      if (v !== value) onChange(v);
+      // Snap precisely
+      isInternalScroll.current = true;
+      el.scrollTop = clamped * ITEM_H;
+      requestAnimationFrame(() => {
+        isInternalScroll.current = false;
+      });
+    }, 90);
+  };
+
   return (
-    <div className="flex items-center gap-0.5">
-      <input
-        ref={ref}
-        aria-label={aria}
-        type="text"
-        inputMode="numeric"
-        value={pad(value)}
-        onChange={(e) => {
-          const v = parseInt(e.target.value.replace(/\D/g, ""), 10);
-          if (!isNaN(v)) onChange(v);
-        }}
-        onWheel={(e) => {
-          if (document.activeElement !== ref.current) return;
-          e.preventDefault();
-          onBump(e.deltaY < 0 ? 1 : -1);
-        }}
-        className="w-11 h-9 text-center text-[15px] font-medium rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-      />
-      <div className="flex flex-col">
-        <button
-          type="button"
-          onClick={() => onBump(1)}
-          className="h-4 w-4 flex items-center justify-center text-muted-foreground hover:text-foreground"
-          aria-label={`Increase ${aria}`}
-        >
-          <ChevronUp className="w-3 h-3" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onBump(-1)}
-          className="h-4 w-4 flex items-center justify-center text-muted-foreground hover:text-foreground"
-          aria-label={`Decrease ${aria}`}
-        >
-          <ChevronDown className="w-3 h-3" />
-        </button>
-      </div>
+    <div
+      ref={ref}
+      role="listbox"
+      aria-label={ariaLabel}
+      onScroll={onScroll}
+      className="overflow-y-auto scrollbar-none snap-y snap-mandatory"
+      style={{
+        height: ITEM_H * 5,
+        width: wide ? 44 : 40,
+        scrollSnapType: "y mandatory",
+        scrollbarWidth: "none",
+      }}
+    >
+      <div style={{ height: ITEM_H * 2 }} aria-hidden />
+      {values.map((v, i) => {
+        const active = i === index;
+        return (
+          <div
+            key={String(v)}
+            onClick={() => onChange(v)}
+            className="flex items-center justify-center cursor-pointer snap-center transition-opacity tabular-nums"
+            style={{
+              height: ITEM_H,
+              fontSize: active ? 16 : 14,
+              fontWeight: active ? 600 : 400,
+              opacity: active ? 1 : 0.35,
+            }}
+          >
+            {format(v)}
+          </div>
+        );
+      })}
+      <div style={{ height: ITEM_H * 2 }} aria-hidden />
     </div>
   );
 }

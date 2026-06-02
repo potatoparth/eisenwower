@@ -170,7 +170,7 @@ export function MatrixView({
 
       {/* Compact 2x2 tiles */}
       {showCompact ? (
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-4 px-3 sm:px-0">
           {quadrants.map((quadrant) => (
             <CompactQuadrantTile
               key={quadrant.id}

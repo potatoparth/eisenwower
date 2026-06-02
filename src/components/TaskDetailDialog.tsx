@@ -110,7 +110,7 @@ export function TaskDetailDialog({
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={save}
-            className="text-xl font-medium border-0 px-0 h-auto focus-visible:ring-0 shadow-none bg-transparent"
+            className="text-[18px] font-medium border-0 px-0 h-auto focus-visible:ring-1 focus-visible:ring-ring shadow-none bg-transparent"
             placeholder="Task name"
           />
 
@@ -144,6 +144,31 @@ export function TaskDetailDialog({
               </Button>
             </div>
           )}
+
+          {/* Quadrant picker */}
+          <div className="grid grid-cols-4 gap-1.5">
+            {quadrants.map((q) => (
+              <button
+                key={q.id}
+                onClick={() => {
+                  setQuadrant(q.id);
+                  onUpdate(task.id, { quadrant: q.id });
+                }}
+                className={cn(
+                  "py-2 px-2 rounded-lg text-[11px] font-medium border transition-all",
+                  quadrant === q.id
+                    ? "border-foreground/40"
+                    : "border-border opacity-60 hover:opacity-100"
+                )}
+                style={{
+                  background: `hsl(var(--quadrant-${q.color}) / 0.10)`,
+                  color: `hsl(var(--quadrant-${q.color}-foreground))`,
+                }}
+              >
+                {q.title}
+              </button>
+            ))}
+          </div>
 
           {/* Description with simple format buttons */}
           <div className="space-y-1.5">
@@ -246,31 +271,6 @@ export function TaskDetailDialog({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          {/* Quadrant picker */}
-          <div className="grid grid-cols-4 gap-1.5">
-            {quadrants.map((q) => (
-              <button
-                key={q.id}
-                onClick={() => {
-                  setQuadrant(q.id);
-                  onUpdate(task.id, { quadrant: q.id });
-                }}
-                className={cn(
-                  "py-2 px-2 rounded-lg text-[11px] font-medium border transition-all",
-                  quadrant === q.id
-                    ? "border-foreground/40"
-                    : "border-border opacity-60 hover:opacity-100"
-                )}
-                style={{
-                  background: `hsl(var(--quadrant-${q.color}) / 0.10)`,
-                  color: `hsl(var(--quadrant-${q.color}-foreground))`,
-                }}
-              >
-                {q.title}
-              </button>
-            ))}
           </div>
 
           <p className="text-[10px] text-muted-foreground pt-1">
