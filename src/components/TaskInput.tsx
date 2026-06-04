@@ -18,7 +18,7 @@ export interface TaskAddOptions {
 
 export type TaskInputPickerProps = Pick<
   TaskInputProps,
-  "categories" | "projects" | "defaultProjectId" | "onCreateCategory" | "onCreateProject"
+  "categories" | "projects" | "defaultProjectId" | "defaultCategory" | "onCreateCategory" | "onCreateProject"
 >;
 
 interface TaskInputProps {
