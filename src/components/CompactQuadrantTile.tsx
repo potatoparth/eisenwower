@@ -8,7 +8,8 @@ interface CompactQuadrantTileProps {
   onClick: () => void;
 }
 
-const MUTED = "#9CA3AF";
+const MUTED_LIGHT = "#9CA3AF";
+const MUTED_DARK = "#4B5563";
 
 export function CompactQuadrantTile({ quadrant, tasks, onClick }: CompactQuadrantTileProps) {
   const open = tasks.filter((t) => t.status === "open");
@@ -75,11 +76,27 @@ export function CompactQuadrantTile({ quadrant, tasks, onClick }: CompactQuadran
       {/* SECTION 2 — STATS */}
       <div
         className="flex flex-1 flex-col justify-center"
-        style={{ padding: "12px 14px", gap: 6 }}
+        style={{ padding: "10px 15px", gap: 8 }}
       >
-        <StatRow label="Today" value={today} color={today > 0 ? "#D97706" : MUTED} />
-        <StatRow label="Open" value={open.length} color={open.length > 0 ? accent : MUTED} />
-        <StatRow label="Overdue" value={overdue} color={overdue > 0 ? "#DC2626" : MUTED} />
+        <SentenceStat
+          value={today}
+          singular="task for today"
+          plural="tasks for today"
+          activeColor="#D97706"
+        />
+        <SentenceStat
+          value={overdue}
+          singular="task to reschedule"
+          plural="tasks to reschedule"
+          activeColor="#DC2626"
+        />
+        <SentenceStat
+          value={open.length}
+          singular="task in total"
+          plural="tasks in total"
+          activeColor={accent}
+          alwaysActive
+        />
       </div>
 
       {/* SECTION 3 — FOOTER */}
@@ -108,12 +125,45 @@ export function CompactQuadrantTile({ quadrant, tasks, onClick }: CompactQuadran
   );
 }
 
-function StatRow({ label, value, color }: { label: string; value: number; color: string }) {
+function SentenceStat({
+  value,
+  singular,
+  plural,
+  activeColor,
+  alwaysActive = false,
+}: {
+  value: number;
+  singular: string;
+  plural: string;
+  activeColor: string;
+  alwaysActive?: boolean;
+}) {
+  const active = alwaysActive || value > 0;
+  const text = value === 1 ? singular : plural;
   return (
-    <div className="flex items-center justify-between">
-      <span style={{ fontSize: 12, color: MUTED }}>{label}</span>
-      <span className="tabular-nums" style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em", color }}>
+    <div className="flex items-baseline" style={{ gap: 0 }}>
+      <span
+        className="tabular-nums"
+        style={{
+          fontSize: 22,
+          fontWeight: 800,
+          letterSpacing: "-0.04em",
+          lineHeight: 1,
+          marginRight: 6,
+          color: active ? activeColor : MUTED_LIGHT,
+        }}
+      >
         {value}
+      </span>
+      <span
+        className="dark:[&]:!text-[color:var(--muted-dark)]"
+        style={
+          active
+            ? { fontSize: 14, fontWeight: 500, letterSpacing: "-0.01em", color: activeColor }
+            : ({ fontSize: 14, fontWeight: 500, letterSpacing: "-0.01em", color: MUTED_LIGHT, ["--muted-dark" as any]: MUTED_DARK } as React.CSSProperties)
+        }
+      >
+        {text}
       </span>
     </div>
   );
