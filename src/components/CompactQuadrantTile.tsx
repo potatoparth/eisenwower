@@ -8,8 +8,6 @@ interface CompactQuadrantTileProps {
   onClick: () => void;
 }
 
-const MUTED_LIGHT = "#9CA3AF";
-const MUTED_DARK = "#4B5563";
 
 export function CompactQuadrantTile({ quadrant, tasks, onClick }: CompactQuadrantTileProps) {
   const open = tasks.filter((t) => t.status === "open");
