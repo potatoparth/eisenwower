@@ -21,6 +21,7 @@ interface QuadrantColumnProps {
   categories: string[];
   projects: ProjectTemplate[];
   defaultProjectId?: string;
+  defaultCategory?: string;
   onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
   onCreateProject?: TaskInputPickerProps["onCreateProject"];
   onExpand?: () => void;
@@ -42,6 +43,7 @@ export function QuadrantColumn({
   categories,
   projects,
   defaultProjectId,
+  defaultCategory,
   onCreateCategory,
   onCreateProject,
 }: QuadrantColumnProps) {
@@ -132,6 +134,7 @@ export function QuadrantColumn({
           categories={categories}
           projects={projects}
           defaultProjectId={defaultProjectId}
+          defaultCategory={defaultCategory}
           onCreateCategory={onCreateCategory}
           onCreateProject={onCreateProject}
         />

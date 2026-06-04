@@ -16,6 +16,7 @@ interface QuadrantExpandDialogProps {
   categories: string[];
   projects: ProjectTemplate[];
   defaultProjectId?: string;
+  defaultCategory?: string;
   onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
   onCreateProject?: TaskInputPickerProps["onCreateProject"];
   onClose: () => void;
@@ -39,6 +40,7 @@ export function QuadrantExpandDialog({
   categories,
   projects,
   defaultProjectId,
+  defaultCategory,
   onCreateCategory,
   onCreateProject,
 }: QuadrantExpandDialogProps) {
@@ -93,6 +95,7 @@ export function QuadrantExpandDialog({
             categories={categories}
             projects={projects}
             defaultProjectId={defaultProjectId}
+            defaultCategory={defaultCategory}
             onCreateCategory={onCreateCategory}
             onCreateProject={onCreateProject}
           />

@@ -32,6 +32,7 @@ interface MatrixViewProps {
   onAddTask: (name: string, quadrant: Quadrant, options?: TaskAddOptions) => void;
   projects: ProjectTemplate[];
   defaultProjectId?: string;
+  defaultCategory?: string;
   onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
   onCreateProject?: TaskInputPickerProps["onCreateProject"];
   onReorderTasks?: (reorderedTasks: Task[]) => void;
@@ -67,6 +68,7 @@ export function MatrixView({
   quadrantMap,
   projects,
   defaultProjectId,
+  defaultCategory,
   onCreateCategory,
   onCreateProject,
 }: MatrixViewProps) {
@@ -163,6 +165,7 @@ export function MatrixView({
           categories={categories}
           projects={projects}
           defaultProjectId={defaultProjectId}
+          defaultCategory={defaultCategory}
           onCreateCategory={onCreateCategory}
           onCreateProject={onCreateProject}
         />
@@ -207,6 +210,7 @@ export function MatrixView({
               categories={categories}
               projects={projects}
               defaultProjectId={defaultProjectId}
+              defaultCategory={defaultCategory}
               onCreateCategory={onCreateCategory}
               onCreateProject={onCreateProject}
             />
@@ -245,6 +249,7 @@ export function MatrixView({
           categories={categories}
           projects={projects}
           defaultProjectId={defaultProjectId}
+          defaultCategory={defaultCategory}
           onCreateCategory={onCreateCategory}
           onCreateProject={onCreateProject}
         />
