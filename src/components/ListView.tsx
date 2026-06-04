@@ -26,6 +26,7 @@ interface ListViewProps {
   onAddTask: (name: string, quadrant: Quadrant, options?: TaskAddOptions) => void;
   projects: ProjectTemplate[];
   defaultProjectId?: string;
+  defaultCategory?: string;
   onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
   onCreateProject?: TaskInputPickerProps["onCreateProject"];
   onTaskClick?: (task: Task) => void;
@@ -48,6 +49,7 @@ export function ListView({
   quadrantMap,
   projects,
   defaultProjectId,
+  defaultCategory,
   onCreateCategory,
   onCreateProject,
 }: ListViewProps) {
@@ -88,6 +90,7 @@ export function ListView({
           categories={categories}
           projects={projects}
           defaultProjectId={defaultProjectId}
+          defaultCategory={defaultCategory}
           onCreateCategory={onCreateCategory}
           onCreateProject={onCreateProject}
         />
