@@ -98,6 +98,9 @@ const Index = () => {
   const defaultProjectId =
     activeProjectId && activeProjectId !== "__none__" ? activeProjectId : undefined;
 
+  const defaultCategory =
+    selectedCategories.length === 1 ? selectedCategories[0] : undefined;
+
   const handleAddTask: typeof addTask = (name, quadrant, options) => {
     // TaskInput always passes category when the user completed the details step.
     const projectId = options?.category
@@ -167,6 +170,7 @@ const Index = () => {
                 quadrantMap={quadrantMap}
                 projects={projects}
                 defaultProjectId={defaultProjectId}
+                defaultCategory={defaultCategory}
                 onCreateCategory={handleCreateCategory}
                 onCreateProject={handleCreateProject}
               />
@@ -182,6 +186,7 @@ const Index = () => {
                 quadrantMap={quadrantMap}
                 projects={projects}
                 defaultProjectId={defaultProjectId}
+                defaultCategory={defaultCategory}
                 onCreateCategory={handleCreateCategory}
                 onCreateProject={handleCreateProject}
               />
