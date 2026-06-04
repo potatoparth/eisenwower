@@ -138,28 +138,30 @@ function SentenceStat({
 }) {
   const active = alwaysActive || value > 0;
   const text = value === 1 ? singular : plural;
+  const mutedClass = "text-[#9CA3AF] dark:text-[#4B5563]";
   return (
     <div className="flex items-baseline" style={{ gap: 0 }}>
       <span
-        className="tabular-nums"
+        className={`tabular-nums ${active ? "" : mutedClass}`}
         style={{
           fontSize: 22,
           fontWeight: 800,
           letterSpacing: "-0.04em",
           lineHeight: 1,
           marginRight: 6,
-          color: active ? activeColor : MUTED_LIGHT,
+          ...(active ? { color: activeColor } : {}),
         }}
       >
         {value}
       </span>
       <span
-        className="dark:[&]:!text-[color:var(--muted-dark)]"
-        style={
-          active
-            ? { fontSize: 14, fontWeight: 500, letterSpacing: "-0.01em", color: activeColor }
-            : ({ fontSize: 14, fontWeight: 500, letterSpacing: "-0.01em", color: MUTED_LIGHT, ["--muted-dark" as any]: MUTED_DARK } as React.CSSProperties)
-        }
+        className={active ? "" : mutedClass}
+        style={{
+          fontSize: 14,
+          fontWeight: 500,
+          letterSpacing: "-0.01em",
+          ...(active ? { color: activeColor } : {}),
+        }}
       >
         {text}
       </span>
