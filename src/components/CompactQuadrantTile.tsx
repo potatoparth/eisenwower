@@ -16,7 +16,7 @@ export function CompactQuadrantTile({ quadrant, tasks, onClick }: CompactQuadran
   const overdue = open.filter((t) => isOverdue(t)).length;
 
   const accent = `hsl(var(--quadrant-${quadrant.color}))`;
-  const accentBg = `hsl(var(--quadrant-${quadrant.color}) / 0.08)`;
+  const accentBg = `hsl(var(--quadrant-${quadrant.color}) / var(--quadrant-tint-alpha, 0.08))`;
   const accentBorder = `hsl(var(--quadrant-${quadrant.color}) / 0.20)`;
   const accentDivider = `hsl(var(--quadrant-${quadrant.color}) / 0.12)`;
   const badgeBg = `hsl(var(--quadrant-${quadrant.color}) / 0.15)`;
@@ -90,8 +90,8 @@ export function CompactQuadrantTile({ quadrant, tasks, onClick }: CompactQuadran
         />
         <SentenceStat
           value={open.length}
-          singular="task in total"
-          plural="tasks in total"
+          singular="task open"
+          plural="tasks open"
           activeColor={accent}
           alwaysActive
         />
