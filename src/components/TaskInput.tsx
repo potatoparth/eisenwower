@@ -31,6 +31,7 @@ interface TaskInputProps {
   categories?: string[];
   projects?: ProjectTemplate[];
   defaultProjectId?: string;
+  defaultCategory?: string;
   onCreateCategory?: (name: string) => string;
   onCreateProject?: (name: string) => string;
 }
@@ -49,6 +50,7 @@ export function TaskInput({
   categories = [],
   projects = [],
   defaultProjectId,
+  defaultCategory,
   onCreateCategory,
   onCreateProject,
 }: TaskInputProps) {
@@ -84,10 +86,7 @@ export function TaskInput({
   );
 
   const canComplete =
-    Boolean(name.trim()) &&
-    Boolean(selectedQuadrant || defaultQuadrant) &&
-    Boolean(category) &&
-    Boolean(projectId);
+    Boolean(name.trim()) && Boolean(selectedQuadrant || defaultQuadrant);
 
   const reset = () => {
     setStep("name");
@@ -105,8 +104,9 @@ export function TaskInput({
     setProjectId(
       defaultProjectId && projects.some((p) => p.id === defaultProjectId)
         ? defaultProjectId
-        : ""
+        : NO_PROJECT
     );
+    setCategory(defaultCategory || "General");
     setStep("details");
   };
 
@@ -127,13 +127,14 @@ export function TaskInput({
 
   const handleComplete = useCallback(() => {
     const q = selectedQuadrant || defaultQuadrant;
-    if (!name.trim() || !q || !category || !projectId) return;
+    if (!name.trim() || !q) return;
 
     onAddTask(name, q, {
       description: description || undefined,
-      category,
+      category: category || defaultCategory || "General",
       dueDate: dueDate || undefined,
-      projectId: projectId === NO_PROJECT ? undefined : projectId,
+      projectId:
+        !projectId || projectId === NO_PROJECT ? undefined : projectId,
     });
     setStep("name");
     setName("");
@@ -144,7 +145,7 @@ export function TaskInput({
     setDescription("");
     setIsFocused(false);
     inputRef.current?.focus();
-  }, [name, selectedQuadrant, defaultQuadrant, category, projectId, description, dueDate, onAddTask]);
+  }, [name, selectedQuadrant, defaultQuadrant, category, projectId, description, dueDate, defaultCategory, onAddTask]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -281,8 +282,8 @@ export function TaskInput({
             >
               <div className="px-3 pb-3 space-y-2">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="font-medium">Category & project</span>
-                  <span className="text-[10px] opacity-60">required</span>
+                  <span className="font-medium">Details</span>
+                  <span className="text-[10px] opacity-60">optional</span>
                 </div>
                 <div className="space-y-2">
                   {/* Description (collapsed by default) */}
