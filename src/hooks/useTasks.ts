@@ -166,9 +166,10 @@ export function useTasks(userId?: string) {
         // Strip undefined keys so we don't overwrite with null.
         const payload = Object.fromEntries(
           Object.entries(toUpdate(propagateUpdates)).filter(([_, v]) => v !== undefined)
-        );
+        ) as Record<string, unknown>;
         if (Object.keys(payload).length) {
-          supabase.from("tasks").update(payload).in("id", propagateIds).eq("user_id", userId).then(({ error }) => { if (error) loadTasks(); });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          supabase.from("tasks").update(payload as any).in("id", propagateIds).eq("user_id", userId).then(({ error }) => { if (error) loadTasks(); });
         }
       }
     }
