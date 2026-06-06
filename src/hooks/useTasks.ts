@@ -2,6 +2,34 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Task, Quadrant, TaskStatus, Recurrence } from "@/types/task";
 
+function computeNextOccurrence(template: Task): string | undefined {
+  const rec = template.recurrence ?? "none";
+  if (rec === "none") return undefined;
+  const base = new Date();
+  base.setHours(0, 0, 0, 0);
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  if (rec === "daily") {
+    const d = new Date(base); d.setDate(d.getDate() + 1); return fmt(d);
+  }
+  if (rec === "weekly") {
+    const days = (template.recurrenceDays && template.recurrenceDays.length)
+      ? [...template.recurrenceDays].sort((a, b) => a - b)
+      : [base.getDay()];
+    for (let i = 1; i <= 7; i++) {
+      const d = new Date(base); d.setDate(d.getDate() + i);
+      if (days.includes(d.getDay())) return fmt(d);
+    }
+    return undefined;
+  }
+  if (rec === "monthly") {
+    const day = (template.recurrenceDays && template.recurrenceDays[0]) || base.getDate();
+    const d = new Date(base.getFullYear(), base.getMonth() + 1, day);
+    return fmt(d);
+  }
+  return undefined;
+}
+
 type TaskRow = {
   id: string; name: string; description: string | null; category: string; quadrant: string; due_date: string | null;
   status: string; created_at: string; updated_at: string; deadline_threshold_override: number | null; kanban_column: string | null; sort_order: number;
