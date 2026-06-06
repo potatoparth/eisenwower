@@ -15,12 +15,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Task, Quadrant, QuadrantInfo } from "@/types/task";
+import { Task, Quadrant, QuadrantInfo, Recurrence } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import { cn } from "@/lib/utils";
 import { isOverdue } from "@/lib/sort";
 import { format, parseISO } from "date-fns";
 import { DateTimePicker } from "@/components/DateTimePicker";
+import { RecurrenceField } from "@/components/RecurrenceField";
 
 interface TaskDetailDialogProps {
   task: Task;
@@ -49,6 +50,8 @@ export function TaskDetailDialog({
   const [dueDate, setDueDate] = useState(task.dueDate || "");
   const [quadrant, setQuadrant] = useState<Quadrant>(task.quadrant);
   const [projectId, setProjectId] = useState<string | undefined>(task.projectId);
+  const [recurrence, setRecurrence] = useState<Recurrence>(task.recurrence ?? "none");
+  const [recurrenceDays, setRecurrenceDays] = useState<number[]>(task.recurrenceDays ?? []);
 
   useEffect(() => {
     setName(task.name);
@@ -57,6 +60,8 @@ export function TaskDetailDialog({
     setDueDate(task.dueDate || "");
     setQuadrant(task.quadrant);
     setProjectId(task.projectId);
+    setRecurrence(task.recurrence ?? "none");
+    setRecurrenceDays(task.recurrenceDays ?? []);
   }, [task]);
 
   const save = () =>
@@ -222,6 +227,28 @@ export function TaskDetailDialog({
               }}
               accentColor={`hsl(var(--quadrant-${qInfo.color}))`}
               className={cn(overdue && "text-destructive")}
+            />
+          </div>
+
+          {/* Repeat */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-medium text-muted-foreground">Repeat</label>
+            <RecurrenceField
+              recurrence={recurrence}
+              recurrenceDays={recurrenceDays}
+              onChange={({ recurrence: r, recurrenceDays: d }) => {
+                setRecurrence(r);
+                setRecurrenceDays(d);
+                // If recurrence set with no deadline, default to today.
+                let nextDue = dueDate;
+                if (r !== "none" && !nextDue) {
+                  const t = new Date();
+                  nextDue = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+                  setDueDate(nextDue);
+                }
+                onUpdate(task.id, { recurrence: r, recurrenceDays: d, dueDate: nextDue || undefined });
+              }}
+              compact
             />
           </div>
 
