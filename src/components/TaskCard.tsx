@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, Trash2, GripVertical } from "lucide-react";
+import { Check, Trash2, GripVertical, Repeat } from "lucide-react";
 import { Task, Quadrant, QuadrantInfo, QUADRANT_MAP } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { format, isToday, isTomorrow, isPast, parseISO } from "date-fns";
@@ -126,6 +126,10 @@ export function TaskCard({
             >
               {task.category}
             </span>
+          )}
+
+          {task.recurrence && task.recurrence !== "none" && (
+            <Repeat className="w-3 h-3 text-muted-foreground" style={{ opacity: 0.45 }} />
           )}
 
           {task.dueDate && (
