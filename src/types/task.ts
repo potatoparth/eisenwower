@@ -6,6 +6,8 @@ export type Quadrant =
 
 export type TaskStatus = "open" | "done";
 
+export type Recurrence = "none" | "daily" | "weekly" | "monthly";
+
 export interface Task {
   id: string;
   name: string;
@@ -19,6 +21,11 @@ export interface Task {
   deadlineThresholdOverride?: number; // per-task override for deadline warning days
   kanbanColumn?: string; // which kanban column this task belongs to
   projectId?: string; // optional project association
+  recurrence?: Recurrence; // default 'none'
+  recurrenceDays?: number[]; // 0..6 (Sun..Sat) for weekly
+  recurrenceTime?: string; // HH:MM
+  isRecurringInstance?: boolean;
+  recurringTemplateId?: string;
 }
 
 export interface QuadrantInfo {
