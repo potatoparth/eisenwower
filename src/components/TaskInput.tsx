@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Calendar, Tag, ChevronRight, FolderKanban, AlignLeft } from "lucide-react";
-import { Quadrant, QUADRANTS, QuadrantInfo } from "@/types/task";
+import { Quadrant, QUADRANTS, QuadrantInfo, Recurrence } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SelectorWithCreate } from "@/components/SelectorWithCreate";
 import { DateTimePicker } from "@/components/DateTimePicker";
+import { RecurrenceField } from "@/components/RecurrenceField";
 import { cn } from "@/lib/utils";
 
 export interface TaskAddOptions {
@@ -14,6 +15,9 @@ export interface TaskAddOptions {
   category?: string;
   dueDate?: string;
   projectId?: string;
+  recurrence?: Recurrence;
+  recurrenceDays?: number[];
+  recurrenceTime?: string;
 }
 
 export type TaskInputPickerProps = Pick<
@@ -65,6 +69,8 @@ export function TaskInput({
   const [description, setDescription] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [descOpen, setDescOpen] = useState(false);
+  const [recurrence, setRecurrence] = useState<Recurrence>("none");
+  const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -98,6 +104,8 @@ export function TaskInput({
     setDescription("");
     setIsFocused(false);
     setDescOpen(false);
+    setRecurrence("none");
+    setRecurrenceDays([]);
   };
 
   const beginDetails = () => {
@@ -129,12 +137,21 @@ export function TaskInput({
     const q = selectedQuadrant || defaultQuadrant;
     if (!name.trim() || !q) return;
 
+    // If recurrence set and no deadline, default to today.
+    let finalDueDate = dueDate;
+    if (recurrence !== "none" && !finalDueDate) {
+      const d = new Date();
+      finalDueDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
     onAddTask(name, q, {
       description: description || undefined,
       category: category || defaultCategory || "General",
-      dueDate: dueDate || undefined,
+      dueDate: finalDueDate || undefined,
       projectId:
         !projectId || projectId === NO_PROJECT ? undefined : projectId,
+      recurrence,
+      recurrenceDays,
     });
     setStep("name");
     setName("");
@@ -144,8 +161,10 @@ export function TaskInput({
     setDueDate("");
     setDescription("");
     setIsFocused(false);
+    setRecurrence("none");
+    setRecurrenceDays([]);
     inputRef.current?.focus();
-  }, [name, selectedQuadrant, defaultQuadrant, category, projectId, description, dueDate, defaultCategory, onAddTask]);
+  }, [name, selectedQuadrant, defaultQuadrant, category, projectId, description, dueDate, defaultCategory, onAddTask, recurrence, recurrenceDays]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -323,6 +342,15 @@ export function TaskInput({
                       />
                     </div>
                   </div>
+                  <RecurrenceField
+                    recurrence={recurrence}
+                    recurrenceDays={recurrenceDays}
+                    onChange={({ recurrence: r, recurrenceDays: d }) => {
+                      setRecurrence(r);
+                      setRecurrenceDays(d);
+                    }}
+                    compact
+                  />
                   <SelectorWithCreate
                     icon={<Tag className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
                     options={categoryOptions}
