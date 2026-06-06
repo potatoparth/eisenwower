@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, Calendar, Tag, AlertCircle, FolderKanban } from "lucide-react";
-import { Task, Quadrant, QuadrantInfo } from "@/types/task";
+import { Task, Quadrant, QuadrantInfo, Recurrence } from "@/types/task";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,6 +8,7 @@ import { ProjectTemplate } from "@/types/project";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays, isPast, isToday } from "date-fns";
 import { DateTimePicker } from "@/components/DateTimePicker";
+import { RecurrenceField } from "@/components/RecurrenceField";
 
 interface TaskDetailPanelProps {
   task: Task;
@@ -27,6 +28,8 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
   const [quadrant, setQuadrant] = useState<Quadrant>(task.quadrant);
   const [deadlineThreshold, setDeadlineThreshold] = useState<number | undefined>(task.deadlineThresholdOverride);
   const [projectId, setProjectId] = useState<string | undefined>(task.projectId);
+  const [recurrence, setRecurrence] = useState<Recurrence>(task.recurrence ?? "none");
+  const [recurrenceDays, setRecurrenceDays] = useState<number[]>(task.recurrenceDays ?? []);
 
   useEffect(() => {
     setName(task.name);
@@ -36,6 +39,8 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
     setQuadrant(task.quadrant);
     setDeadlineThreshold(task.deadlineThresholdOverride);
     setProjectId(task.projectId);
+    setRecurrence(task.recurrence ?? "none");
+    setRecurrenceDays(task.recurrenceDays ?? []);
   }, [task]);
 
   const handleSave = () => {
@@ -142,6 +147,26 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
               const c = quadrants.find((q) => q.id === quadrant)?.color ?? 1;
               return `hsl(var(--quadrant-${c}))`;
             })()}
+          />
+        </div>
+
+        {/* Repeat */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">Repeat</label>
+          <RecurrenceField
+            recurrence={recurrence}
+            recurrenceDays={recurrenceDays}
+            onChange={({ recurrence: r, recurrenceDays: d }) => {
+              setRecurrence(r);
+              setRecurrenceDays(d);
+              let nextDue = dueDate;
+              if (r !== "none" && !nextDue) {
+                const t = new Date();
+                nextDue = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+                setDueDate(nextDue);
+              }
+              onUpdate(task.id, { recurrence: r, recurrenceDays: d, dueDate: nextDue || undefined });
+            }}
           />
         </div>
 
