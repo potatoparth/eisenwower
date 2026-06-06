@@ -1,11 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Task, Quadrant, TaskStatus } from "@/types/task";
+import { Task, Quadrant, TaskStatus, Recurrence } from "@/types/task";
 
 type TaskRow = {
   id: string; name: string; description: string | null; category: string; quadrant: string; due_date: string | null;
   status: string; created_at: string; updated_at: string; deadline_threshold_override: number | null; kanban_column: string | null; sort_order: number;
   project_id: string | null;
+  recurrence: string | null;
+  recurrence_days: number[] | null;
+  recurrence_time: string | null;
+  is_recurring_instance: boolean | null;
+  recurring_template_id: string | null;
 };
 
 const fromRow = (row: TaskRow): Task => ({
@@ -21,6 +26,11 @@ const fromRow = (row: TaskRow): Task => ({
   deadlineThresholdOverride: row.deadline_threshold_override ?? undefined,
   kanbanColumn: row.kanban_column || undefined,
   projectId: row.project_id || undefined,
+  recurrence: (row.recurrence as Recurrence) || "none",
+  recurrenceDays: row.recurrence_days || [],
+  recurrenceTime: row.recurrence_time || "22:00",
+  isRecurringInstance: !!row.is_recurring_instance,
+  recurringTemplateId: row.recurring_template_id || undefined,
 });
 
 const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => ({
@@ -33,6 +43,11 @@ const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => ({
   deadline_threshold_override: updates.deadlineThresholdOverride ?? null,
   kanban_column: updates.kanbanColumn ?? null,
   project_id: updates.projectId ?? null,
+  recurrence: updates.recurrence ?? undefined,
+  recurrence_days: updates.recurrenceDays ?? undefined,
+  recurrence_time: updates.recurrenceTime ?? undefined,
+  is_recurring_instance: updates.isRecurringInstance ?? undefined,
+  recurring_template_id: updates.recurringTemplateId ?? undefined,
 });
 
 export function useTasks(userId?: string) {
