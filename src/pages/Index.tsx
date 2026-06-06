@@ -18,6 +18,10 @@ import { SettingsPanel } from "@/components/SettingsPanel";
 import { LoginPage } from "@/components/LoginPage";
 import { ViewMode } from "@/components/ViewToggle";
 import { Task, getQuadrants, getQuadrantMap } from "@/types/task";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Index = () => {
   const {
@@ -39,6 +43,7 @@ const Index = () => {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [recurringDeleteTask, setRecurringDeleteTask] = useState<Task | null>(null);
   const [overdueMode, setOverdueMode] = useState<OverdueMode>(() => {
     const stored = typeof window !== "undefined" ? localStorage.getItem("overdueMode") : null;
     return (stored as OverdueMode) || "all";
@@ -110,6 +115,16 @@ const Index = () => {
     return addTask(name, quadrant, { ...options, projectId });
   };
 
+  const handleDeleteTask = (id: string) => {
+    const t = tasks.find((x) => x.id === id);
+    const isTemplate = t && (t.recurrence ?? "none") !== "none" && !t.isRecurringInstance;
+    if (isTemplate) {
+      setRecurringDeleteTask(t!);
+      return;
+    }
+    deleteTask(id);
+  };
+
   const handleCreateCategory = (name: string) => {
     addCategoryColor(name, "#7a8599");
     return name;
@@ -158,7 +173,7 @@ const Index = () => {
             <motion.div key="matrix" {...viewAnimation} className="h-full">
               <MatrixView
                 tasks={filteredTasks} categories={taskCategories} onMoveTask={moveTask}
-                onToggleStatus={toggleStatus} onDeleteTask={deleteTask} onAddTask={handleAddTask}
+                onToggleStatus={toggleStatus} onDeleteTask={handleDeleteTask} onAddTask={handleAddTask}
                 onReorderTasks={setTasks} onTaskClick={setSelectedTask}
                 getCategoryColor={getCategoryColor} deadlineThresholdDays={settings.deadlineThresholdDays}
                 dateFilter={dateFilter}
@@ -180,7 +195,7 @@ const Index = () => {
             <motion.div key="list" {...viewAnimation} className="h-full max-w-4xl mx-auto">
               <ListView
                 tasks={filteredTasks} categories={taskCategories} onToggleStatus={toggleStatus}
-                onDeleteTask={deleteTask} onAddTask={handleAddTask} onTaskClick={setSelectedTask}
+                onDeleteTask={handleDeleteTask} onAddTask={handleAddTask} onTaskClick={setSelectedTask}
                 getCategoryColor={getCategoryColor} deadlineThresholdDays={settings.deadlineThresholdDays}
                 quadrants={quadrants}
                 quadrantMap={quadrantMap}
@@ -197,7 +212,7 @@ const Index = () => {
               <KanbanView
                 tasks={filteredTasks} columns={columns} onAddColumn={addColumn}
                 onRemoveColumn={removeColumn} onRenameColumn={renameColumn}
-                onToggleStatus={toggleStatus} onDeleteTask={deleteTask}
+                onToggleStatus={toggleStatus} onDeleteTask={handleDeleteTask}
                 onUpdateTask={updateTask} onAddTask={handleAddTask}
                 onTaskClick={setSelectedTask} getCategoryColor={getCategoryColor}
                 deadlineThresholdDays={settings.deadlineThresholdDays}
@@ -264,6 +279,36 @@ const Index = () => {
           allCategories={getCategories()}
         />
       )}
+
+      <AlertDialog open={!!recurringDeleteTask} onOpenChange={(o) => !o && setRecurringDeleteTask(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete recurring task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{recurringDeleteTask?.name}" repeats. Choose what to delete.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (recurringDeleteTask) deleteTask(recurringDeleteTask.id, "single");
+                setRecurringDeleteTask(null);
+              }}
+            >
+              Delete this task only
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => {
+                if (recurringDeleteTask) deleteTask(recurringDeleteTask.id, "future");
+                setRecurringDeleteTask(null);
+              }}
+            >
+              Delete all future repeats
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

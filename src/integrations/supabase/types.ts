@@ -189,10 +189,15 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          is_recurring_instance: boolean
           kanban_column: string | null
           name: string
           project_id: string | null
           quadrant: string
+          recurrence: string
+          recurrence_days: number[]
+          recurrence_time: string
+          recurring_template_id: string | null
           sort_order: number
           status: string
           updated_at: string
@@ -205,10 +210,15 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          is_recurring_instance?: boolean
           kanban_column?: string | null
           name: string
           project_id?: string | null
           quadrant?: string
+          recurrence?: string
+          recurrence_days?: number[]
+          recurrence_time?: string
+          recurring_template_id?: string | null
           sort_order?: number
           status?: string
           updated_at?: string
@@ -221,10 +231,15 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          is_recurring_instance?: boolean
           kanban_column?: string | null
           name?: string
           project_id?: string | null
           quadrant?: string
+          recurrence?: string
+          recurrence_days?: number[]
+          recurrence_time?: string
+          recurring_template_id?: string | null
           sort_order?: number
           status?: string
           updated_at?: string
