@@ -357,7 +357,7 @@ export function SettingsPanel({
         <section className="space-y-3 pt-2 border-t">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-foreground">{settings.localUsername || currentUser?.username}</p>
+              <p className="text-sm font-medium text-foreground">{currentUser?.username}</p>
               <p className="text-xs text-muted-foreground">{currentUser?.role}</p>
             </div>
             <Button variant="outline" size="sm" onClick={onLogout} className="rounded-xl gap-1.5">
