@@ -44,12 +44,6 @@ export function Header({ viewMode, onViewModeChange, taskCount, onSettingsClick,
           <LayoutGrid className="w-4 h-4 text-primary" />
         </div>
         <div>
-          <h1
-            className="font-semibold text-[15px] text-foreground leading-tight"
-            style={{ letterSpacing: "-0.03em" }}
-          >
-            Eisenhower
-          </h1>
           <p className="text-[11px] leading-tight" style={{ color: "#9CA3AF" }}>
             {taskCount} open{username && <span> · {username}</span>}
           </p>
