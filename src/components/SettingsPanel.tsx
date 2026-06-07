@@ -24,6 +24,7 @@ interface SettingsPanelProps {
   onLogout: () => void;
   onDeleteUser: (id: string) => void;
   allCategories?: string[];
+  onUpdateDisplayName?: (name: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export function SettingsPanel({
@@ -41,10 +42,12 @@ export function SettingsPanel({
   onLogout,
   onDeleteUser,
   allCategories = [],
+  onUpdateDisplayName,
 }: SettingsPanelProps) {
   const [newCatName, setNewCatName] = useState("");
   const [newCatColor, setNewCatColor] = useState("#7a8599");
-  const [usernameDraft, setUsernameDraft] = useState(settings.localUsername || currentUser?.username || "");
+  const [usernameDraft, setUsernameDraft] = useState(currentUser?.username || "");
+  const [savingName, setSavingName] = useState(false);
   const initialMode: "light" | "dark" =
     typeof document !== "undefined" && document.documentElement.classList.contains("dark")
       ? "dark"
@@ -86,13 +89,19 @@ export function SettingsPanel({
             />
             <Button
               size="sm"
-              onClick={() => onUpdateSettings({ localUsername: usernameDraft.trim() || undefined })}
+              disabled={savingName || !usernameDraft.trim() || usernameDraft.trim() === currentUser?.username}
+              onClick={async () => {
+                if (!onUpdateDisplayName) return;
+                setSavingName(true);
+                await onUpdateDisplayName(usernameDraft);
+                setSavingName(false);
+              }}
               className="rounded-lg"
             >
               Save
             </Button>
           </div>
-          <p className="text-[11px] text-muted-foreground">Saved locally on this device.</p>
+          <p className="text-[11px] text-muted-foreground">Synced across your devices.</p>
         </section>
 
         {/* Quadrant tint intensity */}

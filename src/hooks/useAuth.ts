@@ -142,6 +142,24 @@ export function useAuth() {
     setUsers(prev => prev.filter(u => u.id !== id));
   }, []);
 
+  const updateDisplayName = useCallback(async (name: string): Promise<AuthResult> => {
+    if (!authUser) return { success: false, error: "Not signed in" };
+    const trimmed = name.trim();
+    if (!trimmed) return { success: false, error: "Name cannot be empty" };
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: trimmed })
+      .eq("user_id", authUser.id);
+    if (error) return { success: false, error: error.message };
+
+    await supabase.auth.updateUser({ data: { display_name: trimmed } });
+
+    setCurrentUser(prev => prev ? { ...prev, username: trimmed } : prev);
+    setUsers(prev => prev.map(u => u.id === authUser.id ? { ...u, username: trimmed } : u));
+    return { success: true };
+  }, [authUser]);
+
   return useMemo(() => ({
     session,
     authUser,
@@ -155,5 +173,6 @@ export function useAuth() {
     loginWithGoogle,
     logout,
     deleteUser,
-  }), [session, authUser, currentUser, users, isInitialized, isAdmin, signup, login, loginWithGoogle, logout, deleteUser]);
+    updateDisplayName,
+  }), [session, authUser, currentUser, users, isInitialized, isAdmin, signup, login, loginWithGoogle, logout, deleteUser, updateDisplayName]);
 }
