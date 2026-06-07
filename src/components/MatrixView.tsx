@@ -242,7 +242,7 @@ export function MatrixView({
           onDelete={onDeleteTask}
           onAddTask={onAddTask}
           onClose={() => setExpandedQuadrant(null)}
-          onTaskClick={(task) => { setExpandedQuadrant(null); onTaskClick?.(task); }}
+          onTaskClick={(task) => onTaskClick?.(task)}
           getCategoryColor={getCategoryColor}
           deadlineThresholdDays={deadlineThresholdDays}
           bottomSheet={isMobile}

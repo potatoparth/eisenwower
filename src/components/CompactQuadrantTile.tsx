@@ -97,28 +97,6 @@ export function CompactQuadrantTile({ quadrant, tasks, onClick }: CompactQuadran
         />
       </div>
 
-      {/* SECTION 3 — FOOTER */}
-      {today > 0 && (
-        <div
-          className="flex-shrink-0"
-          style={{ padding: "10px 14px", borderTop: `1px solid ${accentDivider}`, display: "flex", flexDirection: "column", gap: 4 }}
-        >
-          {todayTasks.slice(0, 2).map((t) => (
-            <div key={t.id} className="flex items-center gap-1.5 min-w-0">
-              <span
-                className="rounded-full flex-shrink-0"
-                style={{ width: 5, height: 5, backgroundColor: accent }}
-              />
-              <span
-                className="overflow-hidden whitespace-nowrap text-ellipsis text-foreground/80"
-                style={{ fontSize: 11 }}
-              >
-                {t.name}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
     </button>
   );
 }
