@@ -26,7 +26,7 @@ import {
 const Index = () => {
   const {
     currentUser, users, isInitialized, needsSetup, isAdmin,
-    signup, login, loginWithGoogle, logout, deleteUser,
+    signup, login, loginWithGoogle, logout, deleteUser, updateDisplayName,
   } = useAuth();
 
   const {
@@ -133,7 +133,7 @@ const Index = () => {
   const handleCreateProject = (name: string) => addProject(name).id;
 
   const useSidebarDetail = settings.taskDetailView === "sidebar";
-  const displayUsername = settings.localUsername || currentUser.username;
+  const displayUsername = currentUser.username;
 
   return (
     <div className={`h-screen bg-background flex flex-col overflow-hidden ${fontSizeClass}`}>
@@ -277,6 +277,7 @@ const Index = () => {
           onClose={() => setShowSettings(false)} currentUser={currentUser}
           users={users} isAdmin={isAdmin} onLogout={logout} onDeleteUser={deleteUser}
           allCategories={getCategories()}
+          onUpdateDisplayName={updateDisplayName}
         />
       )}
 
