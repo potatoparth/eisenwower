@@ -77,7 +77,9 @@ export function QuadrantExpandDialog({
           <div className="flex items-center gap-2">
             <span className={cn("w-3 h-3 rounded-full", getDotClass())} />
             <h2 className="font-semibold text-lg text-foreground">{quadrant.title}</h2>
-            <span className="text-sm text-muted-foreground">— {quadrant.subtitle}</span>
+            {quadrant.subtitle && (
+              <span className="text-sm text-muted-foreground">— {quadrant.subtitle}</span>
+            )}
             <span className="text-xs text-muted-foreground ml-2">{openTasks.length} open</span>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose} className="rounded-lg">

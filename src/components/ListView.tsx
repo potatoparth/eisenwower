@@ -149,7 +149,9 @@ export function ListView({
               <div className="flex items-center gap-2 px-1">
                 <span className={cn("w-2 h-2 rounded-full", info.color === 1 && "bg-quadrant-1", info.color === 2 && "bg-quadrant-2", info.color === 3 && "bg-quadrant-3", info.color === 4 && "bg-quadrant-4")} />
                 <h3 className="font-medium text-sm">{info.title}</h3>
-                <span className="text-xs text-muted-foreground">{info.subtitle}</span>
+                {info.subtitle && (
+                  <span className="text-xs text-muted-foreground">{info.subtitle}</span>
+                )}
                 <span className="text-xs text-muted-foreground ml-auto">{quadrantTasks.length}</span>
               </div>
               <div className="space-y-1">

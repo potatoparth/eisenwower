@@ -1,11 +1,18 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Calendar, Tag, ChevronRight, FolderKanban, AlignLeft } from "lucide-react";
+import { Calendar, Tag, ChevronRight, FolderKanban, AlignLeft } from "lucide-react";
 import { Quadrant, QUADRANTS, QuadrantInfo, Recurrence } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SelectorWithCreate } from "@/components/SelectorWithCreate";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { RecurrenceField } from "@/components/RecurrenceField";
 import { cn } from "@/lib/utils";
@@ -217,23 +224,27 @@ export function TaskInput({
     <div ref={containerRef} className={cn("relative", className)}>
       <div
         className={cn(
-          "bg-card rounded-xl border transition-all duration-200",
-          isFocused || step !== "name"
-            ? "border-primary/20 shadow-medium"
-            : "border-border shadow-soft",
-          compact && "rounded-lg"
+          "transition-all duration-200 border bg-secondary/40 border-border/60",
+          step === "name"
+            ? compact
+              ? "rounded-full"
+              : "rounded-full mx-auto max-w-2xl"
+            : "rounded-2xl bg-card"
         )}
       >
         {/* Name Input */}
-        <div className={cn("flex items-center gap-2", compact ? "p-2" : "p-3")}>
-          <div
-            className={cn(
-              "rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0",
-              compact ? "w-6 h-6" : "w-7 h-7"
-            )}
-          >
-            <Plus className={cn(compact ? "w-3 h-3" : "w-3.5 h-3.5", "text-primary")} />
-          </div>
+        <div
+          className={cn(
+            "flex items-center gap-2",
+            step === "name"
+              ? compact
+                ? "px-3 py-1.5"
+                : "px-5 py-2.5"
+              : compact
+              ? "p-2"
+              : "p-3"
+          )}
+        >
           <Input
             ref={inputRef}
             type="text"
@@ -243,7 +254,7 @@ export function TaskInput({
             onFocus={() => setIsFocused(true)}
             placeholder={placeholder}
             className={cn(
-              "border-0 shadow-none p-0 h-auto placeholder:text-muted-foreground/60 focus-visible:ring-0",
+              "border-0 bg-transparent shadow-none p-0 h-auto placeholder:text-muted-foreground/50 focus-visible:ring-0",
               compact ? "text-sm" : "text-base"
             )}
           />
@@ -251,7 +262,7 @@ export function TaskInput({
             <Button
               size="sm"
               onClick={handleNameSubmit}
-              className="rounded-lg h-7 w-7 p-0"
+              className="rounded-full h-7 w-7 p-0"
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </Button>
@@ -280,7 +291,9 @@ export function TaskInput({
                       className={getQuadrantButtonClass(q)}
                     >
                       <span className="block font-semibold text-xs">{q.title}</span>
-                      <span className="block text-[10px] opacity-75">{q.subtitle}</span>
+                      {q.subtitle && (
+                        <span className="block text-[10px] opacity-75">{q.subtitle}</span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -351,17 +364,21 @@ export function TaskInput({
                     }}
                     compact
                   />
-                  <SelectorWithCreate
-                    icon={<Tag className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
-                    options={categoryOptions}
-                    value={category}
-                    onChange={setCategory}
-                    onCreate={onCreateCategory}
-                    placeholder="Select category"
-                    searchPlaceholder="Search categories…"
-                    createPlaceholder="New category name…"
-                    compact
-                  />
+                  <div className="flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                    <Select value={category} onValueChange={setCategory}>
+                      <SelectTrigger className="flex-1 h-8 text-xs bg-secondary/50 border-0 rounded-lg">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categoryOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <SelectorWithCreate
                     icon={<FolderKanban className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
                     options={projectOptions}

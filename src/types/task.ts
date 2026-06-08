@@ -80,7 +80,10 @@ export function getQuadrants(labels?: Partial<QuadrantLabels>): QuadrantInfo[] {
   return QUADRANTS.map((q) => ({
     ...q,
     title: labels?.[q.id]?.title?.trim() || q.title,
-    subtitle: labels?.[q.id]?.subtitle?.trim() || q.subtitle,
+    subtitle:
+      labels?.[q.id]?.subtitle !== undefined
+        ? labels[q.id]!.subtitle.trim()
+        : q.subtitle,
   }));
 }
 

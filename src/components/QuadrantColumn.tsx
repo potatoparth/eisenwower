@@ -121,7 +121,9 @@ export function QuadrantColumn({
             </button>
           )}
         </div>
-        <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 ml-[16px]">{quadrant.subtitle}</p>
+        {quadrant.subtitle && (
+          <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 ml-[16px]">{quadrant.subtitle}</p>
+        )}
       </div>
 
       {/* Task Input */}
