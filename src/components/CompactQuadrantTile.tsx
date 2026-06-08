@@ -63,12 +63,14 @@ export function CompactQuadrantTile({ quadrant, tasks, onClick }: CompactQuadran
             {open.length}
           </span>
         </div>
-        <p
-          className="mt-1 max-w-full overflow-hidden whitespace-nowrap text-ellipsis"
-          style={{ fontSize: 11, color: subtitleColor }}
-        >
-          {quadrant.subtitle}
-        </p>
+        {quadrant.subtitle && (
+          <p
+            className="mt-1 max-w-full overflow-hidden whitespace-nowrap text-ellipsis"
+            style={{ fontSize: 11, color: subtitleColor }}
+          >
+            {quadrant.subtitle}
+          </p>
+        )}
       </div>
 
       {/* SECTION 2 — STATS */}

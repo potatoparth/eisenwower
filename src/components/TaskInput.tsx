@@ -280,7 +280,9 @@ export function TaskInput({
                       className={getQuadrantButtonClass(q)}
                     >
                       <span className="block font-semibold text-xs">{q.title}</span>
-                      <span className="block text-[10px] opacity-75">{q.subtitle}</span>
+                      {q.subtitle && (
+                        <span className="block text-[10px] opacity-75">{q.subtitle}</span>
+                      )}
                     </button>
                   ))}
                 </div>
