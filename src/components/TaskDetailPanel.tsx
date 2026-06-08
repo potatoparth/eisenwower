@@ -18,9 +18,10 @@ interface TaskDetailPanelProps {
   getCategoryColor?: (name: string) => string | undefined;
   projects?: ProjectTemplate[];
   quadrants: QuadrantInfo[];
+  categories?: string[];
 }
 
-export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose, getCategoryColor, projects = [], quadrants }: TaskDetailPanelProps) {
+export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose, getCategoryColor, projects = [], quadrants, categories = [] }: TaskDetailPanelProps) {
   const [name, setName] = useState(task.name);
   const [description, setDescription] = useState(task.description || "");
   const [category, setCategory] = useState(task.category);
@@ -183,12 +184,22 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
                 style={{ backgroundColor: getCategoryColor(category) }}
               />
             )}
-            <Input
+            <Select
               value={category}
-              onChange={e => setCategory(e.target.value)}
-              onBlur={handleBlur}
-              className="border-0 bg-secondary/50 rounded-xl"
-            />
+              onValueChange={(v) => {
+                setCategory(v);
+                onUpdate(task.id, { category: v });
+              }}
+            >
+              <SelectTrigger className="border-0 bg-secondary/50 rounded-xl">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from(new Set([...categories, "General", category].filter(Boolean))).sort((a, b) => a.localeCompare(b)).map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

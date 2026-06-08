@@ -250,6 +250,7 @@ const Index = () => {
           getCategoryColor={getCategoryColor}
           projects={projects}
           quadrants={quadrants}
+          categories={taskCategories}
         />
       )}
       {selectedTask && !useSidebarDetail && (
@@ -265,6 +266,7 @@ const Index = () => {
           projects={projects}
           quadrants={quadrants}
           quadrantMap={quadrantMap}
+          categories={taskCategories}
         />
       )}
 

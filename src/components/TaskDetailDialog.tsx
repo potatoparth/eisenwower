@@ -32,6 +32,7 @@ interface TaskDetailDialogProps {
   projects?: ProjectTemplate[];
   quadrants: QuadrantInfo[];
   quadrantMap: Record<Quadrant, QuadrantInfo>;
+  categories?: string[];
 }
 
 export function TaskDetailDialog({
@@ -43,6 +44,7 @@ export function TaskDetailDialog({
   projects = [],
   quadrants,
   quadrantMap,
+  categories = [],
 }: TaskDetailDialogProps) {
   const [name, setName] = useState(task.name);
   const [description, setDescription] = useState(task.description || "");
@@ -264,12 +266,22 @@ export function TaskDetailDialog({
                   style={{ backgroundColor: getCategoryColor(category) }}
                 />
               )}
-              <Input
+              <Select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                onBlur={save}
-                className="rounded-lg bg-secondary/60 border-0"
-              />
+                onValueChange={(v) => {
+                  setCategory(v);
+                  onUpdate(task.id, { category: v });
+                }}
+              >
+                <SelectTrigger className="rounded-lg bg-secondary/60 border-0">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from(new Set([...categories, "General", category].filter(Boolean))).sort((a, b) => a.localeCompare(b)).map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
