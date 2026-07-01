@@ -93,20 +93,18 @@ export function TaskDetailDialog({
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-[640px] rounded-2xl p-0 overflow-hidden backdrop-blur-xl">
-        <DialogHeader className="px-3 pt-3 pb-2 flex flex-row items-center justify-between space-y-0 gap-1">
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" onClick={() => prevTask && onNavigate?.(prevTask)} disabled={!prevTask} className="h-8 w-8 p-0 rounded-lg" title="Previous task">
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
+        <DialogHeader className="px-3 pt-3 pb-2 grid grid-cols-[1fr_auto_1fr] items-center space-y-0 gap-2">
+          <Button variant="ghost" size="sm" onClick={() => prevTask && onNavigate?.(prevTask)} disabled={!prevTask} className="h-8 w-8 p-0 rounded-lg justify-self-start" title="Previous task">
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <DialogTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2 justify-self-center">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(var(--quadrant-${qInfo.color}))` }} />
+            {qInfo.title}
+          </DialogTitle>
+          <div className="flex items-center gap-1 justify-self-end">
             <Button variant="ghost" size="sm" onClick={() => nextTask && onNavigate?.(nextTask)} disabled={!nextTask} className="h-8 w-8 p-0 rounded-lg" title="Next task">
               <ChevronRight className="w-4 h-4" />
             </Button>
-            <DialogTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2 ml-2">
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(var(--quadrant-${qInfo.color}))` }} />
-              {qInfo.title}
-            </DialogTitle>
-          </div>
-          <div className="flex items-center gap-1">
             {onToggleStatus && (
               <Button
                 variant={task.status === "done" ? "secondary" : "outline"}
@@ -130,7 +128,7 @@ export function TaskDetailDialog({
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={save}
-            className="text-[18px] font-medium border-0 px-0 h-auto focus-visible:ring-1 focus-visible:ring-ring shadow-none bg-transparent"
+            className="text-[18px] font-medium border-0 px-0 h-auto focus-visible:ring-1 focus-visible:ring-ring shadow-none bg-transparent text-center"
             placeholder="Task name"
           />
 
@@ -178,12 +176,16 @@ export function TaskDetailDialog({
                   "py-2 px-2 rounded-lg text-[11px] font-medium border transition-all",
                   quadrant === q.id
                     ? "border-foreground/40"
-                    : "border-border opacity-60 hover:opacity-100"
+                    : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground"
                 )}
-                style={{
-                  background: `hsl(var(--quadrant-${q.color}) / 0.10)`,
-                  color: `hsl(var(--quadrant-${q.color}-foreground))`,
-                }}
+                style={
+                  quadrant === q.id
+                    ? {
+                        background: `hsl(var(--quadrant-${q.color}) / 0.18)`,
+                        color: `hsl(var(--quadrant-${q.color}-foreground))`,
+                      }
+                    : undefined
+                }
               >
                 {q.title}
               </button>
