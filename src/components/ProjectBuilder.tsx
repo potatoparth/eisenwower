@@ -119,6 +119,22 @@ export function ProjectBuilder({
             </Button>
           </div>
 
+          {/* Matrix-style task input — a quadrant selection is required. */}
+          {onAddMatrixTask && (
+            <div className="max-w-2xl w-full mx-auto">
+              <TaskInput
+                onAddTask={handleAddMatrixTask}
+                placeholder="Add a task to this project..."
+                quadrants={quadrants}
+                categories={categories}
+                projects={projects}
+                defaultProjectId={selectedProject.id}
+                onCreateCategory={onCreateCategory}
+                onCreateProject={onCreateProject}
+              />
+            </div>
+          )}
+
           {/* Task list with dependency visualization */}
           <div className="flex-1 overflow-y-auto space-y-2">
             {selectedProject.tasks.sort((a, b) => a.order - b.order).map((task, idx) => {
@@ -181,13 +197,7 @@ export function ProjectBuilder({
             )}
 
             {mappedTasks.length > 0 && (
-              <div className="pt-4 mt-2 border-t border-border space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Mapped Tasks ({mappedTasks.length})
-                  </h4>
-                  <span className="text-[10px] text-muted-foreground">from Matrix / Kanban</span>
-                </div>
+              <div className="space-y-2">
                 {mappedTasks.map(t => (
                   <div key={t.id} className="flex items-center gap-3 bg-card rounded-xl border border-border p-3">
                     <div className={cn("w-2 h-2 rounded-full flex-shrink-0", t.status === "done" ? "bg-emerald-500" : "bg-primary")} />
@@ -205,32 +215,6 @@ export function ProjectBuilder({
             )}
           </div>
 
-          {/* Matrix-style task input — a quadrant selection is required. */}
-          {onAddMatrixTask && (
-            <div className="max-w-2xl w-full mx-auto">
-              <TaskInput
-                onAddTask={handleAddMatrixTask}
-                placeholder="Add a task to this project..."
-                leadingElement={
-                  <Button
-                    type="button"
-                    size="icon"
-                    className="h-8 w-8 rounded-full pointer-events-none"
-                    tabIndex={-1}
-                    aria-label="Add task mode"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                }
-                quadrants={quadrants}
-                categories={categories}
-                projects={projects}
-                defaultProjectId={selectedProject.id}
-                onCreateCategory={onCreateCategory}
-                onCreateProject={onCreateProject}
-              />
-            </div>
-          )}
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
