@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, type KeyboardEvent } from "react";
+import { useEffect, useState, useRef, useMemo, type KeyboardEvent } from "react";
 import { X, Plus } from "lucide-react";
 import { durations, atmospheres, type AtmosphereId } from "@/lib/sprint/atmospheres";
 import { loadSprints } from "@/lib/sprint/sprint-store";
