@@ -71,6 +71,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
     light: { ...DEFAULT_QUADRANT_ACCENTS.light },
     dark: { ...DEFAULT_QUADRANT_ACCENTS.dark },
   },
+  primaryColor: "#6D28D9",
+  enabledViews: { matrix: true, list: true, kanban: true, gantt: true, projects: true },
   fontSize: "medium",
   defaultView: "matrix",
   deadlineThresholdDays: 2,
