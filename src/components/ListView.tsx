@@ -37,6 +37,7 @@ interface ListViewProps {
   allTasks: Task[];
   onSelectTask: (task: Task) => void;
   onDeleteAllDone: () => void;
+  onRescheduleTasks?: (ids: string[], newDueDate: string) => void;
 }
 
 export function ListView({
@@ -58,6 +59,7 @@ export function ListView({
   allTasks,
   onSelectTask,
   onDeleteAllDone,
+  onRescheduleTasks,
 }: ListViewProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
