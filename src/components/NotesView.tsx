@@ -519,3 +519,109 @@ function ColorPicker({ value, onChange, dark }: { value: string; onChange: (v: s
     </Popover>
   );
 }
+
+/* ---------------- Read-only preview ---------------- */
+
+const LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>]+)/gi;
+
+function renderLinkified(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  const re = new RegExp(LINK_RE.source, "gi");
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) nodes.push(text.slice(last, m.index));
+    const label = m[1] ?? m[3];
+    const href = m[2] ?? m[3];
+    nodes.push(
+      <a
+        key={`${m.index}-${href}`}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary underline decoration-primary/40 hover:decoration-primary"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {label}
+      </a>
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
+}
+
+type PreviewLine = { type: "text" | "ordered" | "check" | "bullet"; indent: number; text: string; checked?: boolean; label?: string };
+
+function parsePreview(source: string): PreviewLine[] {
+  const raw = source.split(/\r?\n/);
+  const out: PreviewLine[] = [];
+  const counters: number[] = [];
+  for (const line of raw) {
+    const m = line.match(/^((?:  )*)/);
+    const indent = Math.min(4, (m ? m[1].length : 0) / 2);
+    const body = line.slice(indent * 2);
+    let type: PreviewLine["type"] = "text";
+    let text = body;
+    let checked: boolean | undefined;
+    let label: string | undefined;
+    let mm: RegExpMatchArray | null;
+    if ((mm = body.match(/^\d+\.\s?(.*)$/))) {
+      type = "ordered"; text = mm[1];
+      counters.length = indent + 1;
+      for (let k = 0; k <= indent; k++) if (counters[k] == null) counters[k] = 0;
+      counters[indent] = (counters[indent] ?? 0) + 1;
+      label = counters.slice(0, indent + 1).join(".") + ".";
+    } else if ((mm = body.match(/^-\s\[([ xX])\]\s?(.*)$/))) {
+      type = "check"; checked = mm[1].toLowerCase() === "x"; text = mm[2];
+      counters.length = Math.min(counters.length, indent + 1);
+    } else if ((mm = body.match(/^[-•]\s?(.*)$/))) {
+      type = "bullet"; text = mm[1];
+      counters.length = Math.min(counters.length, indent + 1);
+    } else {
+      counters.length = Math.min(counters.length, indent + 1);
+    }
+    out.push({ type, indent, text, checked, label });
+  }
+  return out;
+}
+
+function NotePreview({ text }: { text: string }) {
+  const lines = useMemo(() => parsePreview(text), [text]);
+  return (
+    <div className="text-sm leading-snug space-y-0.5">
+      {lines.map((l, i) => {
+        if (l.type === "text" && !l.text) return <div key={i} className="h-3" />;
+        const marker =
+          l.type === "ordered" ? (
+            <span className="text-xs font-medium text-muted-foreground tabular-nums min-w-[1.5rem] text-right">{l.label}</span>
+          ) : l.type === "check" ? (
+            <span className="pt-[3px]"><Checkbox checked={!!l.checked} disabled className="h-3.5 w-3.5" /></span>
+          ) : l.type === "bullet" ? (
+            <span className="text-muted-foreground min-w-[1rem] text-center">•</span>
+          ) : null;
+        return (
+          <div key={i} className="flex items-start gap-1.5" style={{ paddingLeft: l.indent * 12 }}>
+            {marker}
+            <span className={cn("whitespace-pre-wrap break-words flex-1", l.type === "check" && l.checked && "line-through text-muted-foreground")}>
+              {renderLinkified(l.text)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function NoteAttachmentPreview({ attachments }: { attachments: TaskAttachment[] }) {
+  return (
+    <div className="flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
+      {attachments.map((a) => (
+        <span key={a.id} className="inline-flex items-center gap-1 rounded-md bg-secondary/60 px-1.5 py-0.5 max-w-full">
+          <Paperclip className="w-3 h-3 shrink-0" />
+          <span className="truncate max-w-[10rem]">{a.name}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
