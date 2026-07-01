@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Plus, Search, Trash2, X } from "lucide-react";
+import { SquarePen, Search, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
@@ -73,16 +73,14 @@ export function TaskActionBar({
     </Button>
   );
 
+  // Decorative "compose" glyph — signals task entry without looking like a button.
   const plusIndicator = (
-    <Button
-      type="button"
-      size="icon"
-      className="h-8 w-8 rounded-full pointer-events-none"
-      tabIndex={-1}
-      aria-label="Add task mode"
+    <span
+      aria-hidden
+      className="flex h-8 w-8 items-center justify-center text-muted-foreground/60"
     >
-      <Plus className="w-4 h-4" />
-    </Button>
+      <SquarePen className="w-4 h-4" strokeWidth={1.75} />
+    </span>
   );
 
   return (
