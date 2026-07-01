@@ -352,12 +352,15 @@ interface DaySectionProps {
   onTaskClick: (t: Task) => void;
   onToggleStatus?: (id: string) => void;
   getCategoryColor?: (name: string) => string | undefined;
+  moveOptions: { key: string; label: string }[];
+  onMove: (id: string, sectionKey: string) => void;
 }
 
 function DaySection({
   sectionKey, label, dateStr, icon, count, collapsed, onToggleCollapsed,
   items, dragging, dropTarget, setDropTarget, onCommitDrop,
   onDragStart, onDragEnd, onTaskClick, onToggleStatus, getCategoryColor,
+  moveOptions, onMove,
 }: DaySectionProps) {
   const allowDrop = (e: React.DragEvent) => {
     if (e.dataTransfer.types.includes("text/task-id")) {
