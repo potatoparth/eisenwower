@@ -79,11 +79,7 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
   return (
     <div className="fixed inset-y-0 left-0 w-full max-w-md bg-card border-r shadow-medium z-50 flex flex-col animate-slide-in-left">
       {/* Header */}
-      <div className="grid grid-cols-[auto_1fr_auto] items-center p-3 border-b gap-1">
-        <Button variant="ghost" size="sm" onClick={() => prevTask && onNavigate?.(prevTask)} disabled={!prevTask} className="h-8 w-8 p-0 rounded-lg justify-self-start" title="Previous task">
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
-        <div className="flex items-center justify-center gap-1">
+      <div className="flex items-center justify-end p-3 border-b gap-1">
           {onToggleStatus && (
             <Button
               variant={task.status === "done" ? "secondary" : "outline"}
@@ -104,10 +100,6 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
           <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0 rounded-lg" title="Close">
             <X className="w-4 h-4" />
           </Button>
-        </div>
-        <Button variant="ghost" size="sm" onClick={() => nextTask && onNavigate?.(nextTask)} disabled={!nextTask} className="h-8 w-8 p-0 rounded-lg justify-self-end" title="Next task">
-          <ChevronRight className="w-4 h-4" />
-        </Button>
       </div>
 
       {/* Content */}
@@ -115,12 +107,20 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
         {/* Task name */}
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground text-center block">Task Name</label>
-          <Input
-            value={name}
-            onChange={e => setName(e.target.value)}
-            onBlur={handleBlur}
-            className="text-base font-medium border-0 bg-secondary/50 rounded-xl text-center"
-          />
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => prevTask && onNavigate?.(prevTask)} disabled={!prevTask} className="h-8 w-8 p-0 rounded-lg flex-shrink-0" title="Previous task">
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              onBlur={handleBlur}
+              className="text-base font-medium border-0 bg-secondary/50 rounded-xl text-center flex-1"
+            />
+            <Button variant="ghost" size="sm" onClick={() => nextTask && onNavigate?.(nextTask)} disabled={!nextTask} className="h-8 w-8 p-0 rounded-lg flex-shrink-0" title="Next task">
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {overdue && (
