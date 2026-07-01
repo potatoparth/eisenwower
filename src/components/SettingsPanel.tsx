@@ -40,6 +40,7 @@ const VIEW_LIST: { id: keyof NonNullable<AppSettings["enabledViews"]>; label: st
   { id: "matrix", label: "Matrix" },
   { id: "list", label: "List" },
   { id: "kanban", label: "Kanban" },
+  { id: "calendar", label: "Calendar" },
   { id: "gantt", label: "Gantt" },
   { id: "projects", label: "Projects" },
 ];

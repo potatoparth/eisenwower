@@ -26,6 +26,8 @@ export interface Task {
   category: string;
   quadrant: Quadrant;
   dueDate?: string;
+  /** Optional time-of-day for the deadline, HH:MM (24h). */
+  dueTime?: string;
   status: TaskStatus;
   createdAt: string;
   updatedAt: string;

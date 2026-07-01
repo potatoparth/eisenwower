@@ -32,6 +32,7 @@ function computeNextOccurrence(template: Task): string | undefined {
 
 type TaskRow = {
   id: string; name: string; description: string | null; category: string; quadrant: string; due_date: string | null;
+  due_time: string | null;
   status: string; created_at: string; updated_at: string; deadline_threshold_override: number | null; kanban_column: string | null; sort_order: number;
   project_id: string | null;
   recurrence: string | null;
@@ -49,6 +50,7 @@ const fromRow = (row: TaskRow): Task => ({
   category: row.category,
   quadrant: row.quadrant as Quadrant,
   dueDate: row.due_date || undefined,
+  dueTime: row.due_time || undefined,
   status: row.status as TaskStatus,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
@@ -69,6 +71,7 @@ const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => ({
   category: updates.category,
   quadrant: updates.quadrant,
   due_date: updates.dueDate ?? null,
+  due_time: updates.dueTime ?? null,
   status: updates.status,
   deadline_threshold_override: updates.deadlineThresholdOverride ?? null,
   kanban_column: updates.kanbanColumn ?? null,
@@ -99,7 +102,7 @@ export function useTasks(userId?: string) {
   }, [userId, loadTasks]);
 
   const addTask = useCallback((name: string, quadrant: Quadrant, options?: {
-    description?: string; category?: string; dueDate?: string; projectId?: string;
+    description?: string; category?: string; dueDate?: string; dueTime?: string; projectId?: string;
     recurrence?: Recurrence; recurrenceDays?: number[]; recurrenceTime?: string;
     isRecurringInstance?: boolean; recurringTemplateId?: string;
   }): Task => {
@@ -107,6 +110,7 @@ export function useTasks(userId?: string) {
     const optimistic: Task = {
       id: crypto.randomUUID(), name: name.trim(), description: options?.description,
       category: options?.category || "General", quadrant, dueDate: options?.dueDate,
+      dueTime: options?.dueTime,
       status: "open", createdAt: now, updatedAt: now, kanbanColumn: "todo",
       projectId: options?.projectId,
       recurrence: options?.recurrence ?? "none",
@@ -121,6 +125,7 @@ export function useTasks(userId?: string) {
         id: optimistic.id, user_id: userId, name: optimistic.name,
         description: optimistic.description || null, category: optimistic.category,
         quadrant, due_date: optimistic.dueDate || null, status: optimistic.status,
+        due_time: optimistic.dueTime || null,
         kanban_column: optimistic.kanbanColumn, sort_order: 0,
         project_id: optimistic.projectId || null,
         recurrence: optimistic.recurrence,
