@@ -142,11 +142,6 @@ const Index = () => {
         onViewModeChange={setViewMode}
         onSettingsClick={() => setShowSettings(true)}
         onLogout={logout}
-        tasks={tasks}
-        onSelectTask={setSelectedTask}
-        onDeleteAllDone={() => {
-          tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id));
-        }}
       />
 
       <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 overflow-y-auto">
@@ -191,6 +186,9 @@ const Index = () => {
                 defaultCategory={defaultCategory}
                 onCreateCategory={handleCreateCategory}
                 onCreateProject={handleCreateProject}
+                onSelectTask={setSelectedTask}
+                onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
+                allTasks={tasks}
               />
             </motion.div>
           )}
@@ -207,6 +205,9 @@ const Index = () => {
                 defaultCategory={defaultCategory}
                 onCreateCategory={handleCreateCategory}
                 onCreateProject={handleCreateProject}
+                onSelectTask={setSelectedTask}
+                onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
+                allTasks={tasks}
               />
             </motion.div>
           )}
