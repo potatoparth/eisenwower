@@ -177,42 +177,12 @@ export function TaskDetailDialog({
             ))}
           </div>
 
-          {/* Description with simple format buttons */}
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => applyFormat("bold")}
-                className="px-2 h-6 text-xs rounded-md hover:bg-secondary font-bold"
-              >
-                B
-              </button>
-              <button
-                onClick={() => applyFormat("italic")}
-                className="px-2 h-6 text-xs rounded-md hover:bg-secondary italic"
-              >
-                I
-              </button>
-              <button
-                onClick={() => applyFormat("bullet")}
-                className="px-2 h-6 text-xs rounded-md hover:bg-secondary"
-              >
-                • List
-              </button>
-              <button
-                onClick={() => applyFormat("check")}
-                className="px-2 h-6 text-xs rounded-md hover:bg-secondary"
-              >
-                ☐ Check
-              </button>
-            </div>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onBlur={save}
-              placeholder="Add a description..."
-              className="w-full min-h-[160px] p-3 text-sm bg-secondary/60 rounded-lg border-0 resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
+          <TaskDescription
+            value={description}
+            onChange={setDescription}
+            onCommit={save}
+            placeholder="Add a description…"
+          />
 
           {/* Deadline */}
           <div className="space-y-1">
