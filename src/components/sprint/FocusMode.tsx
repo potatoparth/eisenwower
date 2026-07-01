@@ -174,7 +174,7 @@ export function FocusMode({ sprint, onUpdate, onExit, onComplete }: Props) {
   const isLight =
     !bgEnabled &&
     typeof document !== "undefined" &&
-    document.documentElement.!document.documentElement.classList.contains("dark");
+    !document.documentElement.classList.contains("dark");
   const mutedText = isLight ? "rgba(0,0,0,0.4)" : muted;
   const veryMutedText = isLight ? "rgba(0,0,0,0.3)" : veryMuted;
   const handleColor = isLight ? "rgba(0,0,0,0.2)" : bgEnabled ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.15)";

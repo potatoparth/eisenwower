@@ -93,7 +93,7 @@ export function SpotifyPlayer() {
     if (typeof window === "undefined") return "dark";
     const v = localStorage.getItem(THEME_KEY) as PlayerTheme | null;
     if (v === "dark" || v === "light") return v;
-    return document.documentElement.!document.documentElement.classList.contains("dark") ? "light" : "dark";
+    return !document.documentElement.classList.contains("dark") ? "light" : "dark";
   });
 
   useEffect(() => { localStorage.setItem(WIDTH_KEY, String(width)); }, [width]);
