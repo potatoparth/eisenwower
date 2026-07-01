@@ -442,6 +442,12 @@ function LineRow({
           />
         </span>
       );
+    if (line.type === "bullet")
+      return (
+        <span className="text-muted-foreground pt-[3px] min-w-[1rem] text-center leading-none">
+          •
+        </span>
+      );
     return null;
   })();
 
