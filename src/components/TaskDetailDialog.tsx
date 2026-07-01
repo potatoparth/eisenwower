@@ -8,13 +8,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Task, Quadrant, QuadrantInfo, Recurrence } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import { cn } from "@/lib/utils";
@@ -23,6 +16,7 @@ import { format, parseISO } from "date-fns";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { RecurrenceField } from "@/components/RecurrenceField";
 import { TaskDescription } from "@/components/TaskDescription";
+import { SelectorWithCreate } from "@/components/SelectorWithCreate";
 
 interface TaskDetailDialogProps {
   task: Task;
@@ -37,6 +31,8 @@ interface TaskDetailDialogProps {
   navTasks?: Task[];
   onNavigate?: (task: Task) => void;
   onToggleStatus?: (id: string) => void;
+  onCreateCategory?: (name: string) => string;
+  onCreateProject?: (name: string) => string;
 }
 
 export function TaskDetailDialog({
@@ -52,6 +48,8 @@ export function TaskDetailDialog({
   navTasks = [],
   onNavigate,
   onToggleStatus,
+  onCreateCategory,
+  onCreateProject,
 }: TaskDetailDialogProps) {
   const [name, setName] = useState(task.name);
   const [description, setDescription] = useState(task.description || "");
@@ -246,30 +244,29 @@ export function TaskDetailDialog({
             <label className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
               <Tag className="w-3 h-3" /> Category
             </label>
-            <div className="flex items-center gap-2">
-              {getCategoryColor?.(category) && (
-                <span
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: getCategoryColor(category) }}
-                />
-              )}
-              <Select
-                value={category}
-                onValueChange={(v) => {
-                  setCategory(v);
-                  onUpdate(task.id, { category: v });
-                }}
-              >
-                <SelectTrigger className="rounded-lg bg-secondary/60 border-0">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from(new Set([...categories, "General", category].filter(Boolean))).sort((a, b) => a.localeCompare(b)).map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <SelectorWithCreate
+              icon={
+                getCategoryColor?.(category) ? (
+                  <span
+                    className="w-2.5 h-2.5 rounded-full inline-block"
+                    style={{ backgroundColor: getCategoryColor(category) }}
+                  />
+                ) : undefined
+              }
+              options={Array.from(new Set([...categories, "General", category].filter(Boolean)))
+                .sort((a, b) => a.localeCompare(b))
+                .map((c) => ({ value: c, label: c }))}
+              value={category}
+              onChange={(v) => {
+                setCategory(v);
+                onUpdate(task.id, { category: v });
+              }}
+              onCreate={onCreateCategory}
+              placeholder="Select category"
+              searchPlaceholder="Search categories…"
+              createPlaceholder="New category name…"
+              compact
+            />
           </div>
 
           {/* Project */}
@@ -277,26 +274,23 @@ export function TaskDetailDialog({
             <label className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
               <FolderKanban className="w-3 h-3" /> Project
             </label>
-            <Select
+            <SelectorWithCreate
+              options={[
+                { value: "__none__", label: "No project" },
+                ...projects.map((p) => ({ value: p.id, label: p.name })),
+              ]}
               value={projectId ?? "__none__"}
-              onValueChange={(v) => {
+              onChange={(v) => {
                 const next = v === "__none__" ? undefined : v;
                 setProjectId(next);
                 onUpdate(task.id, { projectId: next });
               }}
-            >
-              <SelectTrigger className="rounded-lg bg-secondary/60 border-0">
-                <SelectValue placeholder="No project" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">No project</SelectItem>
-                {projects.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onCreate={onCreateProject}
+              placeholder="No project"
+              searchPlaceholder="Search projects…"
+              createPlaceholder="New project name…"
+              compact
+            />
           </div>
 
           <div className="pt-2 border-t space-y-1">
