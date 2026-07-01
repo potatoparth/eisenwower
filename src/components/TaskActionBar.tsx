@@ -61,23 +61,23 @@ export function TaskActionBar({
   };
 
   return (
-    <div className="flex items-center gap-2 w-full">
+    <div className="grid w-full grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2">
       <Button
         variant="ghost"
         size="icon"
         onClick={() => (searchMode ? exitSearch() : setSearchMode(true))}
-        className="rounded-full w-10 h-10 flex-shrink-0"
+        className="h-10 w-10 rounded-full"
         title={searchMode ? "Close search" : "Search tasks"}
         aria-pressed={searchMode}
       >
         {searchMode ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
       </Button>
 
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0">
         {searchMode ? (
           <Popover open={open && matches.length > 0} onOpenChange={setOpen}>
             <PopoverAnchor asChild>
-              <div className="relative">
+              <div className="relative h-10 w-full">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                 <Input
                   ref={inputRef}
@@ -86,7 +86,7 @@ export function TaskActionBar({
                   onFocus={() => setOpen(true)}
                   onKeyDown={(e) => { if (e.key === "Escape") exitSearch(); }}
                   placeholder="Search tasks..."
-                  className="pl-10 h-10 rounded-full bg-secondary/60 border-border/60 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0"
+                  className="h-10 w-full rounded-full bg-secondary/40 border-border/60 pl-10 pr-4 py-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
               </div>
             </PopoverAnchor>
@@ -129,7 +129,7 @@ export function TaskActionBar({
           <Button
             variant="ghost"
             size="icon"
-            className="rounded-full w-10 h-10 flex-shrink-0"
+            className="h-10 w-10 rounded-full"
             title="Delete all completed tasks"
             disabled={doneCount === 0}
           >
