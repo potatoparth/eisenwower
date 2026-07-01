@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import {
   addMonths,
   endOfMonth,
@@ -107,6 +107,9 @@ export function DateTimePicker({
   const [timeInput, setTimeInput] = useState<string>(
     formatTimeInput(parsed ? parsed.getHours() : defH, parsed ? parsed.getMinutes() : defM)
   );
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
+  const [showCustomTime, setShowCustomTime] = useState<boolean>(false);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   // Re-snapshot draft each time the picker opens.
   useEffect(() => {
@@ -119,21 +122,53 @@ export function DateTimePicker({
     setDraftMinute(m);
     setViewMonth(p ?? new Date());
     setTimeInput(formatTimeInput(h, m));
+    // Progressive disclosure: expand a section only if the current value doesn't match any chip.
+    const chipDates = [
+      new Date(),
+      addDays(new Date(), 1),
+      nextSaturday(new Date()),
+      nextMonday(new Date()),
+    ];
+    const matchesDateChip = p ? chipDates.some((d) => isSameDay(d, p)) : true;
+    const matchesTimeChip = TIME_CHIPS.some((c) => c.h === h && c.m === m);
+    setShowCalendar(!!p && !matchesDateChip);
+    setShowCustomTime(!matchesTimeChip);
   }, [open, value, defH, defM]);
 
   const today = new Date();
 
+  // Scrollable rolling calendar: 16 weeks starting at the start of viewMonth's week.
   const days = useMemo(() => {
-    const start = startOfWeek(startOfMonth(viewMonth), { weekStartsOn: 0 });
-    const end = endOfWeek(endOfMonth(viewMonth), { weekStartsOn: 0 });
+    const start = startOfWeek(viewMonth, { weekStartsOn: 0 });
     const arr: Date[] = [];
-    let d = start;
-    while (d <= end) {
-      arr.push(d);
-      d = addDays(d, 1);
-    }
+    for (let i = 0; i < 16 * 7; i++) arr.push(addDays(start, i));
     return arr;
   }, [viewMonth]);
+
+  // Group days into weeks, tagging weeks that start a new month for divider labels.
+  const weeks = useMemo(() => {
+    const w: { days: Date[]; monthLabel?: string }[] = [];
+    for (let i = 0; i < days.length; i += 7) {
+      const chunk = days.slice(i, i + 7);
+      const prevChunk = i === 0 ? null : days.slice(i - 7, i);
+      const showLabel =
+        !prevChunk ||
+        chunk.some(
+          (d) =>
+            d.getDate() === 1 ||
+            (prevChunk && !isSameMonth(d, prevChunk[prevChunk.length - 1]))
+        );
+      // Only add label if the month changed vs the previous week (or first row)
+      const monthChanged =
+        !prevChunk ||
+        !isSameMonth(chunk[0], prevChunk[0]);
+      w.push({
+        days: chunk,
+        monthLabel: monthChanged ? format(chunk.find((d) => isSameMonth(d, chunk[3])) ?? chunk[0], "MMMM yyyy") : undefined,
+      });
+    }
+    return w;
+  }, [days]);
 
   const commit = () => {
     if (!draftDate) {
@@ -194,7 +229,7 @@ export function DateTimePicker({
   );
 
   const Body = (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2.5">
       {/* Date quick chips */}
       <div className={cn("flex flex-wrap gap-1.5", isMobile && "gap-2")}>
         {dateChips.map((c) => {
@@ -205,7 +240,7 @@ export function DateTimePicker({
               type="button"
               onClick={() => pickDate(c.date)}
               className={cn(
-                "rounded-full text-xs font-medium px-3 py-1.5 border transition-colors",
+                "rounded-full text-xs font-medium px-2.5 py-1 border transition-colors",
                 isMobile && "text-sm px-4 py-2 min-h-11 flex-1",
                 active
                   ? "text-white border-transparent"
@@ -217,82 +252,118 @@ export function DateTimePicker({
             </button>
           );
         })}
-      </div>
-
-      {/* Month header */}
-      <div className="flex items-center justify-between">
         <button
           type="button"
-          onClick={() => setViewMonth((m) => addMonths(m, -1))}
+          onClick={() => setShowCalendar((s) => !s)}
           className={cn(
-            "rounded-lg flex items-center justify-center hover:bg-secondary",
-            isMobile ? "w-11 h-11" : "w-7 h-7"
+            "rounded-full text-xs font-medium px-2.5 py-1 border transition-colors inline-flex items-center gap-1",
+            isMobile && "text-sm px-4 py-2 min-h-11",
+            showCalendar
+              ? "border-border bg-secondary text-foreground"
+              : "bg-secondary/60 border-transparent hover:border-border text-foreground"
           )}
-          aria-label="Previous month"
+          aria-expanded={showCalendar}
         >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <div className="text-sm font-semibold">{format(viewMonth, "MMMM yyyy")}</div>
-        <button
-          type="button"
-          onClick={() => setViewMonth((m) => addMonths(m, 1))}
-          className={cn(
-            "rounded-lg flex items-center justify-center hover:bg-secondary",
-            isMobile ? "w-11 h-11" : "w-7 h-7"
-          )}
-          aria-label="Next month"
-        >
-          <ChevronRight className="w-4 h-4" />
+          <CalendarDays className="w-3.5 h-3.5" />
+          Pick a date
         </button>
       </div>
 
-      {/* DOW */}
-      <div className="grid grid-cols-7">
-        {DOW.map((d, i) => (
-          <div
-            key={i}
-            className="text-[11px] font-medium text-muted-foreground text-center"
-          >
-            {d}
-          </div>
-        ))}
-      </div>
-
-      {/* Days */}
-      <div className="grid grid-cols-7 gap-y-1">
-        {days.map((d, i) => {
-          const inMonth = isSameMonth(d, viewMonth);
-          const isToday = isSameDay(d, today);
-          const isSelected = draftDate && isSameDay(d, draftDate);
-          return (
+      {showCalendar && (
+        <div className="flex flex-col gap-1.5 rounded-lg border bg-secondary/30 p-2">
+          {/* Month header */}
+          <div className="flex items-center justify-between">
             <button
-              key={i}
               type="button"
-              onClick={() => pickDate(d)}
+              onClick={() => setViewMonth((m) => addMonths(m, -1))}
               className={cn(
-                "mx-auto rounded-lg flex items-center justify-center transition-colors",
-                isMobile ? "w-11 h-11 text-sm" : "w-9 h-9 text-[13px]",
-                !inMonth && "opacity-30",
-                !isSelected && "hover:bg-secondary",
-                isToday && !isSelected && "font-semibold",
-                isSelected && "text-white font-semibold"
+                "rounded-md flex items-center justify-center hover:bg-secondary",
+                isMobile ? "w-9 h-9" : "w-6 h-6"
               )}
-              style={{
-                ...(isToday && !isSelected
-                  ? { boxShadow: `inset 0 0 0 1.5px ${accentColor}` }
-                  : {}),
-                ...(isSelected ? { backgroundColor: accentColor } : {}),
-              }}
+              aria-label="Previous month"
             >
-              {d.getDate()}
+              <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-          );
-        })}
-      </div>
+            <div className="text-xs font-semibold">{format(viewMonth, "MMMM yyyy")}</div>
+            <button
+              type="button"
+              onClick={() => setViewMonth((m) => addMonths(m, 1))}
+              className={cn(
+                "rounded-md flex items-center justify-center hover:bg-secondary",
+                isMobile ? "w-9 h-9" : "w-6 h-6"
+              )}
+              aria-label="Next month"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* DOW (sticky above scrolling weeks) */}
+          <div className="grid grid-cols-7">
+            {DOW.map((d, i) => (
+              <div
+                key={i}
+                className="text-[10px] font-medium text-muted-foreground text-center"
+              >
+                {d}
+              </div>
+            ))}
+          </div>
+
+          {/* Scrollable weeks: ~2 rows tall */}
+          <div
+            ref={scrollRef}
+            className="overflow-y-auto"
+            style={{ maxHeight: isMobile ? 132 : 110 }}
+          >
+            <div className="flex flex-col">
+              {weeks.map((wk, wi) => (
+                <div key={wi}>
+                  {wk.monthLabel && wi !== 0 && (
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70 px-1 pt-1 pb-0.5 border-t border-border/40 mt-0.5">
+                      {wk.monthLabel}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-7">
+                    {wk.days.map((d, di) => {
+                      const isToday = isSameDay(d, today);
+                      const isSelected = draftDate && isSameDay(d, draftDate);
+                      const dim = !isSameMonth(d, viewMonth);
+                      return (
+                        <button
+                          key={di}
+                          type="button"
+                          onClick={() => pickDate(d)}
+                          className={cn(
+                            "mx-auto rounded-md flex items-center justify-center transition-colors",
+                            isMobile ? "w-9 h-9 text-sm" : "w-8 h-8 text-[12px]",
+                            dim && !isSelected && "opacity-40",
+                            !isSelected && "hover:bg-secondary",
+                            isToday && !isSelected && "font-semibold",
+                            isSelected && "text-white font-semibold"
+                          )}
+                          style={{
+                            ...(isToday && !isSelected
+                              ? { boxShadow: `inset 0 0 0 1.5px ${accentColor}` }
+                              : {}),
+                            ...(isSelected ? { backgroundColor: accentColor } : {}),
+                          }}
+                        >
+                          {d.getDate()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Time */}
-      <div className="pt-3 border-t flex flex-col gap-2">
-        <span className="text-xs text-muted-foreground">Time</span>
+      <div className="pt-2 border-t flex flex-col gap-1.5">
+        <span className="text-[11px] text-muted-foreground">Time</span>
         <div className="flex flex-wrap gap-1.5">
           {TIME_CHIPS.map((c) => {
             const active = activeTimeChip?.label === c.label;
@@ -302,7 +373,7 @@ export function DateTimePicker({
                 type="button"
                 onClick={() => pickTimeChip(c.h, c.m)}
                 className={cn(
-                  "rounded-full text-xs font-medium px-3 py-1.5 border transition-colors tabular-nums",
+                  "rounded-full text-xs font-medium px-2.5 py-1 border transition-colors tabular-nums",
                   isMobile && "text-sm px-4 py-2 min-h-11 flex-1",
                   active
                     ? "text-white border-transparent"
@@ -314,25 +385,43 @@ export function DateTimePicker({
               </button>
             );
           })}
+          <button
+            type="button"
+            onClick={() => setShowCustomTime((s) => !s)}
+            className={cn(
+              "rounded-full text-xs font-medium px-2.5 py-1 border transition-colors inline-flex items-center gap-1",
+              isMobile && "text-sm px-4 py-2 min-h-11",
+              showCustomTime
+                ? "border-border bg-secondary text-foreground"
+                : "bg-secondary/60 border-transparent hover:border-border text-foreground"
+            )}
+            aria-expanded={showCustomTime}
+          >
+            <Clock className="w-3.5 h-3.5" />
+            Custom
+          </button>
         </div>
-        <input
-          type="text"
-          value={timeInput}
-          onChange={(e) => onTimeInputChange(e.target.value)}
-          onBlur={onTimeInputBlur}
-          placeholder="e.g. 10:30 PM"
-          className={cn(
-            "w-full rounded-lg bg-secondary/60 px-3 text-sm border border-transparent focus:border-border focus:outline-none transition-colors tabular-nums",
-            isMobile ? "h-11" : "h-9"
-          )}
-          aria-label="Custom time"
-        />
+        {showCustomTime && (
+          <input
+            type="text"
+            value={timeInput}
+            onChange={(e) => onTimeInputChange(e.target.value)}
+            onBlur={onTimeInputBlur}
+            placeholder="e.g. 10:30 PM"
+            className={cn(
+              "w-full rounded-lg bg-secondary/60 px-3 text-sm border border-transparent focus:border-border focus:outline-none transition-colors tabular-nums",
+              isMobile ? "h-11" : "h-8"
+            )}
+            aria-label="Custom time"
+            autoFocus
+          />
+        )}
       </div>
     </div>
   );
 
   const Footer = (
-    <div className={cn("flex items-center gap-2", !isMobile && "pt-3 mt-1 border-t")}>
+    <div className={cn("flex items-center gap-2", !isMobile && "pt-2 mt-1 border-t")}>
       <button
         type="button"
         onClick={clear}
@@ -345,7 +434,7 @@ export function DateTimePicker({
         onClick={cancel}
         className={cn(
           "rounded-lg text-sm font-medium border border-border hover:bg-secondary transition-colors",
-          isMobile ? "h-11 px-4" : "h-9 px-3"
+          isMobile ? "h-11 px-4" : "h-8 px-3"
         )}
       >
         Cancel
@@ -355,7 +444,7 @@ export function DateTimePicker({
         onClick={commit}
         className={cn(
           "rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90",
-          isMobile ? "h-11 px-4 flex-1" : "h-9 px-3"
+          isMobile ? "h-11 px-4 flex-1" : "h-8 px-3"
         )}
         style={{ backgroundColor: accentColor }}
       >
@@ -417,13 +506,13 @@ export function DateTimePicker({
         sideOffset={6}
         avoidCollisions
         collisionPadding={16}
-        className="z-50 p-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.45)] border bg-popover flex flex-col overflow-hidden"
+        className="z-50 p-3 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.45)] border bg-popover flex flex-col overflow-hidden"
         style={{
           width: 320,
-          maxHeight: "min(620px, calc(100vh - 32px))",
+          maxHeight: "min(85vh, calc(100vh - 32px))",
         }}
       >
-        <div className="flex-1 overflow-y-auto pr-1 -mr-1">{Body}</div>
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1 -mr-1">{Body}</div>
         {Footer}
       </PopoverContent>
     </Popover>
