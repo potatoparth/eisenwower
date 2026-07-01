@@ -124,13 +124,15 @@ export function ProjectBuilder({
             </Button>
           </div>
 
-          {/* Matrix-style task input — a quadrant selection is required. */}
+          {/* Matrix-style action bar: add task + search + clear-done. */}
           {onAddMatrixTask && (
-            <div className="max-w-2xl w-full mx-auto">
-              <TaskInput
+            <div className="max-w-2xl w-full mx-auto flex-shrink-0">
+              <TaskActionBar
+                tasks={mappedTasks}
+                onSelectTask={(t) => onSelectTask?.(t)}
+                onDeleteAllDone={() => onDeleteAllDone?.()}
                 onAddTask={handleAddMatrixTask}
-                placeholder="Add a task to this project..."
-                quadrants={quadrants}
+                quadrants={quadrants ?? []}
                 categories={categories}
                 projects={projects}
                 defaultProjectId={selectedProject.id}
