@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Tag, ChevronRight, FolderKanban, AlignLeft } from "lucide-react";
 import { Quadrant, QUADRANTS, QuadrantInfo, Recurrence } from "@/types/task";
@@ -38,6 +38,7 @@ interface TaskInputProps {
   placeholder?: string;
   className?: string;
   compact?: boolean;
+  leadingElement?: ReactNode;
   quadrants?: QuadrantInfo[];
   categories?: string[];
   projects?: ProjectTemplate[];
@@ -57,6 +58,7 @@ export function TaskInput({
   placeholder = "Add a new task...",
   className,
   compact = false,
+  leadingElement,
   quadrants = QUADRANTS,
   categories = [],
   projects = [],
@@ -245,6 +247,11 @@ export function TaskInput({
               : "p-3"
           )}
         >
+          {step === "name" && leadingElement && (
+            <div className={cn("flex h-full flex-shrink-0 items-center", compact ? "mr-1 -ml-1" : "mr-2 -ml-2")}>
+              {leadingElement}
+            </div>
+          )}
           <Input
             ref={inputRef}
             type="text"

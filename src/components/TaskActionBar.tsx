@@ -60,25 +60,29 @@ export function TaskActionBar({
     setOpen(false);
   };
 
-  return (
-    <div className="grid w-full grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => (searchMode ? exitSearch() : setSearchMode(true))}
-        className="h-10 w-10 rounded-full"
-        title={searchMode ? "Close search" : "Search tasks"}
-        aria-pressed={searchMode}
-      >
-        {searchMode ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
-      </Button>
+  const searchToggle = (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => (searchMode ? exitSearch() : setSearchMode(true))}
+      className="h-8 w-8 rounded-full"
+      title={searchMode ? "Close search" : "Search tasks"}
+      aria-pressed={searchMode}
+    >
+      {searchMode ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+    </Button>
+  );
 
+  return (
+    <div className="grid w-full grid-cols-[minmax(0,1fr)_2.5rem] items-center gap-2">
       <div className="min-w-0">
         {searchMode ? (
           <Popover open={open && matches.length > 0} onOpenChange={setOpen}>
             <PopoverAnchor asChild>
-              <div className="relative h-12 w-full">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <div className="relative flex h-[50px] w-full items-center rounded-full border border-border/60 bg-secondary/40 px-5">
+                <div className="mr-2 -ml-2 flex h-full flex-shrink-0 items-center">
+                  {searchToggle}
+                </div>
                 <Input
                   ref={inputRef}
                   value={query}
@@ -86,7 +90,7 @@ export function TaskActionBar({
                   onFocus={() => setOpen(true)}
                   onKeyDown={(e) => { if (e.key === "Escape") exitSearch(); }}
                   placeholder="Search tasks..."
-                  className="h-12 w-full rounded-full bg-secondary/40 border-border/60 pl-10 pr-4 py-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
               </div>
             </PopoverAnchor>
@@ -113,6 +117,7 @@ export function TaskActionBar({
           <TaskInput
             onAddTask={onAddTask}
             placeholder="Add a new task..."
+            leadingElement={searchToggle}
             quadrants={quadrants}
             categories={categories}
             projects={projects}
