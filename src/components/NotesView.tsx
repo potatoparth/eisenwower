@@ -51,6 +51,20 @@ export function NotesView(props: NotesViewProps) {
   } = props;
 
   const dark = useIsDark();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editingNote = useMemo(
+    () => (editingId ? notes.find((n) => n.id === editingId) ?? null : null),
+    [editingId, notes]
+  );
+  const composerWrapRef = useRef<HTMLDivElement>(null);
+
+  const startEdit = (id: string) => {
+    setEditingId(id);
+    // Scroll composer into view so the user sees the pre-filled form
+    requestAnimationFrame(() => {
+      composerWrapRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   const pinned = useMemo(() => notes.filter((n) => n.pinned), [notes]);
   const others = useMemo(() => notes.filter((n) => !n.pinned), [notes]);
@@ -60,23 +74,28 @@ export function NotesView(props: NotesViewProps) {
   return (
     <div className="flex-1 min-h-0 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-1 pb-8">
-        <NoteComposer
-          categories={categories}
-          projects={projects}
-          defaultCategory={defaultCategory}
-          defaultProjectId={defaultProjectId}
-          onCreateCategory={onCreateCategory}
-          onCreateProject={onCreateProject}
-          onAddNote={onAddNote}
-          dark={dark}
-        />
+        <div ref={composerWrapRef}>
+          <NoteComposer
+            categories={categories}
+            projects={projects}
+            defaultCategory={defaultCategory}
+            defaultProjectId={defaultProjectId}
+            onCreateCategory={onCreateCategory}
+            onCreateProject={onCreateProject}
+            onAddNote={onAddNote}
+            onUpdateNote={onUpdateNote}
+            editingNote={editingNote}
+            onCancelEdit={() => setEditingId(null)}
+            dark={dark}
+          />
+        </div>
 
         {pinned.length > 0 && (
           <>
             <SectionLabel>Pinned</SectionLabel>
             <MasonryGrid>
               <AnimatePresence initial={false}>
-                {pinned.map((n) => (
+                {pinned.filter((n) => n.id !== editingId).map((n) => (
                   <NoteCard
                     key={n.id}
                     note={n}
@@ -88,6 +107,7 @@ export function NotesView(props: NotesViewProps) {
                     onUpdate={onUpdateNote}
                     onDelete={onDeleteNote}
                     onConvert={onConvertToTask}
+                    onEdit={startEdit}
                     getCategoryColor={getCategoryColor}
                     dark={dark}
                   />
@@ -102,7 +122,7 @@ export function NotesView(props: NotesViewProps) {
             {pinned.length > 0 && <SectionLabel>Others</SectionLabel>}
             <MasonryGrid>
               <AnimatePresence initial={false}>
-                {others.map((n) => (
+                {others.filter((n) => n.id !== editingId).map((n) => (
                   <NoteCard
                     key={n.id}
                     note={n}
@@ -114,6 +134,7 @@ export function NotesView(props: NotesViewProps) {
                     onUpdate={onUpdateNote}
                     onDelete={onDeleteNote}
                     onConvert={onConvertToTask}
+                    onEdit={startEdit}
                     getCategoryColor={getCategoryColor}
                     dark={dark}
                   />
@@ -159,19 +180,38 @@ interface ComposerProps {
   onCreateCategory?: (name: string) => string;
   onCreateProject?: (name: string) => string;
   onAddNote: (options?: Partial<Note>) => Note | null;
+  onUpdateNote: (id: string, updates: Partial<Note>) => void;
+  editingNote?: Note | null;
+  onCancelEdit?: () => void;
   dark: boolean;
 }
 
 function NoteComposer(props: ComposerProps) {
+  const isEditing = !!props.editingNote;
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
-  const [draftId] = useState(() => crypto.randomUUID());
+  const [draftId, setDraftId] = useState<string>(() => crypto.randomUUID());
   const [category, setCategory] = useState(props.defaultCategory || "General");
   const [projectId, setProjectId] = useState(props.defaultProjectId || "");
   const [color, setColor] = useState<string>("default");
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // When entering edit mode, prefill from the note.
+  useEffect(() => {
+    if (props.editingNote) {
+      setOpen(true);
+      setTitle(props.editingNote.title);
+      setContent(props.editingNote.content);
+      setAttachments(props.editingNote.attachments ?? []);
+      setCategory(props.editingNote.category || "General");
+      setProjectId(props.editingNote.projectId || "");
+      setColor(props.editingNote.color || "default");
+      setDraftId(props.editingNote.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.editingNote?.id]);
 
   useEffect(() => {
     if (!open) return;
@@ -195,19 +235,32 @@ function NoteComposer(props: ComposerProps) {
     setCategory(props.defaultCategory || "General");
     setProjectId(props.defaultProjectId || "");
     setOpen(false);
+    setDraftId(crypto.randomUUID());
+    if (isEditing) props.onCancelEdit?.();
   };
 
   const commit = () => {
     if (!title.trim() && !content.trim() && attachments.length === 0) { reset(); return; }
-    props.onAddNote({
-      id: draftId,
-      title: title.trim(),
-      content: content.trim(),
-      category,
-      projectId: projectId || undefined,
-      color: color === "default" ? undefined : color,
-      attachments,
-    });
+    if (isEditing && props.editingNote) {
+      props.onUpdateNote(props.editingNote.id, {
+        title: title.trim(),
+        content: content.trim(),
+        category,
+        projectId: projectId || undefined,
+        color: color === "default" ? undefined : color,
+        attachments,
+      });
+    } else {
+      props.onAddNote({
+        id: draftId,
+        title: title.trim(),
+        content: content.trim(),
+        category,
+        projectId: projectId || undefined,
+        color: color === "default" ? undefined : color,
+        attachments,
+      });
+    }
     reset();
   };
 
@@ -290,7 +343,7 @@ function NoteComposer(props: ComposerProps) {
               </div>
               <div className="ml-auto flex items-center gap-1">
                 <Button size="sm" variant="ghost" onClick={reset} className="h-8">Cancel</Button>
-                <Button size="sm" onClick={commit} className="h-8 px-4">Done</Button>
+                <Button size="sm" onClick={commit} className="h-8 px-4">{isEditing ? "Save" : "Done"}</Button>
               </div>
             </div>
           </div>
@@ -331,114 +384,53 @@ interface CardProps {
   onUpdate: (id: string, updates: Partial<Note>) => void;
   onDelete: (id: string) => void;
   onConvert: (note: Note) => void;
+  onEdit: (id: string) => void;
   getCategoryColor?: (name: string) => string | undefined;
   dark: boolean;
 }
 
 function NoteCard(props: CardProps) {
   const { note, dark } = props;
-  const [editing, setEditing] = useState(false);
-  const [title, setTitle] = useState(note.title);
-  const [content, setContent] = useState(note.content);
-
-  useEffect(() => { if (!editing) { setTitle(note.title); setContent(note.content); } }, [note.title, note.content, editing]);
-
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  // Commit when the user clicks outside the card (ignoring portaled popovers/dialogs).
-  useEffect(() => {
-    if (!editing) return;
-    const onDown = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (cardRef.current && !cardRef.current.contains(target)) {
-        const el = target as HTMLElement;
-        if (el.closest?.("[data-radix-popper-content-wrapper], [role='dialog']")) return;
-        commitEdit();
-      }
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editing, title, content]);
-
   const bg = noteColorFor(note.color, dark ? "dark" : "light");
   const catColor = props.getCategoryColor?.(note.category);
-  const catOptions = (props.categories.length ? props.categories : ["General"]).map((c) => ({ value: c, label: c }));
-  const projectOptions = [{ value: "", label: "No project" }, ...props.projects.map((p) => ({ value: p.id, label: p.name }))];
-
-  const commitEdit = () => {
-    setEditing(false);
-    if (title !== note.title || content !== note.content) {
-      props.onUpdate(note.id, { title: title.trim(), content: content.trim() });
-    }
-  };
 
   return (
     <motion.div
-      ref={cardRef}
       layout
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
       transition={{ duration: 0.15 }}
-      className="mb-3 break-inside-avoid rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow group"
+      className="mb-3 break-inside-avoid rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow group cursor-pointer"
       style={{ backgroundColor: bg }}
       onClick={(e) => {
-        if (editing) return;
         const el = e.target as HTMLElement;
         if (el.closest("button, a, input, textarea, [role='dialog'], [data-radix-popper-content-wrapper]")) return;
-        setEditing(true);
+        props.onEdit(note.id);
       }}
     >
       <div className="p-3">
         <div className="flex items-start gap-2">
           <div className="flex-1 min-w-0">
-            {editing ? (
-              <>
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Title"
-                  className="border-0 bg-transparent focus-visible:ring-0 px-1 text-base font-medium h-8"
-                />
-                <TaskDescription
-                  value={content}
-                  onChange={setContent}
-                  placeholder="Note"
-                  alwaysOpen
-                />
-                <div className="pt-1">
-                  <TaskAttachments
-                    taskId={note.id}
-                    value={note.attachments ?? []}
-                    onChange={(next) => props.onUpdate(note.id, { attachments: next })}
-                  />
+            <div>
+              {note.title && (
+                <div className="font-semibold text-sm mb-1 break-words">{note.title}</div>
+              )}
+              {note.content ? (
+                <NotePreview text={note.content} />
+              ) : !note.title && (!note.attachments || note.attachments.length === 0) ? (
+                <div className="text-sm text-muted-foreground italic">Empty note</div>
+              ) : null}
+              {note.attachments && note.attachments.length > 0 && (
+                <div className="mt-2">
+                  <NoteAttachmentPreview attachments={note.attachments} />
                 </div>
-              </>
-            ) : (
-              <div
-                className="cursor-text"
-                onClick={() => setEditing(true)}
-              >
-                {note.title && (
-                  <div className="font-semibold text-sm mb-1 break-words">{note.title}</div>
-                )}
-                {note.content ? (
-                  <NotePreview text={note.content} />
-                ) : !note.title && (!note.attachments || note.attachments.length === 0) ? (
-                  <div className="text-sm text-muted-foreground italic">Empty note</div>
-                ) : null}
-                {!editing && note.attachments && note.attachments.length > 0 && (
-                  <div className="mt-2">
-                    <NoteAttachmentPreview attachments={note.attachments} />
-                  </div>
-                )}
-              </div>
-            )}
+              )}
+            </div>
           </div>
           <button
             className="opacity-60 hover:opacity-100 p-1 -mr-1 -mt-1"
-            onClick={() => props.onUpdate(note.id, { pinned: !note.pinned })}
+            onClick={(e) => { e.stopPropagation(); props.onUpdate(note.id, { pinned: !note.pinned }); }}
             title={note.pinned ? "Unpin" : "Pin"}
           >
             {note.pinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
@@ -466,60 +458,24 @@ function NoteCard(props: CardProps) {
         </div>
 
         <div className="flex items-center gap-0.5 mt-2 opacity-90">
-          {editing ? (
-            <Button size="sm" onClick={commitEdit} className="h-7 text-xs">Done</Button>
-          ) : (
-            <>
-              <ColorPicker
-                value={note.color || "default"}
-                onChange={(c) => props.onUpdate(note.id, { color: c === "default" ? undefined : c })}
-                dark={dark}
-              />
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Category & project">
-                    <FolderKanban className="w-3.5 h-3.5" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-2 space-y-2" align="start">
-                  <div className="text-xs text-muted-foreground px-1">Category</div>
-                  <SelectorWithCreate
-                    options={catOptions}
-                    value={note.category}
-                    onChange={(v) => props.onUpdate(note.id, { category: v })}
-                    onCreate={props.onCreateCategory}
-                    icon={<Tag className="w-3.5 h-3.5" />}
-                  />
-                  <div className="text-xs text-muted-foreground px-1 pt-1">Project</div>
-                  <SelectorWithCreate
-                    options={projectOptions}
-                    value={note.projectId || ""}
-                    onChange={(v) => props.onUpdate(note.id, { projectId: v || undefined })}
-                    onCreate={props.onCreateProject}
-                    icon={<FolderKanban className="w-3.5 h-3.5" />}
-                  />
-                </PopoverContent>
-              </Popover>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                title="Convert to task"
-                onClick={() => props.onConvert(note)}
-              >
-                <ListChecks className="w-3.5 h-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                title="Delete note"
-                onClick={() => props.onDelete(note.id)}
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </Button>
-            </>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            title="Convert to task"
+            onClick={(e) => { e.stopPropagation(); props.onConvert(note); }}
+          >
+            <ListChecks className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            title="Delete note"
+            onClick={(e) => { e.stopPropagation(); props.onDelete(note.id); }}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </Button>
         </div>
       </div>
     </motion.div>
