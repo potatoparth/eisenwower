@@ -397,10 +397,7 @@ function NoteCard(props: CardProps) {
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.98 }}
-      transition={{ duration: 0.15 }}
+      initial={false}
       className="mb-3 break-inside-avoid rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow group cursor-pointer"
       style={{ backgroundColor: bg }}
       onClick={(e) => {
