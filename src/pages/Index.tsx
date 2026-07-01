@@ -104,7 +104,7 @@ const Index = () => {
     const enabled = settings.enabledViews;
     if (!enabled) return;
     if (enabled[viewMode] === false) {
-        const fallback = (["matrix", "list", "kanban", "calendar", "gantt", "projects", "notes"] as ViewMode[])
+        const fallback = (["matrix", "list", "kanban", "calendar", "gantt", "projects", "notes", "sprint"] as ViewMode[])
         .find((v) => enabled[v] !== false);
       if (fallback) setViewMode(fallback);
     }
