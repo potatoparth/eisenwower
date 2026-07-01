@@ -20,8 +20,12 @@ interface FilterBarProps {
   onSelectedCategoriesChange: (v: string[]) => void;
   getCategoryColor?: (name: string) => string | undefined;
   projects?: ProjectTemplate[];
-  activeProjectId?: string | null;
-  onActiveProjectChange?: (id: string | null) => void;
+  /** Empty = all projects. "__none__" represents "No project". */
+  activeProjectIds?: string[];
+  onActiveProjectIdsChange?: (ids: string[]) => void;
+  /** Project ids that survive the current cascade. Empty array means "cascade yields none". */
+  availableProjectIds?: string[];
+  hasNoProjectOption?: boolean;
   compactMode?: boolean;
   onCompactModeChange?: (v: boolean) => void;
 }
@@ -108,6 +112,7 @@ function OverdueButton({
 
 export function FilterBar(p: FilterBarProps) {
   const [catSearch, setCatSearch] = useState("");
+  const [projSearch, setProjSearch] = useState("");
   const toggleCat = (c: string) => {
     if (p.selectedCategories.includes(c)) {
       p.onSelectedCategoriesChange(p.selectedCategories.filter((x) => x !== c));
@@ -116,12 +121,17 @@ export function FilterBar(p: FilterBarProps) {
     }
   };
 
-  const projectLabel = (() => {
-    if (!p.projects) return null;
-    if (p.activeProjectId === null || p.activeProjectId === undefined) return "All projects";
-    if (p.activeProjectId === "__none__") return "No project";
-    return p.projects.find((x) => x.id === p.activeProjectId)?.name ?? "Project";
-  })();
+  const activeIds = p.activeProjectIds ?? [];
+  const toggleProj = (id: string) => {
+    if (activeIds.includes(id)) {
+      p.onActiveProjectIdsChange?.(activeIds.filter((x) => x !== id));
+    } else {
+      p.onActiveProjectIdsChange?.([...activeIds, id]);
+    }
+  };
+  const projectLabel = activeIds.length === 0
+    ? "All projects"
+    : `Projects · ${activeIds.length}`;
 
   const divider = (
     <span className="w-px h-5 bg-border shrink-0" aria-hidden />
@@ -190,37 +200,78 @@ export function FilterBar(p: FilterBarProps) {
         </Popover>
       )}
 
-      {p.projects && p.onActiveProjectChange && (
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className={cn(pillBase, p.activeProjectId ? pillActive : pillIdle)}
-            >
-              <span className="max-w-[120px] truncate">{projectLabel}</span>
-              <ChevronDown className="w-3 h-3 opacity-70" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-56 p-1">
-            {[
-              { id: null as string | null, name: "All projects" },
-              { id: "__none__", name: "No project" },
-              ...p.projects.map((pr) => ({ id: pr.id, name: pr.name })),
-            ].map((opt) => (
+      {p.projects && p.onActiveProjectIdsChange && (() => {
+        const available = p.availableProjectIds;
+        const visibleProjects = available
+          ? p.projects.filter((pr) => available.includes(pr.id))
+          : p.projects;
+        const showNone = p.hasNoProjectOption !== false;
+        const filteredProjects = visibleProjects.filter((pr) =>
+          pr.name.toLowerCase().includes(projSearch.toLowerCase())
+        );
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
               <button
-                key={opt.id ?? "__all__"}
-                onClick={() => p.onActiveProjectChange?.(opt.id)}
-                className={cn(
-                  "w-full text-left px-2 py-1.5 rounded-md text-sm hover:bg-secondary",
-                  (p.activeProjectId ?? null) === opt.id && "bg-secondary font-medium"
-                )}
+                type="button"
+                className={cn(pillBase, activeIds.length > 0 ? pillActive : pillIdle)}
               >
-                {opt.name}
+                <span className="max-w-[140px] truncate">{projectLabel}</span>
+                <ChevronDown className="w-3 h-3 opacity-70" />
               </button>
-            ))}
-          </PopoverContent>
-        </Popover>
-      )}
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-64 p-2">
+              <div className="flex items-center justify-between px-1 pb-2">
+                <span className="text-[11px] font-medium text-muted-foreground">Filter by project</span>
+                {activeIds.length > 0 && (
+                  <button
+                    className="text-[11px] text-muted-foreground hover:text-foreground"
+                    onClick={() => p.onActiveProjectIdsChange?.([])}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div className="relative mb-2">
+                <Search className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={projSearch}
+                  onChange={(e) => setProjSearch(e.target.value)}
+                  placeholder="Search projects..."
+                  className="w-full h-8 pl-7 pr-2 text-xs bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+              <div className="max-h-64 overflow-y-auto space-y-1">
+                {showNone && (
+                  <label className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary cursor-pointer text-sm">
+                    <Checkbox
+                      checked={activeIds.includes("__none__")}
+                      onCheckedChange={() => toggleProj("__none__")}
+                    />
+                    <span className="flex-1 truncate italic text-muted-foreground">No project</span>
+                  </label>
+                )}
+                {filteredProjects.map((pr) => {
+                  const checked = activeIds.includes(pr.id);
+                  return (
+                    <label
+                      key={pr.id}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary cursor-pointer text-sm"
+                    >
+                      <Checkbox checked={checked} onCheckedChange={() => toggleProj(pr.id)} />
+                      <span className="flex-1 truncate">{pr.name}</span>
+                    </label>
+                  );
+                })}
+                {filteredProjects.length === 0 && !showNone && (
+                  <div className="px-2 py-2 text-xs text-muted-foreground">No projects match current filters</div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        );
+      })()}
 
       {divider}
 
