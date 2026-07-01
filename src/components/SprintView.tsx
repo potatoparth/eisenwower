@@ -305,6 +305,72 @@ export function SprintView({ seedTasks, onSeedConsumed }: Props) {
                   </span>
                 </button>
               </div>
+
+              {sprints.length > 0 && (
+                <div className="animate-fade-up-delay mt-16 w-full max-w-md text-left">
+                  <div className="flex items-baseline justify-between mb-3">
+                    <span
+                      className="font-mono uppercase"
+                      style={{ fontSize: 11, letterSpacing: "0.15em", color: fgNav }}
+                    >
+                      My Sprints
+                    </span>
+                    <span
+                      className="font-mono"
+                      style={{ fontSize: 10, color: fgNav }}
+                    >
+                      {sprints.length}
+                    </span>
+                  </div>
+                  <ul className="flex flex-col gap-1.5">
+                    {sprints.slice(0, 8).map((s) => {
+                      const done = s.tasks.filter((t) => t.done).length;
+                      const total = s.tasks.length;
+                      const when = s.completedAt
+                        ? new Date(s.completedAt).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                          })
+                        : "—";
+                      const mins = s.actualMinutes ?? s.duration;
+                      return (
+                        <li
+                          key={s.id}
+                          className="flex items-center justify-between gap-3"
+                          style={{
+                            border: `0.5px solid ${resumeCardBorder}`,
+                            borderRadius: 12,
+                            padding: "10px 14px",
+                          }}
+                        >
+                          <div className="min-w-0">
+                            <div className="truncate" style={{ fontSize: 13, color: fgMain }}>
+                              {s.title}
+                            </div>
+                            <div
+                              className="font-mono mt-0.5"
+                              style={{ fontSize: 10, color: fgNav }}
+                            >
+                              {when} · {mins}m · {done}/{total} tasks
+                              {s.endedEarly ? " · ended early" : ""}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() =>
+                              setSprints(sprints.filter((x) => x.id !== s.id))
+                            }
+                            className="font-mono shrink-0 transition-opacity opacity-40 hover:opacity-100"
+                            style={{ fontSize: 10, color: fgNav, background: "transparent" }}
+                            aria-label="Remove sprint"
+                          >
+                            ✕
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         )}
