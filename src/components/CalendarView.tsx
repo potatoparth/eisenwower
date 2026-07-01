@@ -443,6 +443,8 @@ function DaySection({
                   }}
                   onToggleStatus={onToggleStatus}
                   onClick={() => onTaskClick(t)}
+                  moveOptions={moveOptions.filter((o) => o.key !== sectionKey)}
+                  onMove={onMove}
                 />
               </div>
             );
