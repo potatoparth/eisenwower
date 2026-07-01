@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays, isPast, isToday } from "date-fns";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { RecurrenceField } from "@/components/RecurrenceField";
+import { TaskDescription } from "@/components/TaskDescription";
 
 interface TaskDetailPanelProps {
   task: Task;
