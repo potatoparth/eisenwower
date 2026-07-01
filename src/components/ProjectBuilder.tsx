@@ -2,11 +2,12 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink } from "lucide-react";
 import { ProjectTemplate, ProjectTask, TaskDependencyType } from "@/types/project";
-import { Task } from "@/types/task";
+import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { TaskInput, type TaskAddOptions, type TaskInputPickerProps } from "@/components/TaskInput";
 import {
   Select,
   SelectContent,
@@ -24,20 +25,23 @@ interface ProjectBuilderProps {
   onAddTask: (projectId: string, task: Omit<ProjectTask, "id" | "order">) => void;
   onUpdateTask: (projectId: string, taskId: string, updates: Partial<ProjectTask>) => void;
   onDeleteTask: (projectId: string, taskId: string) => void;
+  // Matrix-style task creation (creates a real Task tied to this project).
+  onAddMatrixTask?: (name: string, quadrant: Quadrant, options?: TaskAddOptions) => void;
+  quadrants?: QuadrantInfo[];
+  categories?: string[];
+  onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
+  onCreateProject?: TaskInputPickerProps["onCreateProject"];
 }
 
 export function ProjectBuilder({
   projects, allTasks = [], onAddProject, onUpdateProject, onDeleteProject,
   onAddTask, onUpdateTask, onDeleteTask,
+  onAddMatrixTask, quadrants, categories = [], onCreateCategory, onCreateProject,
 }: ProjectBuilderProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDesc, setNewProjectDesc] = useState("");
   const [showNewProject, setShowNewProject] = useState(false);
-  const [newTaskName, setNewTaskName] = useState("");
-  const [newTaskDuration, setNewTaskDuration] = useState("1");
-  const [newTaskType, setNewTaskType] = useState<TaskDependencyType>("async");
-  const [newTaskDependsOn, setNewTaskDependsOn] = useState<string>("");
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const mappedTasks = selectedProject ? allTasks.filter(t => t.projectId === selectedProject.id) : [];
@@ -51,19 +55,9 @@ export function ProjectBuilder({
     setShowNewProject(false);
   };
 
-  const handleAddTask = () => {
-    if (!newTaskName.trim() || !selectedProjectId) return;
-    onAddTask(selectedProjectId, {
-      name: newTaskName.trim(),
-      dependencyType: newTaskType,
-      dependsOn: newTaskDependsOn ? [newTaskDependsOn] : [],
-      durationDays: parseInt(newTaskDuration) || 1,
-      status: "pending",
-    });
-    setNewTaskName("");
-    setNewTaskDuration("1");
-    setNewTaskType("async");
-    setNewTaskDependsOn("");
+  const handleAddMatrixTask = (name: string, quadrant: Quadrant, options?: TaskAddOptions) => {
+    if (!selectedProjectId || !onAddMatrixTask) return;
+    onAddMatrixTask(name, quadrant, { ...options, projectId: selectedProjectId });
   };
 
   return (
@@ -211,39 +205,32 @@ export function ProjectBuilder({
             )}
           </div>
 
-          {/* Add task form */}
-          <div className="bg-card rounded-2xl border border-border p-3 space-y-2">
-            <div className="flex gap-2">
-              <Input placeholder="Task name" value={newTaskName} onChange={e => setNewTaskName(e.target.value)} className="flex-1" onKeyDown={e => { if (e.key === "Enter") handleAddTask(); }} />
-              <Input type="number" min="1" value={newTaskDuration} onChange={e => setNewTaskDuration(e.target.value)} className="w-16" placeholder="Days" />
+          {/* Matrix-style task input — a quadrant selection is required. */}
+          {onAddMatrixTask && (
+            <div className="max-w-2xl w-full mx-auto">
+              <TaskInput
+                onAddTask={handleAddMatrixTask}
+                placeholder="Add a task to this project..."
+                leadingElement={
+                  <Button
+                    type="button"
+                    size="icon"
+                    className="h-8 w-8 rounded-full pointer-events-none"
+                    tabIndex={-1}
+                    aria-label="Add task mode"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                }
+                quadrants={quadrants}
+                categories={categories}
+                projects={projects}
+                defaultProjectId={selectedProject.id}
+                onCreateCategory={onCreateCategory}
+                onCreateProject={onCreateProject}
+              />
             </div>
-            <div className="flex gap-2 items-center">
-              <Select value={newTaskType} onValueChange={(v) => setNewTaskType(v as TaskDependencyType)}>
-                <SelectTrigger className="w-[120px] h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="async">Async (parallel)</SelectItem>
-                  <SelectItem value="sync">Sync (sequential)</SelectItem>
-                </SelectContent>
-              </Select>
-              {newTaskType === "sync" && selectedProject.tasks.length > 0 && (
-                <Select value={newTaskDependsOn} onValueChange={setNewTaskDependsOn}>
-                  <SelectTrigger className="flex-1 h-8 text-xs">
-                    <SelectValue placeholder="Depends on..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedProject.tasks.map(t => (
-                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <Button size="sm" onClick={handleAddTask} className="ml-auto">
-                <Plus className="w-3 h-3 mr-1" /> Add Task
-              </Button>
-            </div>
-          </div>
+          )}
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
