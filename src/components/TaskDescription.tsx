@@ -2,6 +2,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AlignLeft, ListOrdered, ListChecks, List, Link2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+
+interface LinkDialogState {
+  idx: number;
+  selStart: number;
+  selEnd: number;
+  text: string;
+  url: string;
+}
 
 /**
  * Shared task description editor.
