@@ -27,7 +27,7 @@ interface Props {
   onSeedConsumed?: () => void;
 }
 
-type Phase = "home" | "countdown" | "focus" | "complete";
+type Phase = "home" | "countdown" | "focus" | "complete" | "history";
 
 function fmtRemain(s: Sprint) {
   if (s.noTimer) return null;
@@ -54,6 +54,18 @@ export function SprintView({ seedTasks, onSeedConsumed }: Props) {
   const [seedForModal, setSeedForModal] = useState<SprintSeedTask[] | undefined>(undefined);
   const { theme } = useTheme();
   const { enabled: bgEnabled } = useBackground();
+
+  // Immersive mode: when a media background is enabled inside sprint,
+  // hide the app chrome (header/footer/padding) so the media fills the screen.
+  // Reverting is automatic on unmount (i.e. switching to any other view).
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (bgEnabled) {
+      document.body.classList.add("sprint-immersive");
+      return () => document.body.classList.remove("sprint-immersive");
+    }
+    document.body.classList.remove("sprint-immersive");
+  }, [bgEnabled]);
 
   useEffect(() => {
     const act = loadActiveSprint();
@@ -208,6 +220,16 @@ export function SprintView({ seedTasks, onSeedConsumed }: Props) {
               </div>
               <div className="flex items-center gap-5">
                 <button
+                  onClick={() => setPhase("history")}
+                  className="font-mono uppercase transition-colors duration-300"
+                  style={{
+                    fontSize: 13, letterSpacing: "0.12em", color: fgNav,
+                    background: "transparent", border: "none", cursor: "pointer",
+                  }}
+                >
+                  My Sprints
+                </button>
+                <button
                   onClick={() => setCustomizeOpen(true)}
                   className="font-mono uppercase transition-colors duration-300"
                   style={{
@@ -321,142 +343,172 @@ export function SprintView({ seedTasks, onSeedConsumed }: Props) {
                 </button>
               </div>
 
-              {(resumable || sprints.length > 0) && (
-                <div className="animate-fade-up-delay mt-16 w-full max-w-md text-left">
-                  <div className="flex items-baseline justify-between mb-3">
-                    <span
-                      className="font-mono uppercase"
-                      style={{ fontSize: 11, letterSpacing: "0.15em", color: fgNav }}
-                    >
-                      My Sprints
-                    </span>
-                    <span
-                      className="font-mono"
-                      style={{ fontSize: 10, color: fgNav }}
-                    >
-                      {sprints.length + (resumable ? 1 : 0)}
-                    </span>
-                  </div>
-                  <ul className="flex flex-col gap-1.5">
-                    {[
-                      ...(resumable
-                        ? [{
-                            s: resumable,
-                            status: (resumable.pausedAt != null ? "paused" : "ongoing") as
-                              | "paused"
-                              | "ongoing"
-                              | "completed"
-                              | "incomplete",
-                          }]
-                        : []),
-                      ...sprints.slice(0, 8).map((s) => {
-                        const total = s.tasks.length;
-                        const done = s.tasks.filter((t) => t.done).length;
-                        const status: "completed" | "incomplete" =
-                          total > 0 && done < total ? "incomplete" : "completed";
-                        return { s, status };
-                      }),
-                    ].map(({ s, status }) => {
-                      const done = s.tasks.filter((t) => t.done).length;
+            </div>
+          </div>
+        )}
+
+        {phase === "history" && (
+          <div key="history" className="relative h-full overflow-y-auto">
+            <header
+              className="relative flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-8"
+              style={{ zIndex: 2 }}
+            >
+              <button
+                onClick={() => setPhase("home")}
+                className="font-mono uppercase transition-colors duration-300"
+                style={{
+                  fontSize: 13, letterSpacing: "0.12em", color: fgNav,
+                  background: "transparent", border: "none", cursor: "pointer",
+                }}
+              >
+                ← Back
+              </button>
+              <span
+                className="font-mono uppercase"
+                style={{ fontSize: 13, letterSpacing: "0.15em", color: fgNav }}
+              >
+                My Sprints
+              </span>
+            </header>
+
+            <div
+              className="relative mx-auto w-full max-w-2xl px-6 pt-8 pb-16 sm:px-10"
+              style={{ zIndex: 2 }}
+            >
+              <h1
+                className="text-3xl tracking-tight sm:text-4xl"
+                style={{
+                  fontFamily: "var(--sp-font-display)",
+                  fontWeight: 300,
+                  color: fgMain,
+                }}
+              >
+                Your sessions
+              </h1>
+
+              {resumable == null && sprints.length === 0 ? (
+                <p
+                  className="mt-16 text-center"
+                  style={{
+                    fontFamily: "var(--sp-font-display)",
+                    fontSize: 18, fontWeight: 300, color: fgSub,
+                  }}
+                >
+                  No sprints yet.
+                </p>
+              ) : (
+                <ul className="mt-8 flex flex-col gap-2.5">
+                  {[
+                    ...(resumable
+                      ? [{
+                          s: resumable,
+                          status: (resumable.pausedAt != null ? "paused" : "ongoing") as
+                            | "paused" | "ongoing" | "completed" | "incomplete",
+                        }]
+                      : []),
+                    ...sprints.map((s) => {
                       const total = s.tasks.length;
-                      const ref = s.completedAt ?? s.startTime;
-                      const when = new Date(ref).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                      });
-                      const mins = s.actualMinutes ?? s.duration;
-                      const pillFg =
-                        status === "completed"
-                          ? isLight ? "#16a34a" : "#4ade80"
-                          : status === "ongoing"
-                          ? isLight ? "#2563eb" : "#60a5fa"
-                          : status === "paused"
-                          ? fgNav
-                          : isLight ? "#dc2626" : "#f87171";
-                      const pillBg =
-                        status === "completed"
-                          ? isLight ? "rgba(34,197,94,0.1)" : "rgba(74,222,128,0.12)"
-                          : status === "ongoing"
-                          ? isLight ? "rgba(59,130,246,0.1)" : "rgba(96,165,250,0.12)"
-                          : status === "paused"
-                          ? isLight ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.05)"
-                          : isLight ? "rgba(220,38,38,0.1)" : "rgba(248,113,113,0.12)";
-                      const isLive = status === "paused" || status === "ongoing";
-                      return (
-                        <li
-                          key={s.id}
-                          className="flex items-center justify-between gap-3"
-                          style={{
-                            border: `0.5px solid ${resumeCardBorder}`,
-                            borderRadius: 12,
-                            padding: "10px 14px",
-                          }}
-                        >
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="truncate"
-                                style={{ fontSize: 13, color: fgMain }}
-                              >
-                                {s.title}
-                              </div>
-                              <span
-                                className="font-mono uppercase shrink-0"
-                                style={{
-                                  fontSize: 9,
-                                  letterSpacing: "0.12em",
-                                  padding: "2px 7px",
-                                  borderRadius: 100,
-                                  background: pillBg,
-                                  color: pillFg,
-                                }}
-                              >
-                                {status}
-                              </span>
-                            </div>
+                      const done = s.tasks.filter((t) => t.done).length;
+                      const status: "completed" | "incomplete" =
+                        total > 0 && done < total ? "incomplete" : "completed";
+                      return { s, status };
+                    }),
+                  ].map(({ s, status }) => {
+                    const done = s.tasks.filter((t) => t.done).length;
+                    const total = s.tasks.length;
+                    const ref = s.completedAt ?? s.startTime;
+                    const when = new Date(ref).toLocaleDateString(undefined, {
+                      weekday: "short", month: "short", day: "numeric",
+                    });
+                    const mins = s.actualMinutes ?? s.duration;
+                    const pillFg =
+                      status === "completed"
+                        ? isLight ? "#16a34a" : "#4ade80"
+                        : status === "ongoing"
+                        ? isLight ? "#2563eb" : "#60a5fa"
+                        : status === "paused"
+                        ? fgNav
+                        : isLight ? "#dc2626" : "#f87171";
+                    const pillBg =
+                      status === "completed"
+                        ? isLight ? "rgba(34,197,94,0.1)" : "rgba(74,222,128,0.12)"
+                        : status === "ongoing"
+                        ? isLight ? "rgba(59,130,246,0.1)" : "rgba(96,165,250,0.12)"
+                        : status === "paused"
+                        ? isLight ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.05)"
+                        : isLight ? "rgba(220,38,38,0.1)" : "rgba(248,113,113,0.12)";
+                    const isLive = status === "paused" || status === "ongoing";
+                    return (
+                      <li
+                        key={s.id}
+                        className="flex items-start justify-between gap-3"
+                        style={{
+                          border: `0.5px solid ${resumeCardBorder}`,
+                          borderRadius: 16,
+                          padding: "16px 18px",
+                          background: isLight ? "rgba(0,0,0,0.02)" : "rgba(255,255,255,0.02)",
+                        }}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <div
-                              className="font-mono mt-0.5"
-                              style={{ fontSize: 10, color: fgNav }}
+                              className="truncate"
+                              style={{ fontSize: 15, color: fgMain }}
                             >
-                              {when} · {mins}m · {done}/{total} tasks
-                              {s.endedEarly ? " · ended early" : ""}
+                              {s.title}
                             </div>
-                            {isLive && (
-                              <button
-                                onClick={() => resume(s)}
-                                className="font-mono mt-1.5 transition-colors"
-                                style={{
-                                  fontSize: 11,
-                                  color: fgMain,
-                                  background: "transparent",
-                                  border: "none",
-                                  padding: 0,
-                                }}
-                              >
-                                Resume →
-                              </button>
-                            )}
+                            <span
+                              className="font-mono uppercase shrink-0"
+                              style={{
+                                fontSize: 9, letterSpacing: "0.12em",
+                                padding: "3px 8px", borderRadius: 100,
+                                background: pillBg, color: pillFg,
+                              }}
+                            >
+                              {status}
+                            </span>
                           </div>
-                          <button
-                            onClick={() => {
-                              if (isLive) {
-                                saveActiveSprint(null);
-                                setResumable(null);
-                              } else {
-                                setSprints(sprints.filter((x) => x.id !== s.id));
-                              }
-                            }}
-                            className="font-mono shrink-0 transition-opacity opacity-40 hover:opacity-100"
-                            style={{ fontSize: 10, color: fgNav, background: "transparent" }}
-                            aria-label="Remove sprint"
+                          <div
+                            className="font-mono mt-1.5"
+                            style={{ fontSize: 11, letterSpacing: "0.08em", color: fgNav }}
                           >
-                            ✕
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
+                            {when} · {total} task{total === 1 ? "" : "s"} ·{" "}
+                            {s.noTimer ? "no timer" : `${mins}m`}
+                            {status === "completed" && total > 0 ? ` · ${done}/${total} done` : ""}
+                            {s.endedEarly ? " · ended early" : ""}
+                          </div>
+                          {isLive && (
+                            <button
+                              onClick={() => resume(s)}
+                              className="font-mono mt-3 transition-colors"
+                              style={{
+                                fontSize: 12, color: fgMain,
+                                background: "transparent", border: "none", padding: 0,
+                              }}
+                            >
+                              Resume →
+                            </button>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => {
+                            if (isLive) {
+                              saveActiveSprint(null);
+                              setResumable(null);
+                            } else {
+                              setSprints(sprints.filter((x) => x.id !== s.id));
+                            }
+                          }}
+                          className="shrink-0 transition-opacity opacity-40 hover:opacity-100"
+                          style={{ fontSize: 14, color: fgNav, background: "transparent" }}
+                          aria-label="Remove sprint"
+                        >
+                          ✕
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
             </div>
           </div>
