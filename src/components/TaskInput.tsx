@@ -227,9 +227,9 @@ export function TaskInput({
           "transition-all duration-200 border bg-secondary/40 border-border/60",
           step === "name"
             ? compact
-              ? "rounded-full"
-              : "rounded-full mx-auto max-w-2xl"
-            : "rounded-2xl bg-card"
+              ? "rounded-full w-full"
+              : "rounded-full mx-auto w-full max-w-2xl"
+            : "rounded-2xl bg-card w-full mx-auto max-w-2xl"
         )}
       >
         {/* Name Input */}
