@@ -197,6 +197,16 @@ export function CalendarView({
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border flex-wrap">
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDayOffset((n) => n - 1)} aria-label="Previous day">
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setDayOffset(0)} disabled={dayOffset === 0}>
+            Today
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDayOffset((n) => n + 1)} aria-label="Next day">
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+          <span className="text-muted-foreground/40">·</span>
           <Button variant="ghost" size="sm" onClick={expandAll}>Expand all</Button>
           <span className="text-muted-foreground/40">·</span>
           <Button variant="ghost" size="sm" onClick={collapseAll}>Collapse all</Button>
