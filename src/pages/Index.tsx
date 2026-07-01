@@ -216,6 +216,7 @@ const Index = () => {
                 onCreateProject={handleCreateProject}
                 onSelectTask={setSelectedTask}
                 onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
+                onRescheduleTasks={handleRescheduleTasks}
                 allTasks={tasks}
               />
             </motion.div>
@@ -235,6 +236,7 @@ const Index = () => {
                 onCreateProject={handleCreateProject}
                 onSelectTask={setSelectedTask}
                 onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
+                onRescheduleTasks={handleRescheduleTasks}
                 allTasks={tasks}
               />
             </motion.div>
@@ -269,6 +271,7 @@ const Index = () => {
                 onCreateProject={handleCreateProject}
                 onSelectTask={setSelectedTask}
                 onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
+                onRescheduleTasks={handleRescheduleTasks}
               />
             </motion.div>
           )}
