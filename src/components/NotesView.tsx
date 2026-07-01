@@ -51,6 +51,20 @@ export function NotesView(props: NotesViewProps) {
   } = props;
 
   const dark = useIsDark();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editingNote = useMemo(
+    () => (editingId ? notes.find((n) => n.id === editingId) ?? null : null),
+    [editingId, notes]
+  );
+  const composerWrapRef = useRef<HTMLDivElement>(null);
+
+  const startEdit = (id: string) => {
+    setEditingId(id);
+    // Scroll composer into view so the user sees the pre-filled form
+    requestAnimationFrame(() => {
+      composerWrapRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   const pinned = useMemo(() => notes.filter((n) => n.pinned), [notes]);
   const others = useMemo(() => notes.filter((n) => !n.pinned), [notes]);
@@ -60,23 +74,28 @@ export function NotesView(props: NotesViewProps) {
   return (
     <div className="flex-1 min-h-0 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-1 pb-8">
-        <NoteComposer
-          categories={categories}
-          projects={projects}
-          defaultCategory={defaultCategory}
-          defaultProjectId={defaultProjectId}
-          onCreateCategory={onCreateCategory}
-          onCreateProject={onCreateProject}
-          onAddNote={onAddNote}
-          dark={dark}
-        />
+        <div ref={composerWrapRef}>
+          <NoteComposer
+            categories={categories}
+            projects={projects}
+            defaultCategory={defaultCategory}
+            defaultProjectId={defaultProjectId}
+            onCreateCategory={onCreateCategory}
+            onCreateProject={onCreateProject}
+            onAddNote={onAddNote}
+            onUpdateNote={onUpdateNote}
+            editingNote={editingNote}
+            onCancelEdit={() => setEditingId(null)}
+            dark={dark}
+          />
+        </div>
 
         {pinned.length > 0 && (
           <>
             <SectionLabel>Pinned</SectionLabel>
             <MasonryGrid>
               <AnimatePresence initial={false}>
-                {pinned.map((n) => (
+                {pinned.filter((n) => n.id !== editingId).map((n) => (
                   <NoteCard
                     key={n.id}
                     note={n}
@@ -88,6 +107,7 @@ export function NotesView(props: NotesViewProps) {
                     onUpdate={onUpdateNote}
                     onDelete={onDeleteNote}
                     onConvert={onConvertToTask}
+                    onEdit={startEdit}
                     getCategoryColor={getCategoryColor}
                     dark={dark}
                   />
@@ -102,7 +122,7 @@ export function NotesView(props: NotesViewProps) {
             {pinned.length > 0 && <SectionLabel>Others</SectionLabel>}
             <MasonryGrid>
               <AnimatePresence initial={false}>
-                {others.map((n) => (
+                {others.filter((n) => n.id !== editingId).map((n) => (
                   <NoteCard
                     key={n.id}
                     note={n}
@@ -114,6 +134,7 @@ export function NotesView(props: NotesViewProps) {
                     onUpdate={onUpdateNote}
                     onDelete={onDeleteNote}
                     onConvert={onConvertToTask}
+                    onEdit={startEdit}
                     getCategoryColor={getCategoryColor}
                     dark={dark}
                   />
