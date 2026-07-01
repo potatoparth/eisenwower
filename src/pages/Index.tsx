@@ -200,9 +200,6 @@ const Index = () => {
                 onToggleStatus={toggleStatus} onDeleteTask={handleDeleteTask} onAddTask={handleAddTask}
                 onReorderTasks={setTasks} onTaskClick={setSelectedTask}
                 getCategoryColor={getCategoryColor} deadlineThresholdDays={settings.deadlineThresholdDays}
-                dateFilter={dateFilter}
-                overdueMode={overdueMode}
-                selectedCategories={selectedCategories}
                 noDatePosition={settings.noDateTasksPosition}
                 compactMode={compactMode}
                 quadrants={quadrants}
