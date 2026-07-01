@@ -11,8 +11,8 @@ import {
   setSpotifyUrl,
   toSpotifyEmbed,
   type BgMeta,
-} from "@/lib/customization-store";
-import { useTheme } from "@/lib/theme-store";
+} from "@/lib/sprint/customization-store";
+import { useTheme } from "@/lib/sprint/theme-store";
 
 interface Props {
   open: boolean;

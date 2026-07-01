@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
-import type { Sprint } from "@/lib/sprint-store";
+import type { Sprint } from "@/lib/sprint/sprint-store";
 
 const messages = ["Locked in.", "Momentum maintained.", "Strong session.", "Held the line."];
 
@@ -28,8 +28,8 @@ export function CompleteScreen({
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-accent text-accent-foreground"
-          style={{ boxShadow: "var(--shadow-glow)" }}
+          className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[color:var(--sp-accent)] text-[color:var(--sp-accent-foreground)]"
+          style={{ boxShadow: "var(--sp-shadow-glow)" }}
         >
           <Check className="h-7 w-7" strokeWidth={3} />
         </motion.div>
@@ -54,7 +54,7 @@ export function CompleteScreen({
             style={{
               fontSize: 12,
               letterSpacing: "0.18em",
-              color: "var(--muted-foreground)",
+              color: "var(--sp-muted-foreground)",
             }}
           >
             {sprint.noTimer
@@ -68,7 +68,7 @@ export function CompleteScreen({
               className="font-mono mt-1"
               style={{
                 fontSize: 12,
-                color: "var(--muted-foreground)",
+                color: "var(--sp-muted-foreground)",
                 opacity: 0.7,
               }}
             >
@@ -88,15 +88,15 @@ export function CompleteScreen({
         >
           {done.map((t) => (
             <div key={t.id} className="flex items-center gap-3 text-sm">
-              <span className="grid h-4 w-4 place-items-center rounded-full bg-accent">
-                <Check className="h-2.5 w-2.5 text-accent-foreground" strokeWidth={3} />
+              <span className="grid h-4 w-4 place-items-center rounded-full bg-[color:var(--sp-accent)]">
+                <Check className="h-2.5 w-2.5 text-[color:var(--sp-accent-foreground)]" strokeWidth={3} />
               </span>
               <span className="line-through opacity-60">{t.title}</span>
             </div>
           ))}
           {open.map((t) => (
-            <div key={t.id} className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span className="h-4 w-4 rounded-full border border-border" />
+            <div key={t.id} className="flex items-center gap-3 text-sm text-[color:var(--sp-muted-foreground)]">
+              <span className="h-4 w-4 rounded-full border border-[color:var(--sp-border)]" />
               <span>{t.title}</span>
             </div>
           ))}
@@ -110,14 +110,14 @@ export function CompleteScreen({
         >
           <button
             onClick={onAnother}
-            className="rounded-2xl bg-accent px-7 py-4 font-display text-base font-semibold text-accent-foreground transition hover:scale-[1.02] active:scale-[0.98]"
-            style={{ boxShadow: "var(--shadow-glow)" }}
+            className="rounded-2xl bg-[color:var(--sp-accent)] px-7 py-4 font-display text-base font-semibold text-[color:var(--sp-accent-foreground)] transition hover:scale-[1.02] active:scale-[0.98]"
+            style={{ boxShadow: "var(--sp-shadow-glow)" }}
           >
             Start Another Sprint
           </button>
           <button
             onClick={onHome}
-            className="rounded-2xl border border-border bg-surface px-7 py-4 font-display text-base font-medium text-muted-foreground transition hover:border-accent hover:text-foreground"
+            className="rounded-2xl border border-[color:var(--sp-border)] bg-[color:var(--sp-surface)] px-7 py-4 font-display text-base font-medium text-[color:var(--sp-muted-foreground)] transition hover:border-[color:var(--sp-accent)] hover:text-[color:var(--sp-foreground)]"
           >
             Return Home
           </button>

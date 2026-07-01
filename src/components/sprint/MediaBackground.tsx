@@ -1,4 +1,4 @@
-import { useBackground } from "@/lib/customization-store";
+import { useBackground } from "@/lib/sprint/customization-store";
 
 export function MediaBackground() {
   const { url, meta, enabled } = useBackground();

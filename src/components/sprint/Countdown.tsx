@@ -17,7 +17,7 @@ export function Countdown({ onDone }: { onDone: () => void }) {
     <motion.div
       className="fixed inset-0 z-[60] grid place-items-center"
       style={{
-        background: "color-mix(in oklab, var(--background) 55%, transparent)",
+        background: "color-mix(in oklab, var(--sp-background) 55%, transparent)",
         backdropFilter: "blur(6px)",
         WebkitBackdropFilter: "blur(6px)",
       }}
@@ -32,7 +32,7 @@ export function Countdown({ onDone }: { onDone: () => void }) {
           style={{
             fontSize: 10,
             letterSpacing: "0.3em",
-            color: "color-mix(in oklab, var(--foreground) 30%, transparent)",
+            color: "color-mix(in oklab, var(--sp-foreground) 30%, transparent)",
           }}
         >
           Entering focus
@@ -52,7 +52,7 @@ export function Countdown({ onDone }: { onDone: () => void }) {
                   fontWeight: 200,
                   lineHeight: 1,
                   letterSpacing: "-0.04em",
-                  color: "var(--foreground)",
+                  color: "var(--sp-foreground)",
                 }}
               >
                 {n}
@@ -69,7 +69,7 @@ export function Countdown({ onDone }: { onDone: () => void }) {
                   fontSize: "3.5rem",
                   fontWeight: 300,
                   letterSpacing: "-0.02em",
-                  color: "var(--foreground)",
+                  color: "var(--sp-foreground)",
                 }}
               >
                 Locked in.

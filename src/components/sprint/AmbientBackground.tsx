@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import type { AtmosphereId } from "@/lib/atmospheres";
-import { atmosphereById } from "@/lib/atmospheres";
+import type { AtmosphereId } from "@/lib/sprint/atmospheres";
+import { atmosphereById } from "@/lib/sprint/atmospheres";
 
 interface Props {
   atmosphere?: AtmosphereId;
@@ -9,7 +9,7 @@ interface Props {
 
 export function AmbientBackground({ atmosphere, intense = false }: Props) {
   const atm = atmosphere ? atmosphereById[atmosphere] : null;
-  const glow1 = atm?.glow ?? "var(--accent-glow, rgba(100,180,255,0.1))";
+  const glow1 = atm?.glow ?? "var(--sp-accent-glow, rgba(100,180,255,0.1))";
   const glow2 = atm?.glowSecondary ?? glow1;
   const particle = atm?.particleColor ?? "rgba(255,255,255,0.4)";
 

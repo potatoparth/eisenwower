@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Settings2, Clock } from "lucide-react";
-import type { Sprint, SprintTask } from "@/lib/sprint-store";
+import type { Sprint, SprintTask } from "@/lib/sprint/sprint-store";
 import { ThemeToggle } from "./ThemeToggle";
 import { AmbientBackground } from "./AmbientBackground";
 import { MediaBackground } from "./MediaBackground";
 import { SpotifyPlayer } from "./SpotifyPlayer";
 import { CustomizeModal } from "./CustomizeModal";
-import { useBackground } from "@/lib/customization-store";
+import { useBackground } from "@/lib/sprint/customization-store";
 
 interface Props {
   sprint: Sprint;
@@ -174,7 +174,7 @@ export function FocusMode({ sprint, onUpdate, onExit, onComplete }: Props) {
   const isLight =
     !bgEnabled &&
     typeof document !== "undefined" &&
-    document.documentElement.classList.contains("light");
+    document.documentElement.!document.documentElement.classList.contains("dark");
   const mutedText = isLight ? "rgba(0,0,0,0.4)" : muted;
   const veryMutedText = isLight ? "rgba(0,0,0,0.3)" : veryMuted;
   const handleColor = isLight ? "rgba(0,0,0,0.2)" : bgEnabled ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.15)";
@@ -185,7 +185,7 @@ export function FocusMode({ sprint, onUpdate, onExit, onComplete }: Props) {
   return (
     <div
       className="fixed inset-0 z-40 flex flex-col animate-fade-in"
-      style={{ background: "var(--background)", overflow: "hidden" }}
+      style={{ background: "var(--sp-background)", overflow: "hidden" }}
     >
       {bgEnabled ? <MediaBackground /> : <AmbientBackground atmosphere={sprint.atmosphere} intense />}
       <SpotifyPlayer />
@@ -213,7 +213,7 @@ export function FocusMode({ sprint, onUpdate, onExit, onComplete }: Props) {
               className={`grid h-7 w-7 place-items-center rounded-full border transition ${
                 bgEnabled
                   ? ""
-                  : "border-[color:var(--border)] text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)]"
+                  : "border-[color:var(--sp-border)] text-[color:var(--sp-muted-foreground)] hover:text-[color:var(--sp-foreground)]"
               }`}
               aria-label="Customize background and music"
               title="Customize"

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Palette, X, Play, Pause, Maximize2, Minimize2 } from "lucide-react";
-import { useSpotifyUrl, toSpotifyEmbed } from "@/lib/customization-store";
+import { useSpotifyUrl, toSpotifyEmbed } from "@/lib/sprint/customization-store";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const WIDTH_KEY = "lockin.spotify.width";
@@ -93,7 +93,7 @@ export function SpotifyPlayer() {
     if (typeof window === "undefined") return "dark";
     const v = localStorage.getItem(THEME_KEY) as PlayerTheme | null;
     if (v === "dark" || v === "light") return v;
-    return document.documentElement.classList.contains("light") ? "light" : "dark";
+    return document.documentElement.!document.documentElement.classList.contains("dark") ? "light" : "dark";
   });
 
   useEffect(() => { localStorage.setItem(WIDTH_KEY, String(width)); }, [width]);
@@ -392,19 +392,19 @@ function MiniBar({
         display: "flex", alignItems: "center", gap: 10,
         padding: "8px 12px",
         borderRadius: 999,
-        background: "color-mix(in oklab, var(--background) 55%, transparent)",
-        border: "1px solid var(--border)",
+        background: "color-mix(in oklab, var(--sp-background) 55%, transparent)",
+        border: "1px solid var(--sp-border)",
         backdropFilter: "blur(14px)",
         WebkitBackdropFilter: "blur(14px)",
-        color: "var(--foreground)",
+        color: "var(--sp-foreground)",
         boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
       }}
     >
       <button
         onClick={onPlayPause}
         aria-label={paused ? "Play" : "Pause"}
-        className="grid place-items-center rounded-full border border-[color:var(--border)] transition hover:opacity-80"
-        style={{ width: 30, height: 30, background: "transparent", color: "var(--foreground)", cursor: "pointer" }}
+        className="grid place-items-center rounded-full border border-[color:var(--sp-border)] transition hover:opacity-80"
+        style={{ width: 30, height: 30, background: "transparent", color: "var(--sp-foreground)", cursor: "pointer" }}
       >
         {paused ? <Play size={13} /> : <Pause size={13} />}
       </button>
@@ -420,7 +420,7 @@ function MiniBar({
         onClick={onExpand}
         aria-label="Expand"
         title="Expand"
-        className="grid place-items-center text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)] transition"
+        className="grid place-items-center text-[color:var(--sp-muted-foreground)] hover:text-[color:var(--sp-foreground)] transition"
         style={{ width: 24, height: 24, cursor: "pointer", background: "transparent", border: "none" }}
       >
         <Maximize2 size={12} />
@@ -429,7 +429,7 @@ function MiniBar({
         onClick={onIcon}
         aria-label="Hide"
         title="Hide"
-        className="grid place-items-center text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)] transition"
+        className="grid place-items-center text-[color:var(--sp-muted-foreground)] hover:text-[color:var(--sp-foreground)] transition"
         style={{ width: 24, height: 24, cursor: "pointer", background: "transparent", border: "none" }}
       >
         <X size={12} />
@@ -446,11 +446,11 @@ function IconButton({ isMobile, onClick }: { isMobile: boolean; onClick: () => v
         onClick={onClick}
         aria-label="Open music player"
         title="Open music player"
-        className="grid place-items-center rounded-full border border-[color:var(--border)] text-[color:var(--muted-foreground)] transition hover:text-[#1DB954]"
+        className="grid place-items-center rounded-full border border-[color:var(--sp-border)] text-[color:var(--sp-muted-foreground)] transition hover:text-[#1DB954]"
         style={{
           width: isMobile ? 32 : 36,
           height: isMobile ? 32 : 36,
-          background: "color-mix(in oklab, var(--background) 75%, transparent)",
+          background: "color-mix(in oklab, var(--sp-background) 75%, transparent)",
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",
         }}

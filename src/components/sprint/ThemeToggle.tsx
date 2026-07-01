@@ -1,5 +1,5 @@
 import { Moon, Sun } from "lucide-react";
-import { useTheme } from "@/lib/theme-store";
+import { useTheme } from "@/lib/sprint/theme-store";
 
 interface Props {
   className?: string;
@@ -19,8 +19,8 @@ export function ThemeToggle({ className = "", color, borderColor }: Props) {
       onClick={toggle}
       style={style}
       className={`grid h-7 w-7 place-items-center rounded-full border ${
-        borderColor ? "" : "border-[color:var(--border)]"
-      } ${color ? "" : "text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)]"} transition ${className}`}
+        borderColor ? "" : "border-[color:var(--sp-border)]"
+      } ${color ? "" : "text-[color:var(--sp-muted-foreground)] hover:text-[color:var(--sp-foreground)]"} transition ${className}`}
       aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
     >
       {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}

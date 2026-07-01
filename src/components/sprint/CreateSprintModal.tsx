@@ -1,8 +1,8 @@
 import { useState, useRef, useMemo, type KeyboardEvent } from "react";
 import { X, Plus } from "lucide-react";
-import { durations, atmospheres, type AtmosphereId } from "@/lib/atmospheres";
-import { loadSprints } from "@/lib/sprint-store";
-import { useTheme } from "@/lib/theme-store";
+import { durations, atmospheres, type AtmosphereId } from "@/lib/sprint/atmospheres";
+import { loadSprints } from "@/lib/sprint/sprint-store";
+import { useTheme } from "@/lib/sprint/theme-store";
 
 interface DraftTask { id: string; title: string }
 
@@ -67,7 +67,7 @@ export function CreateSprintModal({ open, onClose, onLockIn }: Props) {
   const pillSelBg = isLight ? "rgba(0,0,0,0.85)" : "#ffffff";
   const pillSelText = isLight ? "#ffffff" : "rgba(0,0,0,0.9)";
   const pillText = isLight ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.55)";
-  const modalBg = "var(--surface-modal)";
+  const modalBg = "var(--sp-surface-modal)";
 
   const placeholder = useMemo(() => "Give this sprint a title?", []);
 
@@ -223,7 +223,7 @@ export function CreateSprintModal({ open, onClose, onLockIn }: Props) {
                       style={{
                         padding: "8px 18px",
                         fontSize: 15,
-                        fontFamily: "var(--font-mono)",
+                        fontFamily: "var(--sp-font-mono)",
                         background: active ? pillSelBg : "transparent",
                         color: active ? pillSelText : pillText,
                       }}
@@ -238,7 +238,7 @@ export function CreateSprintModal({ open, onClose, onLockIn }: Props) {
                   style={{
                     padding: "8px 18px",
                     fontSize: 15,
-                    fontFamily: "var(--font-mono)",
+                    fontFamily: "var(--sp-font-mono)",
                     background: customMode ? pillSelBg : "transparent",
                     color: customMode ? pillSelText : pillText,
                   }}
