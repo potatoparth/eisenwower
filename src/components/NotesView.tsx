@@ -343,7 +343,7 @@ function NoteComposer(props: ComposerProps) {
               </div>
               <div className="ml-auto flex items-center gap-1">
                 <Button size="sm" variant="ghost" onClick={reset} className="h-8">Cancel</Button>
-                <Button size="sm" onClick={commit} className="h-8 px-4">Done</Button>
+                <Button size="sm" onClick={commit} className="h-8 px-4">{isEditing ? "Save" : "Done"}</Button>
               </div>
             </div>
           </div>
