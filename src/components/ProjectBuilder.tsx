@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { type TaskAddOptions, type TaskInputPickerProps } from "@/components/TaskInput";
 import { TaskActionBar } from "@/components/TaskActionBar";
-import { ProjectTemplate as ProjectT } from "@/types/project";
 import {
   Select,
   SelectContent,
