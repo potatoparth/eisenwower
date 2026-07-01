@@ -326,7 +326,7 @@ export function TaskInput({
             <DialogTitle>New task</DialogTitle>
           </VisuallyHidden>
           {/* Task name preview + Quick add shortcut */}
-          <div className="flex items-start gap-2 px-4 pt-4 pb-2">
+          <div className="flex items-start gap-2 px-4 pt-4 pb-2 pr-14">
             <div className="min-w-0 flex-1">
               <p className="text-[11px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">
                 New task
