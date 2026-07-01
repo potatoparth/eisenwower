@@ -5,6 +5,7 @@ import { Check, Trash2, GripVertical, Repeat } from "lucide-react";
 import { Task, Quadrant, QuadrantInfo, QUADRANT_MAP } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { format, isToday, isTomorrow, isPast, parseISO } from "date-fns";
+import { useSelectionOptional } from "@/hooks/useSelection";
 
 interface TaskCardProps {
   task: Task;
@@ -30,6 +31,9 @@ export function TaskCard({
   quadrantMap,
 }: TaskCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const sel = useSelectionOptional();
+  const isSelectMode = !!sel?.selectMode;
+  const isSelected = !!sel?.has(task.id);
 
   const {
     attributes,
@@ -38,7 +42,7 @@ export function TaskCard({
     transform,
     transition,
     isDragging: isSortableDragging,
-  } = useSortable({ id: task.id });
+  } = useSortable({ id: task.id, disabled: isSelectMode });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -71,24 +75,42 @@ export function TaskCard({
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
+      {...(isSelectMode ? {} : attributes)}
+      {...(isSelectMode ? {} : listeners)}
       className={cn(
         "task-card px-3 py-1.5 group cursor-grab active:cursor-grabbing select-none",
         isDone && "opacity-40",
         isSortableDragging && "opacity-50",
         isDragging && "shadow-medium",
-        "transition-opacity duration-[600ms]"
+        "transition-opacity duration-[600ms]",
+        isSelectMode && "cursor-pointer",
+        isSelectMode && isSelected && "ring-2 ring-primary bg-primary/5"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={(e) => {
+        if (isSelectMode) {
+          e.stopPropagation();
+          sel?.toggle(task.id);
+          return;
+        }
         // Don't open detail panel if clicking checkbox or delete
         if ((e.target as HTMLElement).closest("button")) return;
         onTaskClick?.(task);
       }}
     >
       <div className="flex items-center gap-2">
+        {isSelectMode && (
+          <span
+            aria-hidden
+            className={cn(
+              "flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors",
+              isSelected ? "bg-primary border-primary" : "border-muted-foreground/50 bg-transparent"
+            )}
+          >
+            {isSelected && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+          </span>
+        )}
         {/* Checkbox - circular, stroke = quadrant accent */}
         <button
           onClick={(e) => { e.stopPropagation(); onToggleStatus(task.id); }}
