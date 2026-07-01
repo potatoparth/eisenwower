@@ -89,15 +89,19 @@ export function QuadrantColumn({
           <h3 className="font-semibold text-sm sm:text-base text-foreground tracking-tight">
             {quadrant.title}
           </h3>
-          <span
-            className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
-            style={{
-              backgroundColor: `hsl(var(--quadrant-${quadrant.color}-badge))`,
-              color: `hsl(var(--quadrant-${quadrant.color}-foreground))`,
-            }}
-          >
-            {openTasks.length}
-          </span>
+          {openTasks.length > 0 && (
+            <span
+              className={cn(
+                "text-xs font-medium tabular-nums",
+                quadrant.id === "important-urgent" && openTasks.length > 10
+                  ? "text-destructive"
+                  : "text-muted-foreground"
+              )}
+              aria-label={`${openTasks.length} tasks`}
+            >
+              {openTasks.length}
+            </span>
+          )}
           <button
             onClick={(e) => {
               e.stopPropagation();
