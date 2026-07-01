@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Search, Trash2, X } from "lucide-react";
+import { Plus, Search, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
@@ -73,6 +73,18 @@ export function TaskActionBar({
     </Button>
   );
 
+  const plusIndicator = (
+    <Button
+      type="button"
+      size="icon"
+      className="h-8 w-8 rounded-full pointer-events-none"
+      tabIndex={-1}
+      aria-label="Add task mode"
+    >
+      <Plus className="w-4 h-4" />
+    </Button>
+  );
+
   return (
     <div className="grid w-full grid-cols-[minmax(0,1fr)_2.5rem] items-center gap-2">
       <div className="min-w-0">
@@ -80,9 +92,6 @@ export function TaskActionBar({
           <Popover open={open && matches.length > 0} onOpenChange={setOpen}>
             <PopoverAnchor asChild>
               <div className="relative flex h-[50px] w-full items-center rounded-full border border-border/60 bg-secondary/40 px-5">
-                <div className="mr-2 -ml-2 flex h-full flex-shrink-0 items-center">
-                  {searchToggle}
-                </div>
                 <Input
                   ref={inputRef}
                   value={query}
@@ -92,6 +101,9 @@ export function TaskActionBar({
                   placeholder="Search tasks..."
                   className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
+                <div className="ml-2 -mr-2 flex h-full flex-shrink-0 items-center">
+                  {searchToggle}
+                </div>
               </div>
             </PopoverAnchor>
             <PopoverContent
@@ -117,7 +129,8 @@ export function TaskActionBar({
           <TaskInput
             onAddTask={onAddTask}
             placeholder="Add a new task..."
-            leadingElement={searchToggle}
+            leadingElement={plusIndicator}
+            trailingElement={searchToggle}
             quadrants={quadrants}
             categories={categories}
             projects={projects}
