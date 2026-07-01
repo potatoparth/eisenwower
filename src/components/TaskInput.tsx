@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useMemo, useCallback, type ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Tag, ChevronRight, FolderKanban, AlignLeft } from "lucide-react";
 import { Quadrant, QUADRANTS, QuadrantInfo, Recurrence } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
@@ -15,6 +14,8 @@ import {
 } from "@/components/ui/select";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { RecurrenceField } from "@/components/RecurrenceField";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@/lib/utils";
 
 export interface TaskAddOptions {
@@ -210,7 +211,10 @@ export function TaskInput({
         target.closest("[data-radix-select-content]") ||
         target.closest("[data-radix-popover-content]") ||
         target.closest("[role='listbox']") ||
-        target.closest("[cmdk-root]")
+        target.closest("[cmdk-root]") ||
+        target.closest("[role='dialog']") ||
+        target.closest("[data-radix-dialog-content]") ||
+        target.closest("[data-radix-dialog-overlay]")
       ) {
         return;
       }
@@ -250,27 +254,19 @@ export function TaskInput({
       <div
         className={cn(
           "transition-colors duration-200 border bg-secondary/40 border-border/60",
-          step === "name"
-            ? compact
-              ? "rounded-full w-full"
-              : "rounded-full mx-auto w-full max-w-2xl"
-            : "rounded-2xl bg-card w-full mx-auto max-w-2xl"
+          compact
+            ? "rounded-full w-full"
+            : "rounded-full mx-auto w-full max-w-2xl"
         )}
       >
         {/* Name Input */}
         <div
           className={cn(
             "flex items-center",
-            step === "name"
-              ? compact
-                ? "h-10 px-3 py-0"
-                : "h-12 px-5 py-0"
-              : compact
-              ? "p-2"
-              : "p-3"
+            compact ? "h-10 px-3 py-0" : "h-12 px-5 py-0"
           )}
         >
-          {step === "name" && leadingElement && (
+          {leadingElement && (
             <div className={cn("flex h-full flex-shrink-0 items-center", compact ? "mr-1 -ml-1" : "mr-2 -ml-2")}>
               {leadingElement}
             </div>
@@ -285,14 +281,13 @@ export function TaskInput({
             placeholder={placeholder}
             className={cn(
               "min-w-0 flex-1 border-0 bg-transparent shadow-none p-0 h-full placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
-              step === "name" && (trailingElement
+              (trailingElement
                 ? (compact ? "pr-16" : "pr-20")
                 : (compact ? "pr-9" : "pr-10")),
               compact ? "text-sm" : "text-base"
             )}
           />
-          {step === "name" && (
-            <Button
+          <Button
               size="sm"
               onClick={handleNameSubmit}
               aria-disabled={!name.trim()}
@@ -307,25 +302,39 @@ export function TaskInput({
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </Button>
-          )}
-          {step === "name" && trailingElement && (
+          {trailingElement && (
             <div className={cn("flex h-full flex-shrink-0 items-center", compact ? "ml-1 -mr-1" : "ml-2 -mr-2")}>
               {trailingElement}
             </div>
           )}
         </div>
+      </div>
 
-        {/* Quadrant Selection */}
-        <AnimatePresence>
+      {/* Quadrant + Details rendered in a portalled Dialog so surrounding
+          layout (e.g. matrix quadrants) does not shift when the panel opens. */}
+      <Dialog
+        open={step === "quadrant" || step === "details"}
+        onOpenChange={(o) => {
+          if (!o) {
+            if (step === "details" && canComplete) handleComplete();
+            else reset();
+          }
+        }}
+      >
+        <DialogContent className="p-0 gap-0 border border-border/60 bg-card rounded-2xl max-w-lg overflow-hidden">
+          <VisuallyHidden>
+            <DialogTitle>New task</DialogTitle>
+          </VisuallyHidden>
+          {/* Task name preview */}
+          <div className="px-4 pt-4 pb-2">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">
+              New task
+            </p>
+            <p className="text-sm font-medium truncate">{name || "Untitled"}</p>
+          </div>
+
           {step === "quadrant" && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              <div className="px-3 pb-3 space-y-2">
+            <div className="px-3 pb-3 space-y-2">
                 <p className="text-xs text-muted-foreground font-medium">
                   Select quadrant
                 </p>
@@ -343,22 +352,11 @@ export function TaskInput({
                     </button>
                   ))}
                 </div>
-              </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
 
-        {/* Details */}
-        <AnimatePresence>
           {step === "details" && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              <div className="px-3 pb-3 space-y-2">
+            <div className="px-3 pb-3 space-y-2">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="font-medium">Details</span>
                   <span className="text-[10px] opacity-60">optional</span>
@@ -455,11 +453,10 @@ export function TaskInput({
                     Add
                   </Button>
                 </div>
-              </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
