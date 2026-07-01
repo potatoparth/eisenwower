@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { Note } from "@/types/note";
 import { TaskAttachment } from "@/types/task";
 
@@ -85,7 +86,7 @@ export function useNotes(userId?: string) {
       title: string; content: string; category: string;
       project_id: string | null; color: string | null;
       pinned: boolean; sort_order: number;
-      attachments: unknown;
+      attachments: Json;
     }> = {};
     if (updates.title !== undefined) payload.title = updates.title;
     if (updates.content !== undefined) payload.content = updates.content;
@@ -94,7 +95,7 @@ export function useNotes(userId?: string) {
     if (updates.color !== undefined) payload.color = updates.color || null;
     if (updates.pinned !== undefined) payload.pinned = updates.pinned;
     if (updates.sortOrder !== undefined) payload.sort_order = updates.sortOrder;
-    if (updates.attachments !== undefined) payload.attachments = JSON.parse(JSON.stringify(updates.attachments));
+    if (updates.attachments !== undefined) payload.attachments = JSON.parse(JSON.stringify(updates.attachments)) as Json;
     supabase.from("notes").update(payload).eq("id", id).eq("user_id", userId).then(({ error }) => { if (error) load(); });
   }, [userId, load]);
 
