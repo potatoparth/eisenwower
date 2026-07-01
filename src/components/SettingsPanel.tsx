@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { QuadrantColorPicker } from "@/components/QuadrantColorPicker";
 import { cn } from "@/lib/utils";
@@ -104,11 +104,14 @@ export function SettingsPanel({
   const primaryColor = settings.primaryColor ?? "#6D28D9";
 
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col p-0 rounded-2xl">
-        <DialogHeader className="p-5 pb-3 border-b">
-          <DialogTitle>Settings</DialogTitle>
-        </DialogHeader>
+    <Sheet open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-lg p-0 flex flex-col gap-0"
+      >
+        <SheetHeader className="p-5 pb-3 border-b">
+          <SheetTitle>Settings</SheetTitle>
+        </SheetHeader>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-3">
           {/* Display name */}
@@ -425,7 +428,7 @@ export function SettingsPanel({
             Reset to Defaults
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
