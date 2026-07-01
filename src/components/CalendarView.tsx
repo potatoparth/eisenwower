@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from "react";
-import { ChevronRight, GripVertical, Check as CheckIcon, Inbox } from "lucide-react";
+import { ChevronRight, GripVertical, Check as CheckIcon, Inbox, MoveVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -85,6 +85,29 @@ export function CalendarView({
   }, [visibleTasks, sectionKeys]);
 
   const unscheduledTasks = buckets.get(UNSCHEDULED) ?? [];
+
+  // Options for the "move to…" quick action (works on mobile where HTML5 DnD is unavailable).
+  const moveOptions = useMemo(() => {
+    const opts: { key: string; label: string }[] = dayDates.map((d, i) => ({
+      key: fmtDate(d),
+      label: i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString(undefined, { weekday: "long" }),
+    }));
+    opts.push({ key: UNSCHEDULED, label: "Unscheduled" });
+    return opts;
+  }, [dayDates]);
+
+  const moveTaskToSection = (id: string, sectionKey: string) => {
+    const updates: Partial<Omit<Task, "id" | "createdAt">> = {};
+    if (sectionKey === UNSCHEDULED) {
+      updates.dueDate = undefined;
+      updates.dueTime = undefined;
+    } else {
+      updates.dueDate = sectionKey;
+      const t = tasks.find((x) => x.id === id);
+      if (t?.dueTime) updates.dueTime = t.dueTime;
+    }
+    onUpdateTask(id, updates);
+  };
 
   const toggleUnschId = (id: string) => setUnschSelected((prev) => {
     const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n;
@@ -224,6 +247,8 @@ export function CalendarView({
               onTaskClick={onTaskClick}
               onToggleStatus={onToggleStatus}
               getCategoryColor={getCategoryColor}
+            moveOptions={moveOptions}
+            onMove={moveTaskToSection}
               />
             );
           };
@@ -327,12 +352,15 @@ interface DaySectionProps {
   onTaskClick: (t: Task) => void;
   onToggleStatus?: (id: string) => void;
   getCategoryColor?: (name: string) => string | undefined;
+  moveOptions: { key: string; label: string }[];
+  onMove: (id: string, sectionKey: string) => void;
 }
 
 function DaySection({
   sectionKey, label, dateStr, icon, count, collapsed, onToggleCollapsed,
   items, dragging, dropTarget, setDropTarget, onCommitDrop,
   onDragStart, onDragEnd, onTaskClick, onToggleStatus, getCategoryColor,
+  moveOptions, onMove,
 }: DaySectionProps) {
   const allowDrop = (e: React.DragEvent) => {
     if (e.dataTransfer.types.includes("text/task-id")) {
@@ -415,6 +443,8 @@ function DaySection({
                   }}
                   onToggleStatus={onToggleStatus}
                   onClick={() => onTaskClick(t)}
+                  moveOptions={moveOptions.filter((o) => o.key !== sectionKey)}
+                  onMove={onMove}
                 />
               </div>
             );
@@ -433,7 +463,7 @@ function DaySection({
 
 function TaskRow({
   task, color, isDragging, onDragStart, onDragEnd, onDragOverRow, onDropRow,
-  onToggleStatus, onClick,
+  onToggleStatus, onClick, moveOptions, onMove,
 }: {
   task: Task; color?: string; isDragging: boolean;
   onDragStart: (e: React.DragEvent, id: string) => void;
@@ -442,6 +472,8 @@ function TaskRow({
   onDropRow: (e: React.DragEvent) => void;
   onToggleStatus?: (id: string) => void;
   onClick: () => void;
+  moveOptions: { key: string; label: string }[];
+  onMove: (id: string, sectionKey: string) => void;
 }) {
   const sel = useSelectionOptional();
   const isSelectMode = !!sel?.selectMode;
@@ -507,6 +539,33 @@ function TaskRow({
       <span className="text-xs text-muted-foreground truncate max-w-[120px] text-right shrink-0">
         {task.category}
       </span>
+      {!isSelectMode && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              onClick={(e) => e.stopPropagation()}
+              className="shrink-0 p-1 -mr-1 rounded hover:bg-muted text-muted-foreground/70 hover:text-foreground"
+              aria-label="Move task"
+            >
+              <MoveVertical className="w-3.5 h-3.5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-40 p-1" onClick={(e) => e.stopPropagation()}>
+            <div className="text-[11px] font-medium text-muted-foreground px-2 py-1">Move to…</div>
+            {moveOptions.map((o) => (
+              <button
+                key={o.key}
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onMove(task.id, o.key); }}
+                className="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted"
+              >
+                {o.label}
+              </button>
+            ))}
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 }
