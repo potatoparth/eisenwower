@@ -39,6 +39,7 @@ interface TaskInputProps {
   className?: string;
   compact?: boolean;
   leadingElement?: ReactNode;
+  trailingElement?: ReactNode;
   quadrants?: QuadrantInfo[];
   categories?: string[];
   projects?: ProjectTemplate[];
@@ -59,6 +60,7 @@ export function TaskInput({
   className,
   compact = false,
   leadingElement,
+  trailingElement,
   quadrants = QUADRANTS,
   categories = [],
   projects = [],
@@ -262,7 +264,9 @@ export function TaskInput({
             placeholder={placeholder}
             className={cn(
               "min-w-0 flex-1 border-0 bg-transparent shadow-none p-0 h-full placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
-              step === "name" && (compact ? "pr-9" : "pr-10"),
+              step === "name" && (trailingElement
+                ? (compact ? "pr-16" : "pr-20")
+                : (compact ? "pr-9" : "pr-10")),
               compact ? "text-sm" : "text-base"
             )}
           />
@@ -274,12 +278,19 @@ export function TaskInput({
               tabIndex={name.trim() ? 0 : -1}
               className={cn(
                 "absolute top-1/2 h-7 w-7 -translate-y-1/2 flex-shrink-0 rounded-full p-0 transition-opacity",
-                compact ? "right-3" : "right-5",
+                trailingElement
+                  ? (compact ? "right-11" : "right-14")
+                  : (compact ? "right-3" : "right-5"),
                 !name.trim() && "pointer-events-none opacity-0"
               )}
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </Button>
+          )}
+          {step === "name" && trailingElement && (
+            <div className={cn("flex h-full flex-shrink-0 items-center", compact ? "ml-1 -mr-1" : "ml-2 -mr-2")}>
+              {trailingElement}
+            </div>
           )}
         </div>
 
