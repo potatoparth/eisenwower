@@ -2,6 +2,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AlignLeft, ListOrdered, ListChecks, List, Link2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+
+interface LinkDialogState {
+  idx: number;
+  selStart: number;
+  selEnd: number;
+  text: string;
+  url: string;
+}
 
 /**
  * Shared task description editor.
@@ -197,6 +208,7 @@ function DescriptionEditor({
   const labels = useMemo(() => computeOrderedLabels(lines), [lines]);
   const inputRefs = useRef<Array<HTMLTextAreaElement | null>>([]);
   const [focusIndex, setFocusIndex] = useState<number | null>(null);
+  const [linkDialog, setLinkDialog] = useState<LinkDialogState | null>(null);
 
   useEffect(() => {
     if (focusIndex == null) return;
@@ -278,6 +290,12 @@ function DescriptionEditor({
       } else {
         removeLine(idx);
       }
+      return;
+    }
+    // Cmd/Ctrl+K → open link dialog with current selection prefilled
+    if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
+      e.preventDefault();
+      openLinkDialog(idx);
     }
   };
 
@@ -298,25 +316,48 @@ function DescriptionEditor({
     setFocusIndex(idx);
   };
 
-  const insertLink = () => {
-    const url = window.prompt("Link URL", "https://");
-    if (!url) return;
-    const label = window.prompt("Link text", url) || url;
+  const openLinkDialog = (idxHint?: number) => {
     const active = document.activeElement as HTMLTextAreaElement | null;
     let idx = inputRefs.current.findIndex((el) => el === active);
-    if (idx < 0) idx = lines.length - 1;
+    if (idx < 0) idx = idxHint ?? lines.length - 1;
     const el = inputRefs.current[idx];
     const line = lines[idx];
-    const md = `[${label}](${url})`;
-    if (el && document.activeElement === el) {
-      const start = el.selectionStart ?? line.text.length;
-      const end = el.selectionEnd ?? line.text.length;
-      const next = line.text.slice(0, start) + md + line.text.slice(end);
-      updateLine(idx, { text: next });
-    } else {
-      updateLine(idx, { text: (line.text ? line.text + " " : "") + md });
+    const start = el?.selectionStart ?? line.text.length;
+    const end = el?.selectionEnd ?? line.text.length;
+    const selected = line.text.slice(start, end);
+    setLinkDialog({
+      idx,
+      selStart: start,
+      selEnd: end,
+      text: selected,
+      url: /^https?:\/\//i.test(selected) ? selected : "",
+    });
+  };
+
+  const applyLink = () => {
+    if (!linkDialog) return;
+    let url = linkDialog.url.trim();
+    if (!url) {
+      setLinkDialog(null);
+      return;
     }
-    setFocusIndex(idx);
+    if (!/^[a-z]+:\/\//i.test(url) && !url.startsWith("mailto:")) {
+      url = `https://${url}`;
+    }
+    const label = linkDialog.text.trim() || url;
+    const md = `[${label}](${url})`;
+    const line = lines[linkDialog.idx];
+    if (!line) {
+      setLinkDialog(null);
+      return;
+    }
+    const next =
+      line.text.slice(0, linkDialog.selStart) +
+      md +
+      line.text.slice(linkDialog.selEnd);
+    updateLine(linkDialog.idx, { text: next });
+    setLinkDialog(null);
+    setFocusIndex(linkDialog.idx);
   };
 
   return (
@@ -339,8 +380,8 @@ function DescriptionEditor({
           icon={<ListChecks className="w-3.5 h-3.5" />}
         />
         <ToolbarBtn
-          onClick={insertLink}
-          title="Insert link"
+          onClick={() => openLinkDialog()}
+          title="Insert link (⌘K)"
           icon={<Link2 className="w-3.5 h-3.5" />}
         />
         <ToolbarBtn
@@ -380,6 +421,58 @@ function DescriptionEditor({
           />
         ))}
       </div>
+
+      <Dialog open={!!linkDialog} onOpenChange={(o) => !o && setLinkDialog(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Insert link</DialogTitle>
+          </DialogHeader>
+          {linkDialog && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                applyLink();
+              }}
+              className="space-y-3"
+            >
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Text</label>
+                <Input
+                  autoFocus={!linkDialog.text}
+                  value={linkDialog.text}
+                  onChange={(e) =>
+                    setLinkDialog({ ...linkDialog, text: e.target.value })
+                  }
+                  placeholder="Link label"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">URL</label>
+                <Input
+                  autoFocus={!!linkDialog.text}
+                  value={linkDialog.url}
+                  onChange={(e) =>
+                    setLinkDialog({ ...linkDialog, url: e.target.value })
+                  }
+                  placeholder="https://…"
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setLinkDialog(null)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={!linkDialog.url.trim()}>
+                  Insert
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
