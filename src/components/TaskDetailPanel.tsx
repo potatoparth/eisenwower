@@ -11,6 +11,7 @@ import { DateTimePicker } from "@/components/DateTimePicker";
 import { RecurrenceField } from "@/components/RecurrenceField";
 import { TaskDescription } from "@/components/TaskDescription";
 import { SelectorWithCreate } from "@/components/SelectorWithCreate";
+import { TaskAttachments } from "@/components/TaskAttachments";
 
 interface TaskDetailPanelProps {
   task: Task;
@@ -152,6 +153,16 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
             onChange={setDescription}
             onCommit={handleBlur}
             placeholder="Add a description…"
+          />
+        </div>
+
+        {/* Attachments */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">Attachments</label>
+          <TaskAttachments
+            taskId={task.id}
+            value={task.attachments ?? []}
+            onChange={(next) => onUpdate(task.id, { attachments: next })}
           />
         </div>
 
