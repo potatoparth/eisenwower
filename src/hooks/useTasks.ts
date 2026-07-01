@@ -78,7 +78,7 @@ const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => ({
   recurrence_time: updates.recurrenceTime ?? undefined,
   is_recurring_instance: updates.isRecurringInstance ?? undefined,
   recurring_template_id: updates.recurringTemplateId ?? undefined,
-  attachments: updates.attachments ?? undefined,
+  attachments: updates.attachments ? (JSON.parse(JSON.stringify(updates.attachments)) as never) : undefined,
 });
 
 export function useTasks(userId?: string) {
