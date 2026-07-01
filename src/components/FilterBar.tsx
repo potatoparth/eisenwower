@@ -28,6 +28,7 @@ interface FilterBarProps {
   hasNoProjectOption?: boolean;
   compactMode?: boolean;
   onCompactModeChange?: (v: boolean) => void;
+  showProjectsFilter?: boolean;
 }
 
 /** Spec-locked pill base. Light/dark-aware via CSS vars; falls back to spec hex. */
@@ -200,7 +201,7 @@ export function FilterBar(p: FilterBarProps) {
         </Popover>
       )}
 
-      {p.projects && p.onActiveProjectIdsChange && (() => {
+      {p.projects && p.onActiveProjectIdsChange && p.showProjectsFilter !== false && (() => {
         const available = p.availableProjectIds;
         const visibleProjects = available
           ? p.projects.filter((pr) => available.includes(pr.id))
