@@ -200,6 +200,15 @@ export function TaskInput({
       ) {
         return;
       }
+      // If any Radix popover/select/dropdown is currently open, let that
+      // click just dismiss the popper — don't also commit/reset the task.
+      if (
+        document.querySelector("[data-radix-popper-content-wrapper]") ||
+        document.querySelector("[data-state=open][data-radix-select-trigger]") ||
+        document.querySelector("[data-radix-focus-guard]")
+      ) {
+        return;
+      }
       if (containerRef.current && !containerRef.current.contains(target)) {
         if (step === "details" && canComplete) {
           handleComplete();
