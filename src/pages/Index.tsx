@@ -13,6 +13,7 @@ import { GanttView } from "@/components/GanttView";
 import { CalendarView } from "@/components/CalendarView";
 import { ProjectBuilder } from "@/components/ProjectBuilder";
 import { NotesView } from "@/components/NotesView";
+import { SprintView, type SprintSeedTask } from "@/components/SprintView";
 import { useNotes } from "@/hooks/useNotes";
 import { Note } from "@/types/note";
 import { toast } from "@/hooks/use-toast";
@@ -59,6 +60,10 @@ const Index = () => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("compactMode") === "1";
   });
+
+  // Selection → Sprint bridge: BulkActionBar pushes selected task ids here,
+  // then we flip to the Sprint view where SprintView consumes them once.
+  const [sprintSeed, setSprintSeed] = useState<SprintSeedTask[] | undefined>(undefined);
 
   useEffect(() => { localStorage.setItem("overdueMode", overdueMode); }, [overdueMode]);
   useEffect(() => { localStorage.setItem("compactMode", compactMode ? "1" : "0"); }, [compactMode]);
