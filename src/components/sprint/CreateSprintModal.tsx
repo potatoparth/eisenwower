@@ -16,6 +16,8 @@ interface Props {
     noTimer?: boolean;
     atmosphere?: AtmosphereId;
   }) => void;
+  /** Prefilled tasks (e.g. from "Add to Sprint" bulk action). Capped at 5. */
+  seedTasks?: { id: string; title: string }[];
 }
 
 function generateDefaultTitle(): string {
@@ -42,7 +44,7 @@ function DragHandleIcon({ color }: { color: string }) {
   );
 }
 
-export function CreateSprintModal({ open, onClose, onLockIn }: Props) {
+export function CreateSprintModal({ open, onClose, onLockIn, seedTasks }: Props) {
   const { theme } = useTheme();
   const isLight = theme === "light";
 
@@ -70,6 +72,21 @@ export function CreateSprintModal({ open, onClose, onLockIn }: Props) {
   const modalBg = "var(--sp-surface-modal)";
 
   const placeholder = useMemo(() => "Give this sprint a title?", []);
+
+  // Seed tasks when the modal opens with an incoming selection.
+  const seedKey = seedTasks?.map((t) => t.id).join("|") ?? "";
+  useEffect(() => {
+    if (!open) return;
+    if (seedTasks && seedTasks.length > 0) {
+      setTasks(
+        seedTasks.slice(0, 5).map((t) => ({
+          id: crypto.randomUUID(),
+          title: t.title.length > 0 ? t.title[0].toUpperCase() + t.title.slice(1) : t.title,
+        })),
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, seedKey]);
 
   if (!open) return null;
 
