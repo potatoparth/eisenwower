@@ -349,6 +349,12 @@ function NoteCard(props: CardProps) {
       transition={{ duration: 0.15 }}
       className="mb-3 break-inside-avoid rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow group"
       style={{ backgroundColor: bg }}
+      onClick={(e) => {
+        if (editing) return;
+        const el = e.target as HTMLElement;
+        if (el.closest("button, a, input, textarea, [role='dialog'], [data-radix-popper-content-wrapper]")) return;
+        setEditing(true);
+      }}
     >
       <div className="p-3">
         <div className="flex items-start gap-2">
