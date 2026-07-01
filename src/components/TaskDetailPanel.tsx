@@ -79,16 +79,11 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
   return (
     <div className="fixed inset-y-0 left-0 w-full max-w-md bg-card border-r shadow-medium z-50 flex flex-col animate-slide-in-left">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b gap-1">
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={() => prevTask && onNavigate?.(prevTask)} disabled={!prevTask} className="h-8 w-8 p-0 rounded-lg" title="Previous task">
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => nextTask && onNavigate?.(nextTask)} disabled={!nextTask} className="h-8 w-8 p-0 rounded-lg" title="Next task">
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-        <div className="flex items-center gap-1">
+      <div className="grid grid-cols-[auto_1fr_auto] items-center p-3 border-b gap-1">
+        <Button variant="ghost" size="sm" onClick={() => prevTask && onNavigate?.(prevTask)} disabled={!prevTask} className="h-8 w-8 p-0 rounded-lg justify-self-start" title="Previous task">
+          <ChevronLeft className="w-4 h-4" />
+        </Button>
+        <div className="flex items-center justify-center gap-1">
           {onToggleStatus && (
             <Button
               variant={task.status === "done" ? "secondary" : "outline"}
@@ -110,18 +105,21 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
             <X className="w-4 h-4" />
           </Button>
         </div>
+        <Button variant="ghost" size="sm" onClick={() => nextTask && onNavigate?.(nextTask)} disabled={!nextTask} className="h-8 w-8 p-0 rounded-lg justify-self-end" title="Next task">
+          <ChevronRight className="w-4 h-4" />
+        </Button>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
         {/* Task name */}
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Task Name</label>
+          <label className="text-xs font-medium text-muted-foreground text-center block">Task Name</label>
           <Input
             value={name}
             onChange={e => setName(e.target.value)}
             onBlur={handleBlur}
-            className="text-base font-medium border-0 bg-secondary/50 rounded-xl"
+            className="text-base font-medium border-0 bg-secondary/50 rounded-xl text-center"
           />
         </div>
 
@@ -166,12 +164,14 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
                 className={cn(
                   "py-2 px-3 rounded-xl text-xs font-medium transition-all border",
                   quadrant === q.id
-                    ? "ring-2 ring-primary"
-                    : "opacity-60 hover:opacity-100",
-                  q.color === 1 && "border-quadrant-1-border bg-quadrant-1-light text-quadrant-1-foreground",
-                  q.color === 2 && "border-quadrant-2-border bg-quadrant-2-light text-quadrant-2-foreground",
-                  q.color === 3 && "border-quadrant-3-border bg-quadrant-3-light text-quadrant-3-foreground",
-                  q.color === 4 && "border-quadrant-4-border bg-quadrant-4-light text-quadrant-4-foreground",
+                    ? cn(
+                        "border-foreground/40",
+                        q.color === 1 && "border-quadrant-1-border bg-quadrant-1-light text-quadrant-1-foreground",
+                        q.color === 2 && "border-quadrant-2-border bg-quadrant-2-light text-quadrant-2-foreground",
+                        q.color === 3 && "border-quadrant-3-border bg-quadrant-3-light text-quadrant-3-foreground",
+                        q.color === 4 && "border-quadrant-4-border bg-quadrant-4-light text-quadrant-4-foreground",
+                      )
+                    : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground",
                 )}
               >
                 <span className="font-semibold">{q.title}</span>
