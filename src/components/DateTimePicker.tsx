@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   addMonths,
@@ -13,19 +13,21 @@ import {
   addDays,
 } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 interface DateTimePickerProps {
-  value?: string; // ISO datetime string or YYYY-MM-DD
+  value?: string;
   onChange: (value: string | undefined) => void;
-  accentColor?: string; // any CSS color
+  accentColor?: string;
   placeholder?: string;
   className?: string;
   defaultTime?: string; // "HH:MM"
   id?: string;
 }
 
-const DOW = ["Su", "M", "T", "W", "T", "F", "S"];
+const DOW = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 function pad(n: number) {
   return n.toString().padStart(2, "0");
@@ -41,6 +43,48 @@ function parseValue(v?: string): Date | null {
   }
 }
 
+function nextSaturday(from: Date): Date {
+  const day = from.getDay(); // Sun=0..Sat=6
+  const diff = day === 6 ? 7 : 6 - day;
+  return addDays(from, diff);
+}
+function nextMonday(from: Date): Date {
+  const day = from.getDay();
+  const diff = (8 - day) % 7 || 7; // always future Monday
+  return addDays(from, diff);
+}
+
+const TIME_CHIPS: { label: string; h: number; m: number }[] = [
+  { label: "9:00 AM", h: 9, m: 0 },
+  { label: "12:00 PM", h: 12, m: 0 },
+  { label: "6:00 PM", h: 18, m: 0 },
+  { label: "9:00 PM", h: 21, m: 0 },
+];
+
+function formatTimeInput(h: number, m: number) {
+  const isPM = h >= 12;
+  const h12 = ((h + 11) % 12) + 1;
+  return `${h12}:${pad(m)} ${isPM ? "PM" : "AM"}`;
+}
+
+function parseTimeInput(s: string): { h: number; m: number } | null {
+  const str = s.trim().toLowerCase();
+  if (!str) return null;
+  const m = str.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = m[2] ? parseInt(m[2], 10) : 0;
+  const ap = m[3];
+  if (isNaN(h) || isNaN(min) || min < 0 || min > 59) return null;
+  if (ap) {
+    if (h < 1 || h > 12) return null;
+    h = (h % 12) + (ap === "pm" ? 12 : 0);
+  } else if (h < 0 || h > 23) {
+    return null;
+  }
+  return { h, m: min };
+}
+
 export function DateTimePicker({
   value,
   onChange,
@@ -52,16 +96,29 @@ export function DateTimePicker({
 }: DateTimePickerProps) {
   const parsed = useMemo(() => parseValue(value), [value]);
   const [open, setOpen] = useState(false);
-  const [viewMonth, setViewMonth] = useState<Date>(parsed ?? new Date());
-
-  const hasTime = !!value && value.length > 10;
+  const isMobile = useIsMobile();
   const [defH, defM] = defaultTime.split(":").map((n) => parseInt(n, 10));
-  const hour = parsed ? parsed.getHours() : defH;
-  const minute = parsed ? parsed.getMinutes() : defM;
 
+  const [draftDate, setDraftDate] = useState<Date | null>(parsed);
+  const [draftHour, setDraftHour] = useState<number>(parsed ? parsed.getHours() : defH);
+  const [draftMinute, setDraftMinute] = useState<number>(parsed ? parsed.getMinutes() : defM);
+  const [viewMonth, setViewMonth] = useState<Date>(parsed ?? new Date());
+  const [timeInput, setTimeInput] = useState<string>(
+    formatTimeInput(parsed ? parsed.getHours() : defH, parsed ? parsed.getMinutes() : defM)
+  );
+
+  // Re-snapshot draft each time the picker opens.
   useEffect(() => {
-    if (parsed) setViewMonth(parsed);
-  }, [parsed]);
+    if (!open) return;
+    const p = parseValue(value);
+    const h = p ? p.getHours() : defH;
+    const m = p ? p.getMinutes() : defM;
+    setDraftDate(p);
+    setDraftHour(h);
+    setDraftMinute(m);
+    setViewMonth(p ?? new Date());
+    setTimeInput(formatTimeInput(h, m));
+  }, [open, value, defH, defM]);
 
   const today = new Date();
 
@@ -77,292 +134,281 @@ export function DateTimePicker({
     return arr;
   }, [viewMonth]);
 
-  const emit = (date: Date, h: number, m: number) => {
-    const iso = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
-      date.getDate()
-    )}T${pad(h)}:${pad(m)}:00`;
-    onChange(iso);
+  const commit = () => {
+    if (!draftDate) {
+      onChange(undefined);
+    } else {
+      const iso = `${draftDate.getFullYear()}-${pad(draftDate.getMonth() + 1)}-${pad(
+        draftDate.getDate()
+      )}T${pad(draftHour)}:${pad(draftMinute)}:00`;
+      onChange(iso);
+    }
+    setOpen(false);
+  };
+  const cancel = () => setOpen(false);
+  const clear = () => {
+    onChange(undefined);
+    setOpen(false);
   };
 
   const pickDate = (d: Date) => {
-    const h = parsed ? hour : defH;
-    const m = parsed ? minute : defM;
-    emit(d, h, m);
+    setDraftDate(d);
+    setViewMonth(d);
   };
 
-  const setHour24 = (h: number) => {
-    const base = parsed ?? new Date();
-    emit(base, ((h % 24) + 24) % 24, minute);
-  };
-  const setMinuteValue = (m: number) => {
-    const base = parsed ?? new Date();
-    emit(base, hour, ((m % 60) + 60) % 60);
+  const pickTimeChip = (h: number, m: number) => {
+    setDraftHour(h);
+    setDraftMinute(m);
+    setTimeInput(formatTimeInput(h, m));
   };
 
-  const isPM = hour >= 12;
-  const hour12 = ((hour + 11) % 12) + 1;
-  const setHour12 = (h12: number) => {
-    const next = ((h12 % 12) + (isPM ? 12 : 0)) % 24;
-    setHour24(next);
+  const onTimeInputChange = (v: string) => {
+    setTimeInput(v);
+    const p = parseTimeInput(v);
+    if (p) {
+      setDraftHour(p.h);
+      setDraftMinute(p.m);
+    }
   };
-  const setPeriod = (pm: boolean) => {
-    const next = pm ? (hour % 12) + 12 : hour % 12;
-    setHour24(next);
+  const onTimeInputBlur = () => {
+    const p = parseTimeInput(timeInput);
+    if (p) setTimeInput(formatTimeInput(p.h, p.m));
+    else setTimeInput(formatTimeInput(draftHour, draftMinute));
   };
+
+  const chipToday = new Date();
+  const dateChips = [
+    { key: "today", label: "Today", date: chipToday },
+    { key: "tomorrow", label: "Tomorrow", date: addDays(chipToday, 1) },
+    { key: "weekend", label: "This weekend", date: nextSaturday(chipToday) },
+    { key: "nextweek", label: "Next week", date: nextMonday(chipToday) },
+  ];
 
   const triggerLabel = parsed
     ? `${format(parsed, "d MMM yyyy")} · ${format(parsed, "h:mm a")}`
     : placeholder;
 
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          id={id}
-          type="button"
-          className={cn(
-            "w-full text-left rounded-lg bg-secondary/60 px-3 h-9 text-sm border border-transparent hover:border-border transition-colors",
-            !parsed && "text-muted-foreground/70",
-            className
-          )}
-        >
-          {triggerLabel}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        sideOffset={6}
-        className="p-4 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border bg-popover"
-        style={{ width: 280 }}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          <button
-            type="button"
-            onClick={() => setViewMonth((m) => addMonths(m, -1))}
-            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary"
-            aria-label="Previous month"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <div className="text-sm font-semibold">{format(viewMonth, "MMMM yyyy")}</div>
-          <button
-            type="button"
-            onClick={() => setViewMonth((m) => addMonths(m, 1))}
-            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary"
-            aria-label="Next month"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+  const activeTimeChip = TIME_CHIPS.find(
+    (c) => c.h === draftHour && c.m === draftMinute
+  );
 
-        {/* DOW */}
-        <div className="grid grid-cols-7 pb-2">
-          {DOW.map((d, i) => (
-            <div
-              key={i}
-              className="text-[11px] font-medium text-muted-foreground text-center"
+  const Body = (
+    <div className="flex flex-col gap-3">
+      {/* Date quick chips */}
+      <div className={cn("flex flex-wrap gap-1.5", isMobile && "gap-2")}>
+        {dateChips.map((c) => {
+          const active = !!draftDate && isSameDay(draftDate, c.date);
+          return (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => pickDate(c.date)}
+              className={cn(
+                "rounded-full text-xs font-medium px-3 py-1.5 border transition-colors",
+                isMobile && "text-sm px-4 py-2 min-h-11 flex-1",
+                active
+                  ? "text-white border-transparent"
+                  : "bg-secondary/60 border-transparent hover:border-border text-foreground"
+              )}
+              style={active ? { backgroundColor: accentColor } : undefined}
             >
-              {d}
-            </div>
-          ))}
-        </div>
+              {c.label}
+            </button>
+          );
+        })}
+      </div>
 
-        {/* Days */}
-        <div className="grid grid-cols-7 gap-y-1">
-          {days.map((d, i) => {
-            const inMonth = isSameMonth(d, viewMonth);
-            const isToday = isSameDay(d, today);
-            const isSelected = parsed && isSameDay(d, parsed);
+      {/* Month header */}
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setViewMonth((m) => addMonths(m, -1))}
+          className={cn(
+            "rounded-lg flex items-center justify-center hover:bg-secondary",
+            isMobile ? "w-11 h-11" : "w-7 h-7"
+          )}
+          aria-label="Previous month"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <div className="text-sm font-semibold">{format(viewMonth, "MMMM yyyy")}</div>
+        <button
+          type="button"
+          onClick={() => setViewMonth((m) => addMonths(m, 1))}
+          className={cn(
+            "rounded-lg flex items-center justify-center hover:bg-secondary",
+            isMobile ? "w-11 h-11" : "w-7 h-7"
+          )}
+          aria-label="Next month"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* DOW */}
+      <div className="grid grid-cols-7">
+        {DOW.map((d, i) => (
+          <div
+            key={i}
+            className="text-[11px] font-medium text-muted-foreground text-center"
+          >
+            {d}
+          </div>
+        ))}
+      </div>
+
+      {/* Days */}
+      <div className="grid grid-cols-7 gap-y-1">
+        {days.map((d, i) => {
+          const inMonth = isSameMonth(d, viewMonth);
+          const isToday = isSameDay(d, today);
+          const isSelected = draftDate && isSameDay(d, draftDate);
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => pickDate(d)}
+              className={cn(
+                "mx-auto rounded-lg flex items-center justify-center transition-colors",
+                isMobile ? "w-11 h-11 text-sm" : "w-9 h-9 text-[13px]",
+                !inMonth && "opacity-30",
+                !isSelected && "hover:bg-secondary",
+                isToday && !isSelected && "font-semibold",
+                isSelected && "text-white font-semibold"
+              )}
+              style={{
+                ...(isToday && !isSelected
+                  ? { boxShadow: `inset 0 0 0 1.5px ${accentColor}` }
+                  : {}),
+                ...(isSelected ? { backgroundColor: accentColor } : {}),
+              }}
+            >
+              {d.getDate()}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Time */}
+      <div className="pt-3 border-t flex flex-col gap-2">
+        <span className="text-xs text-muted-foreground">Time</span>
+        <div className="flex flex-wrap gap-1.5">
+          {TIME_CHIPS.map((c) => {
+            const active = activeTimeChip?.label === c.label;
             return (
               <button
-                key={i}
+                key={c.label}
                 type="button"
-                onClick={() => pickDate(d)}
+                onClick={() => pickTimeChip(c.h, c.m)}
                 className={cn(
-                  "w-9 h-9 mx-auto rounded-lg text-[13px] flex items-center justify-center transition-colors",
-                  !inMonth && "opacity-30",
-                  !isSelected && "hover:bg-secondary",
-                  isToday && !isSelected && "font-semibold",
-                  isSelected && "text-white font-semibold"
+                  "rounded-full text-xs font-medium px-3 py-1.5 border transition-colors tabular-nums",
+                  isMobile && "text-sm px-4 py-2 min-h-11 flex-1",
+                  active
+                    ? "text-white border-transparent"
+                    : "bg-secondary/60 border-transparent hover:border-border text-foreground"
                 )}
-                style={{
-                  ...(isToday && !isSelected
-                    ? { boxShadow: `inset 0 0 0 1.5px ${accentColor}` }
-                    : {}),
-                  ...(isSelected ? { backgroundColor: accentColor } : {}),
-                }}
+                style={active ? { backgroundColor: accentColor } : undefined}
               >
-                {d.getDate()}
+                {c.label}
               </button>
             );
           })}
         </div>
-
-        {/* Time wheel */}
-        <div className="mt-3 pt-3 border-t">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs text-muted-foreground">Time</span>
-            <span className="text-xs font-medium tabular-nums" style={{ color: accentColor }}>
-              {pad(hour12)}:{pad(minute)} {isPM ? "PM" : "AM"}
-            </span>
-          </div>
-          <div
-            className="relative flex items-center justify-center gap-1 select-none"
-            style={{ height: ITEM_H * 5 }}
-          >
-            {/* Selection highlight */}
-            <div
-              className="absolute left-0 right-0 mx-auto rounded-lg pointer-events-none"
-              style={{
-                top: ITEM_H * 2,
-                height: ITEM_H,
-                background: `${accentColor.includes("hsl") ? accentColor.replace(")", " / 0.10)") : accentColor + "1A"}`,
-              }}
-            />
-            <WheelColumn
-              values={Array.from({ length: 12 }, (_, i) => i + 1)}
-              value={hour12}
-              onChange={setHour12}
-              format={pad}
-              ariaLabel="Hour"
-            />
-            <div className="text-base font-medium opacity-50">:</div>
-            <WheelColumn
-              values={Array.from({ length: 60 }, (_, i) => i)}
-              value={minute}
-              onChange={setMinuteValue}
-              format={pad}
-              ariaLabel="Minute"
-            />
-            <WheelColumn
-              values={["AM", "PM"]}
-              value={isPM ? "PM" : "AM"}
-              onChange={(v) => setPeriod(v === "PM")}
-              format={(v) => String(v)}
-              ariaLabel="AM or PM"
-              wide
-            />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-3 pt-3 border-t flex items-center gap-4">
-          <button
-            type="button"
-            onClick={() => onChange(undefined)}
-            className="text-xs text-muted-foreground hover:underline"
-          >
-            Clear
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const now = new Date();
-              setViewMonth(now);
-              emit(now, parsed ? hour : defH, parsed ? minute : defM);
-            }}
-            className="text-xs font-semibold hover:underline"
-            style={{ color: accentColor }}
-          >
-            Today
-          </button>
-        </div>
-      </PopoverContent>
-    </Popover>
+        <input
+          type="text"
+          value={timeInput}
+          onChange={(e) => onTimeInputChange(e.target.value)}
+          onBlur={onTimeInputBlur}
+          placeholder="e.g. 10:30 PM"
+          className={cn(
+            "w-full rounded-lg bg-secondary/60 px-3 text-sm border border-transparent focus:border-border focus:outline-none transition-colors tabular-nums",
+            isMobile ? "h-11" : "h-9"
+          )}
+          aria-label="Custom time"
+        />
+      </div>
+    </div>
   );
-}
 
-const ITEM_H = 32;
+  const Footer = (
+    <div className={cn("flex items-center gap-2", !isMobile && "pt-3 mt-1 border-t")}>
+      <button
+        type="button"
+        onClick={clear}
+        className="text-xs text-muted-foreground hover:underline mr-auto"
+      >
+        Clear
+      </button>
+      <button
+        type="button"
+        onClick={cancel}
+        className={cn(
+          "rounded-lg text-sm font-medium border border-border hover:bg-secondary transition-colors",
+          isMobile ? "h-11 px-4" : "h-9 px-3"
+        )}
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        onClick={commit}
+        className={cn(
+          "rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90",
+          isMobile ? "h-11 px-4 flex-1" : "h-9 px-3"
+        )}
+        style={{ backgroundColor: accentColor }}
+      >
+        Set deadline
+      </button>
+    </div>
+  );
 
-interface WheelColumnProps<T extends string | number> {
-  values: T[];
-  value: T;
-  onChange: (v: T) => void;
-  format: (v: T) => string;
-  ariaLabel: string;
-  wide?: boolean;
-}
+  const Trigger = (
+    <button
+      id={id}
+      type="button"
+      className={cn(
+        "w-full text-left rounded-lg bg-secondary/60 px-3 h-9 text-sm border border-transparent hover:border-border transition-colors",
+        !parsed && "text-muted-foreground/70",
+        className
+      )}
+    >
+      {triggerLabel}
+    </button>
+  );
 
-function WheelColumn<T extends string | number>({
-  values,
-  value,
-  onChange,
-  format,
-  ariaLabel,
-  wide,
-}: WheelColumnProps<T>) {
-  const ref = useRef<HTMLDivElement>(null);
-  const index = Math.max(0, values.indexOf(value));
-  const settleRef = useRef<number | null>(null);
-  const isInternalScroll = useRef(false);
-
-  // Sync scrollTop when value changes externally
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const target = index * ITEM_H;
-    if (Math.abs(el.scrollTop - target) > 1) {
-      isInternalScroll.current = true;
-      el.scrollTop = target;
-      requestAnimationFrame(() => {
-        isInternalScroll.current = false;
-      });
-    }
-  }, [index]);
-
-  const onScroll = () => {
-    const el = ref.current;
-    if (!el || isInternalScroll.current) return;
-    if (settleRef.current) window.clearTimeout(settleRef.current);
-    settleRef.current = window.setTimeout(() => {
-      const i = Math.round(el.scrollTop / ITEM_H);
-      const clamped = Math.max(0, Math.min(values.length - 1, i));
-      const v = values[clamped];
-      if (v !== value) onChange(v);
-      // Snap precisely
-      isInternalScroll.current = true;
-      el.scrollTop = clamped * ITEM_H;
-      requestAnimationFrame(() => {
-        isInternalScroll.current = false;
-      });
-    }, 90);
-  };
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>{Trigger}</SheetTrigger>
+        <SheetContent
+          side="bottom"
+          className="rounded-t-2xl border-t bg-popover p-0 flex flex-col max-h-[92vh]"
+        >
+          <div className="flex justify-center pt-2 pb-1">
+            <div className="w-10 h-1.5 rounded-full bg-muted-foreground/30" />
+          </div>
+          <div className="px-4 pt-2 pb-3 overflow-y-auto flex-1">{Body}</div>
+          <div className="px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 border-t bg-popover">
+            {Footer}
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
 
   return (
-    <div
-      ref={ref}
-      role="listbox"
-      aria-label={ariaLabel}
-      onScroll={onScroll}
-      className="overflow-y-auto scrollbar-none snap-y snap-mandatory"
-      style={{
-        height: ITEM_H * 5,
-        width: wide ? 44 : 40,
-        scrollSnapType: "y mandatory",
-        scrollbarWidth: "none",
-      }}
-    >
-      <div style={{ height: ITEM_H * 2 }} aria-hidden />
-      {values.map((v, i) => {
-        const active = i === index;
-        return (
-          <div
-            key={String(v)}
-            onClick={() => onChange(v)}
-            className="flex items-center justify-center cursor-pointer snap-center transition-opacity tabular-nums"
-            style={{
-              height: ITEM_H,
-              fontSize: active ? 16 : 14,
-              fontWeight: active ? 600 : 400,
-              opacity: active ? 1 : 0.35,
-            }}
-          >
-            {format(v)}
-          </div>
-        );
-      })}
-      <div style={{ height: ITEM_H * 2 }} aria-hidden />
-    </div>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{Trigger}</PopoverTrigger>
+      <PopoverContent
+        align="start"
+        sideOffset={6}
+        className="p-4 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border bg-popover"
+        style={{ width: 300 }}
+      >
+        {Body}
+        {Footer}
+      </PopoverContent>
+    </Popover>
   );
 }
