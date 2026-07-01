@@ -67,6 +67,7 @@ export function QuadrantColumn({
       : "quadrant-4";
 
   const accentVar = `hsl(var(--quadrant-${quadrant.color}))`;
+  const accentBadgeBg = `hsl(var(--quadrant-${quadrant.color}) / 0.15)`;
 
   return (
     <div
@@ -91,12 +92,26 @@ export function QuadrantColumn({
           </h3>
           {openTasks.length > 0 && (
             <span
-              className={cn(
-                "text-xs font-medium tabular-nums",
+              className="inline-flex items-center justify-center tabular-nums flex-shrink-0"
+              style={
                 quadrant.id === "important-urgent" && openTasks.length > 10
-                  ? "text-destructive"
-                  : "text-muted-foreground"
-              )}
+                  ? {
+                      backgroundColor: "hsl(var(--destructive) / 0.15)",
+                      color: "hsl(var(--destructive))",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      borderRadius: 20,
+                      padding: "2px 8px",
+                    }
+                  : {
+                      backgroundColor: accentBadgeBg,
+                      color: accentVar,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      borderRadius: 20,
+                      padding: "2px 8px",
+                    }
+              }
               aria-label={`${openTasks.length} tasks`}
             >
               {openTasks.length}
