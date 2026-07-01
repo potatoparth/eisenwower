@@ -224,7 +224,7 @@ export function TaskInput({
     <div ref={containerRef} className={cn("relative", className)}>
       <div
         className={cn(
-          "transition-all duration-200 border bg-secondary/40 border-border/60",
+          "transition-colors duration-200 border bg-secondary/40 border-border/60",
           step === "name"
             ? compact
               ? "rounded-full w-full"
@@ -235,7 +235,7 @@ export function TaskInput({
         {/* Name Input */}
         <div
           className={cn(
-            "flex items-center gap-2",
+            "flex items-center",
             step === "name"
               ? compact
                 ? "h-10 px-3 py-0"
@@ -254,7 +254,8 @@ export function TaskInput({
             onFocus={() => setIsFocused(true)}
             placeholder={placeholder}
             className={cn(
-              "min-w-0 flex-1 border-0 bg-transparent shadow-none p-0 h-auto placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
+              "min-w-0 flex-1 border-0 bg-transparent shadow-none p-0 h-full placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
+              step === "name" && (compact ? "pr-9" : "pr-10"),
               compact ? "text-sm" : "text-base"
             )}
           />
@@ -265,7 +266,8 @@ export function TaskInput({
               aria-disabled={!name.trim()}
               tabIndex={name.trim() ? 0 : -1}
               className={cn(
-                "h-7 w-7 flex-shrink-0 rounded-full p-0 transition-opacity",
+                "absolute top-1/2 h-7 w-7 -translate-y-1/2 flex-shrink-0 rounded-full p-0 transition-opacity",
+                compact ? "right-3" : "right-5",
                 !name.trim() && "pointer-events-none opacity-0"
               )}
             >
