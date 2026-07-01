@@ -168,8 +168,17 @@ const Index = () => {
     deleteTask(id);
   };
 
+  const CATEGORY_PALETTE = [
+    "#e05a5a", "#e08a3c", "#e0b93c", "#7fbf5a", "#3cbfa8",
+    "#3c9fe0", "#5a6fe0", "#8a5ae0", "#c65ae0", "#e05a9f",
+    "#5aa9e0", "#8fb95a", "#b98f5a", "#5ab98f", "#b95a8f",
+  ];
   const handleCreateCategory = (name: string) => {
-    addCategoryColor(name, "#7a8599");
+    const used = new Set(settings.categoryColors.map((c) => c.color.toLowerCase()));
+    const available = CATEGORY_PALETTE.filter((c) => !used.has(c.toLowerCase()));
+    const pool = available.length ? available : CATEGORY_PALETTE;
+    const color = pool[Math.floor(Math.random() * pool.length)];
+    addCategoryColor(name, color);
     return name;
   };
 
