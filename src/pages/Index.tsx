@@ -14,6 +14,7 @@ import { ProjectBuilder } from "@/components/ProjectBuilder";
 import { TaskDetailPanel } from "@/components/TaskDetailPanel";
 import { TaskDetailDialog } from "@/components/TaskDetailDialog";
 import { FilterBar, DateFilter, OverdueMode } from "@/components/FilterBar";
+import { applyTaskFilters } from "@/lib/filters";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { LoginPage } from "@/components/LoginPage";
 import { ViewMode } from "@/components/ViewToggle";
@@ -40,7 +41,7 @@ const Index = () => {
   const [viewMode, setViewMode] = useState<ViewMode>(settings.defaultView as ViewMode);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [activeProjectIds, setActiveProjectIds] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [recurringDeleteTask, setRecurringDeleteTask] = useState<Task | null>(null);
@@ -82,6 +83,34 @@ const Index = () => {
     return Array.from(names).sort((a, b) => a.localeCompare(b));
   }, [tasks, settings.categoryColors]);
 
+  // Cascade: each filter's option list is computed against tasks that pass all OTHER active filters.
+  const filters = { dateFilter, overdueMode, selectedCategories, activeProjectIds };
+  const filteredTasks = useMemo(
+    () => applyTaskFilters(tasks, filters),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tasks, dateFilter, overdueMode, selectedCategories, activeProjectIds]
+  );
+  const cascadedCategoryOptions = useMemo(() => {
+    const pool = applyTaskFilters(tasks, { dateFilter, overdueMode, activeProjectIds });
+    const names = new Set<string>();
+    pool.forEach((t) => { if (t.category?.trim()) names.add(t.category.trim()); });
+    // Always keep the user's current selections visible even if they no longer match.
+    selectedCategories.forEach((c) => names.add(c));
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [tasks, dateFilter, overdueMode, activeProjectIds, selectedCategories]);
+  const cascadedProjectContext = useMemo(() => {
+    const pool = applyTaskFilters(tasks, { dateFilter, overdueMode, selectedCategories });
+    const ids = new Set<string>();
+    let hasNone = false;
+    pool.forEach((t) => {
+      if (t.projectId) ids.add(t.projectId);
+      else hasNone = true;
+    });
+    // Preserve current selections in the dropdown.
+    activeProjectIds.forEach((id) => { if (id !== "__none__") ids.add(id); });
+    return { availableProjectIds: Array.from(ids), hasNoProjectOption: hasNone || activeProjectIds.includes("__none__") };
+  }, [tasks, dateFilter, overdueMode, selectedCategories, activeProjectIds]);
+
   if (!isInitialized) return null;
 
   if (needsSetup || !currentUser) {
@@ -92,16 +121,12 @@ const Index = () => {
 
   const viewAnimation = { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -10 }, transition: { duration: 0.2 } };
 
-  // Filter tasks by active project. null = all, "__none__" handled via activeProjectId === "__none__".
-  const filteredTasks = activeProjectId === null
-    ? tasks
-    : activeProjectId === "__none__"
-      ? tasks.filter(t => !t.projectId)
-      : tasks.filter(t => t.projectId === activeProjectId);
-
-  // Wrap addTask so new tasks inherit the active project (when a real project is selected).
-  const defaultProjectId =
-    activeProjectId && activeProjectId !== "__none__" ? activeProjectId : undefined;
+  // When exactly one real project is selected, treat it as the default for new tasks.
+  const singleActiveProjectId = (() => {
+    const real = activeProjectIds.filter((id) => id !== "__none__");
+    return real.length === 1 ? real[0] : undefined;
+  })();
+  const defaultProjectId = singleActiveProjectId;
 
   const defaultCategory =
     selectedCategories.length === 1 ? selectedCategories[0] : undefined;
@@ -110,8 +135,7 @@ const Index = () => {
     // TaskInput always passes category when the user completed the details step.
     const projectId = options?.category
       ? options.projectId
-      : options?.projectId ??
-        (activeProjectId && activeProjectId !== "__none__" ? activeProjectId : undefined);
+      : options?.projectId ?? singleActiveProjectId;
     return addTask(name, quadrant, { ...options, projectId });
   };
 
@@ -145,7 +169,7 @@ const Index = () => {
       />
 
       <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 overflow-y-auto">
-        {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban") && (
+        {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban" || viewMode === "gantt") && (
           <div className="mb-4">
           <FilterBar
             dateFilter={dateFilter}
@@ -154,13 +178,15 @@ const Index = () => {
             onOverdueModeChange={setOverdueMode}
             noDatePosition={settings.noDateTasksPosition}
             onNoDatePositionChange={(v) => updateSettings({ noDateTasksPosition: v })}
-            categories={taskCategories}
+            categories={cascadedCategoryOptions}
             selectedCategories={selectedCategories}
             onSelectedCategoriesChange={setSelectedCategories}
             getCategoryColor={getCategoryColor}
             projects={projects}
-            activeProjectId={activeProjectId}
-            onActiveProjectChange={setActiveProjectId}
+            activeProjectIds={activeProjectIds}
+            onActiveProjectIdsChange={setActiveProjectIds}
+            availableProjectIds={cascadedProjectContext.availableProjectIds}
+            hasNoProjectOption={cascadedProjectContext.hasNoProjectOption}
             compactMode={compactMode}
             onCompactModeChange={viewMode === "matrix" ? setCompactMode : undefined}
           />
