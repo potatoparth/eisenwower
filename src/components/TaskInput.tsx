@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback, type ReactNode } from "react";
-import { Calendar, Tag, ChevronRight, FolderKanban, AlignLeft } from "lucide-react";
+import { Calendar, Tag, ChevronRight, FolderKanban, AlignLeft, Zap } from "lucide-react";
 import { Quadrant, QUADRANTS, QuadrantInfo, Recurrence } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import { Input } from "@/components/ui/input";
@@ -325,12 +325,25 @@ export function TaskInput({
           <VisuallyHidden>
             <DialogTitle>New task</DialogTitle>
           </VisuallyHidden>
-          {/* Task name preview */}
-          <div className="px-4 pt-4 pb-2">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">
-              New task
-            </p>
-            <p className="text-sm font-medium truncate">{name || "Untitled"}</p>
+          {/* Task name preview + Quick add shortcut */}
+          <div className="flex items-start gap-2 px-4 pt-4 pb-2">
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">
+                New task
+              </p>
+              <p className="text-sm font-medium truncate">{name || "Untitled"}</p>
+            </div>
+            {step === "details" && (
+              <Button
+                size="sm"
+                onClick={handleComplete}
+                disabled={!canComplete}
+                className="h-7 rounded-full text-xs gap-1 flex-shrink-0"
+                title="Add task now with current details (⏎)"
+              >
+                <Zap className="w-3 h-3" /> Quick add
+              </Button>
+            )}
           </div>
 
           {step === "quadrant" && (
