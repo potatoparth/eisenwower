@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useMemo, useCallback, type ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Tag, ChevronRight, FolderKanban, AlignLeft } from "lucide-react";
 import { Quadrant, QUADRANTS, QuadrantInfo, Recurrence } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
