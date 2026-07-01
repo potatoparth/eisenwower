@@ -52,10 +52,7 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout }
       <div className="flex items-center gap-1">
         <Select value={viewMode} onValueChange={(v) => onViewModeChange(v as ViewMode)}>
           <SelectTrigger className="h-9 rounded-xl w-[140px]">
-            <div className="flex items-center gap-2">
-              <CurrentIcon className="w-4 h-4" />
-              <SelectValue />
-            </div>
+            <SelectValue />
           </SelectTrigger>
           <SelectContent align="end">
             {VIEW_OPTIONS.map((v) => {
