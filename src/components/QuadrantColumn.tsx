@@ -104,7 +104,7 @@ export function QuadrantColumn({
                       padding: "2px 8px",
                     }
                   : {
-                      backgroundColor: `${accentVar.replace(")", " / 0.15)")}`,
+                      backgroundColor: accentBadgeBg,
                       color: accentVar,
                       fontSize: 11,
                       fontWeight: 600,
