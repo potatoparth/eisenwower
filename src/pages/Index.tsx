@@ -365,6 +365,24 @@ const Index = () => {
               />
             </motion.div>
           )}
+          {viewMode === "notes" && (
+            <motion.div key="notes" {...viewAnimation} className="flex-1 min-h-0 flex flex-col">
+              <NotesView
+                notes={notes}
+                categories={taskCategories}
+                projects={projects}
+                defaultCategory={defaultCategory}
+                defaultProjectId={defaultProjectId}
+                onCreateCategory={handleCreateCategory}
+                onCreateProject={handleCreateProject}
+                onAddNote={(opts) => addNote(opts)}
+                onUpdateNote={updateNote}
+                onDeleteNote={deleteNote}
+                onConvertToTask={handleConvertNoteToTask}
+                getCategoryColor={getCategoryColor}
+              />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
