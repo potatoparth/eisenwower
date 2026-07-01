@@ -22,6 +22,7 @@ import { isOverdue } from "@/lib/sort";
 import { format, parseISO } from "date-fns";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { RecurrenceField } from "@/components/RecurrenceField";
+import { TaskDescription } from "@/components/TaskDescription";
 
 interface TaskDetailDialogProps {
   task: Task;
@@ -79,16 +80,6 @@ export function TaskDetailDialog({
   const overdue = isOverdue(task);
   const qInfo = quadrantMap[quadrant];
   const doFirstLabel = quadrantMap["important-urgent"].title;
-
-  const applyFormat = (kind: "bold" | "italic" | "bullet" | "check") => {
-    const map = {
-      bold: "**bold**",
-      italic: "*italic*",
-      bullet: "\n- ",
-      check: "\n- [ ] ",
-    };
-    setDescription((d) => d + map[kind]);
-  };
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
@@ -177,42 +168,12 @@ export function TaskDetailDialog({
             ))}
           </div>
 
-          {/* Description with simple format buttons */}
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => applyFormat("bold")}
-                className="px-2 h-6 text-xs rounded-md hover:bg-secondary font-bold"
-              >
-                B
-              </button>
-              <button
-                onClick={() => applyFormat("italic")}
-                className="px-2 h-6 text-xs rounded-md hover:bg-secondary italic"
-              >
-                I
-              </button>
-              <button
-                onClick={() => applyFormat("bullet")}
-                className="px-2 h-6 text-xs rounded-md hover:bg-secondary"
-              >
-                • List
-              </button>
-              <button
-                onClick={() => applyFormat("check")}
-                className="px-2 h-6 text-xs rounded-md hover:bg-secondary"
-              >
-                ☐ Check
-              </button>
-            </div>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onBlur={save}
-              placeholder="Add a description..."
-              className="w-full min-h-[160px] p-3 text-sm bg-secondary/60 rounded-lg border-0 resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
+          <TaskDescription
+            value={description}
+            onChange={setDescription}
+            onCommit={save}
+            placeholder="Add a description…"
+          />
 
           {/* Deadline */}
           <div className="space-y-1">

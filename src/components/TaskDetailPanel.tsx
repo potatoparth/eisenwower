@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays, isPast, isToday } from "date-fns";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { RecurrenceField } from "@/components/RecurrenceField";
+import { TaskDescription } from "@/components/TaskDescription";
 
 interface TaskDetailPanelProps {
   task: Task;
@@ -92,12 +93,11 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
         {/* Description */}
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">Description</label>
-          <textarea
+          <TaskDescription
             value={description}
-            onChange={e => setDescription(e.target.value)}
-            onBlur={handleBlur}
-            placeholder="Add a description..."
-            className="w-full min-h-[80px] p-3 text-sm bg-secondary/50 rounded-xl border-0 resize-none focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground/60"
+            onChange={setDescription}
+            onCommit={handleBlur}
+            placeholder="Add a description…"
           />
         </div>
 
