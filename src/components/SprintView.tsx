@@ -159,7 +159,7 @@ export function SprintView({ seedTasks, onSeedConsumed }: Props) {
 
   return (
     <div
-      className="sprint-scope relative flex-1 min-h-0 overflow-hidden rounded-2xl"
+      className="sprint-scope relative flex-1 min-h-0 overflow-hidden"
       style={{ background: "var(--sp-background)" }}
     >
       <MediaBackground />
@@ -190,10 +190,6 @@ export function SprintView({ seedTasks, onSeedConsumed }: Props) {
                 >
                   Focus Mode
                 </span>
-                <ThemeToggle
-                  color={onMedia ? "rgba(255,255,255,0.85)" : undefined}
-                  borderColor={onMedia ? "rgba(255,255,255,0.35)" : undefined}
-                />
               </div>
               <div className="flex items-center gap-5">
                 <button
