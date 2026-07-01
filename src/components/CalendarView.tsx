@@ -226,8 +226,10 @@ export function CalendarView({
           const renderSection = (key: string) => {
             const items = buckets.get(key) ?? [];
             const dayIdx = sectionKeys.indexOf(key) - 1;
-            const label = dayIdx === 0 ? "Today" : dayIdx === 1 ? "Tomorrow" : dayDates[dayIdx].toLocaleDateString(undefined, { weekday: "long" });
-            const dateStr = dayDates[dayIdx].toLocaleDateString(undefined, { month: "short", day: "numeric" });
+            const d = dayDates[dayIdx];
+            const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
+            const label = diff === 0 ? "Today" : diff === 1 ? "Tomorrow" : diff === -1 ? "Yesterday" : d.toLocaleDateString(undefined, { weekday: "long" });
+            const dateStr = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
             const isCollapsed = collapsed.has(key);
             return (
               <DaySection
