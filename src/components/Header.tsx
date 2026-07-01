@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
-import { Moon, Sun, Settings, LogOut, LayoutGrid, List, Columns3, GanttChart, FolderKanban, CalendarDays } from "lucide-react";
+import { Moon, Sun, Settings, LogOut, LayoutGrid, List, Columns3, GanttChart, FolderKanban, CalendarDays, CheckSquare } from "lucide-react";
 import { ViewMode } from "./ViewToggle";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useSelection } from "@/hooks/useSelection";
+import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   viewMode: ViewMode;
@@ -23,6 +25,7 @@ const VIEW_OPTIONS: { id: ViewMode; label: string; icon: React.ElementType }[] =
 ];
 
 export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, enabledViews }: HeaderProps) {
+  const { selectMode, toggleSelectMode, count } = useSelection();
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== "undefined") {
       return document.documentElement.classList.contains("dark") ||
@@ -74,6 +77,23 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, 
 
         <Button variant="ghost" size="icon" onClick={() => setIsDark(!isDark)} className="rounded-xl w-10 h-10 min-w-[40px] min-h-[40px]">
           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </Button>
+        <Button
+          variant={selectMode ? "default" : "ghost"}
+          size="icon"
+          onClick={toggleSelectMode}
+          className={cn(
+            "rounded-xl w-10 h-10 min-w-[40px] min-h-[40px] relative",
+          )}
+          title={selectMode ? "Exit select mode" : "Select tasks"}
+          aria-pressed={selectMode}
+        >
+          <CheckSquare className="w-4 h-4" />
+          {selectMode && count > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-primary text-[10px] font-semibold text-primary-foreground flex items-center justify-center border border-background">
+              {count}
+            </span>
+          )}
         </Button>
         {onSettingsClick && (
           <Button variant="ghost" size="icon" onClick={onSettingsClick} className="rounded-xl w-10 h-10 min-w-[40px] min-h-[40px]">

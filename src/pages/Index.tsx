@@ -19,6 +19,7 @@ import { applyTaskFilters } from "@/lib/filters";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { LoginPage } from "@/components/LoginPage";
 import { ViewMode } from "@/components/ViewToggle";
+import { BulkActionBar } from "@/components/BulkActionBar";
 import { Task, getQuadrants, getQuadrantMap } from "@/types/task";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -200,6 +201,14 @@ const Index = () => {
     ids.forEach((id) => updateTask(id, { dueDate: newDueDate }));
   };
 
+  // Bulk reschedule for the global Select mode — DateTimePicker returns a full
+  // ISO like "2026-07-04T10:30:00", so split into date + optional time.
+  const handleBulkReschedule = (ids: string[], iso: string) => {
+    const [datePart, timePart] = iso.split("T");
+    const timeStr = timePart ? timePart.slice(0, 5) : undefined;
+    ids.forEach((id) => updateTask(id, { dueDate: datePart, ...(timeStr ? { dueTime: timeStr } : {}) }));
+  };
+
   const useSidebarDetail = settings.taskDetailView === "sidebar";
   const displayUsername = currentUser.username;
 
@@ -332,6 +341,8 @@ const Index = () => {
       </main>
 
       <footer className="flex-shrink-0 h-10 border-t border-border/50" aria-hidden />
+
+      <BulkActionBar onBulkReschedule={handleBulkReschedule} />
 
       {selectedTask && useSidebarDetail && (
         <TaskDetailPanel

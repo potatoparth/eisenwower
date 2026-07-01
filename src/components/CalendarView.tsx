@@ -3,8 +3,11 @@ import { ChevronRight, GripVertical, Check as CheckIcon, Inbox } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { DateTimePicker } from "@/components/DateTimePicker";
 import { Task } from "@/types/task";
 import { cn } from "@/lib/utils";
+import { useSelectionOptional } from "@/hooks/useSelection";
 
 interface CalendarViewProps {
   tasks: Task[];
@@ -31,6 +34,8 @@ function orderOf(t: Task) {
 export function CalendarView({
   tasks, onUpdateTask, onToggleStatus, onTaskClick, getCategoryColor,
 }: CalendarViewProps) {
+  const sel = useSelectionOptional();
+  const isSelectMode = !!sel?.selectMode;
   const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
   const dayDates = useMemo(() => [today, addDays(today, 1), addDays(today, 2)], [today]);
 
@@ -47,19 +52,25 @@ export function CalendarView({
     [tasks, activeCats]
   );
 
-  // Collapsed state per section
+  // Collapsed state per section (unscheduled lives in a separate dialog now)
   const sectionKeys = useMemo(
     () => [UNSCHEDULED, ...dayDates.map(fmtDate)],
     [dayDates]
   );
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const dayKeys = useMemo(() => sectionKeys.filter((k) => k !== UNSCHEDULED), [sectionKeys]);
   const toggleCollapse = (k: string) => setCollapsed((prev) => {
     const next = new Set(prev);
     next.has(k) ? next.delete(k) : next.add(k);
     return next;
   });
   const expandAll = () => setCollapsed(new Set());
-  const collapseAll = () => setCollapsed(new Set(sectionKeys));
+  const collapseAll = () => setCollapsed(new Set(dayKeys));
+
+  // Unscheduled popup state
+  const [unschOpen, setUnschOpen] = useState(false);
+  const [unschSelected, setUnschSelected] = useState<Set<string>>(new Set());
+  const [unschDate, setUnschDate] = useState<string | undefined>(undefined);
 
   // Bucket tasks
   const buckets = useMemo(() => {
@@ -72,6 +83,24 @@ export function CalendarView({
     map.forEach((arr) => arr.sort((a, b) => orderOf(a) - orderOf(b) || a.name.localeCompare(b.name)));
     return map;
   }, [visibleTasks, sectionKeys]);
+
+  const unscheduledTasks = buckets.get(UNSCHEDULED) ?? [];
+
+  const toggleUnschId = (id: string) => setUnschSelected((prev) => {
+    const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n;
+  });
+  const applyUnschReschedule = () => {
+    if (!unschDate || unschSelected.size === 0) return;
+    // unschDate is ISO like 2026-07-04T10:30:00
+    const [datePart, timePart] = unschDate.split("T");
+    const timeStr = timePart ? timePart.slice(0, 5) : undefined;
+    unschSelected.forEach((id) => {
+      onUpdateTask(id, { dueDate: datePart, ...(timeStr ? { dueTime: timeStr } : {}) });
+    });
+    setUnschSelected(new Set());
+    setUnschDate(undefined);
+    setUnschOpen(false);
+  };
 
   // Renormalize a bucket's sort orders back to 0,1,2,... in the background.
   const renormalize = (list: Task[]) => {
@@ -148,6 +177,15 @@ export function CalendarView({
           <Button variant="ghost" size="sm" onClick={collapseAll}>Collapse all</Button>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setUnschOpen(true)}
+            className="gap-1.5"
+          >
+            <Inbox className="w-3.5 h-3.5" />
+            Unscheduled ({unscheduledTasks.length})
+          </Button>
           <CategoryFilter
             categories={allCategories}
             checked={activeCats}
@@ -157,19 +195,14 @@ export function CalendarView({
         </div>
       </div>
 
-      {/* Sections */}
+      {/* Sections (unscheduled lives in the popup, not inline) */}
       <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
         {(() => {
           const renderSection = (key: string) => {
             const items = buckets.get(key) ?? [];
-            const isUnsch = key === UNSCHEDULED;
-            const dayIdx = isUnsch ? -1 : sectionKeys.indexOf(key) - 1;
-            const label = isUnsch
-              ? "Unscheduled"
-              : dayIdx === 0 ? "Today" : dayIdx === 1 ? "Tomorrow" : dayDates[dayIdx].toLocaleDateString(undefined, { weekday: "long" });
-            const dateStr = isUnsch
-              ? undefined
-              : dayDates[dayIdx].toLocaleDateString(undefined, { month: "short", day: "numeric" });
+            const dayIdx = sectionKeys.indexOf(key) - 1;
+            const label = dayIdx === 0 ? "Today" : dayIdx === 1 ? "Tomorrow" : dayDates[dayIdx].toLocaleDateString(undefined, { weekday: "long" });
+            const dateStr = dayDates[dayIdx].toLocaleDateString(undefined, { month: "short", day: "numeric" });
             const isCollapsed = collapsed.has(key);
             return (
               <DaySection
@@ -177,7 +210,7 @@ export function CalendarView({
               sectionKey={key}
               label={label}
               dateStr={dateStr}
-              icon={isUnsch ? <Inbox className="w-3.5 h-3.5 text-muted-foreground" /> : null}
+              icon={null}
               count={items.length}
               collapsed={isCollapsed}
               onToggleCollapsed={() => toggleCollapse(key)}
@@ -194,17 +227,82 @@ export function CalendarView({
               />
             );
           };
-          const dayKeys = sectionKeys.filter((k) => k !== UNSCHEDULED);
           return (
-            <>
-              {renderSection(UNSCHEDULED)}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
-                {dayKeys.map((k) => renderSection(k))}
-              </div>
-            </>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
+              {dayKeys.map((k) => renderSection(k))}
+            </div>
           );
         })()}
       </div>
+
+      {/* Unscheduled popup */}
+      <Dialog open={unschOpen} onOpenChange={(o) => { setUnschOpen(o); if (!o) { setUnschSelected(new Set()); setUnschDate(undefined); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Inbox className="w-4 h-4" /> Unscheduled tasks
+            </DialogTitle>
+            <DialogDescription>
+              Select tasks and pick a deadline to schedule them in bulk.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">{unschSelected.size}/{unscheduledTasks.length} selected</span>
+            <div className="flex items-center gap-2">
+              <button type="button" className="text-primary hover:underline" onClick={() => setUnschSelected(new Set(unscheduledTasks.map((t) => t.id)))}>Select all</button>
+              <span className="text-muted-foreground/40">·</span>
+              <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => setUnschSelected(new Set())}>Clear</button>
+            </div>
+          </div>
+
+          <div className="max-h-72 overflow-y-auto -mx-1 px-1 space-y-0.5 border-y py-2">
+            {unscheduledTasks.length === 0 && (
+              <div className="text-xs text-muted-foreground text-center py-6">No unscheduled tasks.</div>
+            )}
+            {unscheduledTasks.map((t) => {
+              const active = unschSelected.has(t.id);
+              const color = getCategoryColor?.(t.category) || "hsl(var(--muted-foreground))";
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => toggleUnschId(t.id)}
+                  className={cn(
+                    "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors",
+                    active ? "bg-primary/10 hover:bg-primary/15" : "hover:bg-muted/40"
+                  )}
+                >
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center",
+                      active ? "bg-primary border-primary" : "border-muted-foreground/40 bg-transparent"
+                    )}
+                  >
+                    {active && <CheckIcon className="w-2.5 h-2.5 text-primary-foreground" />}
+                  </span>
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  <span className="text-sm truncate flex-1 min-w-0">{t.name}</span>
+                  <span className="text-[11px] text-muted-foreground truncate max-w-[120px] shrink-0">{t.category}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-xs font-medium text-muted-foreground">New deadline</span>
+            <DateTimePicker value={unschDate} onChange={setUnschDate} placeholder="Pick deadline…" />
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setUnschOpen(false)}>Cancel</Button>
+            <Button onClick={applyUnschReschedule} disabled={!unschDate || unschSelected.size === 0}>
+              Schedule{unschSelected.size > 0 ? ` (${unschSelected.size})` : ""}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -345,30 +443,51 @@ function TaskRow({
   onToggleStatus?: (id: string) => void;
   onClick: () => void;
 }) {
+  const sel = useSelectionOptional();
+  const isSelectMode = !!sel?.selectMode;
+  const isSelected = !!sel?.has(task.id);
   const c = color || "hsl(var(--muted-foreground))";
   const done = task.status === "done";
   return (
     <div
-      draggable
-      onDragStart={(e) => onDragStart(e, task.id)}
+      draggable={!isSelectMode}
+      onDragStart={(e) => { if (!isSelectMode) onDragStart(e, task.id); }}
       onDragEnd={onDragEnd}
       onDragOver={onDragOverRow}
       onDrop={onDropRow}
-      onClick={onClick}
+      onClick={(e) => {
+        if (isSelectMode) { e.stopPropagation(); sel?.toggle(task.id); return; }
+        onClick();
+      }}
       className={cn(
         "group flex items-center gap-2 px-2 py-1.5 border-t border-border/60 cursor-pointer hover:bg-muted/40 transition-colors",
-        isDragging && "opacity-40"
+        isDragging && "opacity-40",
+        isSelectMode && isSelected && "bg-primary/10"
       )}
       style={{ borderLeft: `3px solid ${c}` }}
     >
-      <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0 cursor-grab" />
-      <span onClick={(e) => e.stopPropagation()}>
-        <Checkbox
-          checked={done}
-          onCheckedChange={() => onToggleStatus?.(task.id)}
-          className="h-3.5 w-3.5"
-        />
-      </span>
+      {isSelectMode ? (
+        <span
+          aria-hidden
+          className={cn(
+            "flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors",
+            isSelected ? "bg-primary border-primary" : "border-muted-foreground/50 bg-transparent"
+          )}
+        >
+          {isSelected && <CheckIcon className="w-2.5 h-2.5 text-primary-foreground" />}
+        </span>
+      ) : (
+        <>
+          <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0 cursor-grab" />
+          <span onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+              checked={done}
+              onCheckedChange={() => onToggleStatus?.(task.id)}
+              className="h-3.5 w-3.5"
+            />
+          </span>
+        </>
+      )}
       <span
         className="w-2 h-2 rounded-full shrink-0"
         style={{ backgroundColor: c }}
