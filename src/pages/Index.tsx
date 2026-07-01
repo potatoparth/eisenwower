@@ -83,6 +83,25 @@ const Index = () => {
     return Array.from(names).sort((a, b) => a.localeCompare(b));
   }, [tasks, settings.categoryColors]);
 
+  // Auto-assign a random color to any newly-seen category that doesn't have one yet.
+  useEffect(() => {
+    const palette = [
+      "#e05a5a", "#e08a3c", "#e0b93c", "#7fbf5a", "#3cbfa8",
+      "#3c9fe0", "#5a6fe0", "#8a5ae0", "#c65ae0", "#e05a9f",
+      "#5aa9e0", "#8fb95a", "#b98f5a", "#5ab98f", "#b95a8f",
+    ];
+    const known = new Set(settings.categoryColors.map((c) => c.name));
+    const used = new Set(settings.categoryColors.map((c) => c.color.toLowerCase()));
+    taskCategories.forEach((name) => {
+      if (known.has(name)) return;
+      const available = palette.filter((c) => !used.has(c.toLowerCase()));
+      const pool = available.length ? available : palette;
+      const color = pool[Math.floor(Math.random() * pool.length)];
+      used.add(color.toLowerCase());
+      addCategoryColor(name, color);
+    });
+  }, [taskCategories, settings.categoryColors, addCategoryColor]);
+
   // Cascade: each filter's option list is computed against tasks that pass all OTHER active filters.
   const filters = { dateFilter, overdueMode, selectedCategories, activeProjectIds };
   const filteredTasks = useMemo(
