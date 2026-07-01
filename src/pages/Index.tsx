@@ -317,6 +317,8 @@ const Index = () => {
           onNavigate={setSelectedTask}
           onToggleStatus={(id) => toggleStatus(id)}
           onSwitchToDialog={() => updateSettings({ taskDetailView: "popup" })}
+          onCreateCategory={handleCreateCategory}
+          onCreateProject={handleCreateProject}
         />
       )}
       {selectedTask && !useSidebarDetail && (
@@ -336,6 +338,8 @@ const Index = () => {
           navTasks={filteredTasks}
           onNavigate={setSelectedTask}
           onToggleStatus={(id) => toggleStatus(id)}
+          onCreateCategory={handleCreateCategory}
+          onCreateProject={handleCreateProject}
         />
       )}
 
