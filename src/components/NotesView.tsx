@@ -9,6 +9,8 @@ import { SelectorWithCreate } from "@/components/SelectorWithCreate";
 import { TaskDescription } from "@/components/TaskDescription";
 import { TaskAttachments } from "@/components/TaskAttachments";
 import { TaskAttachment } from "@/types/task";
+import { Paperclip } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ProjectTemplate } from "@/types/project";
 import { cn } from "@/lib/utils";
 
