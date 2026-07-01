@@ -67,6 +67,7 @@ export function QuadrantColumn({
       : "quadrant-4";
 
   const accentVar = `hsl(var(--quadrant-${quadrant.color}))`;
+  const accentBadgeBg = `hsl(var(--quadrant-${quadrant.color}) / 0.15)`;
 
   return (
     <div
