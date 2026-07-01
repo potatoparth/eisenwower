@@ -180,19 +180,38 @@ interface ComposerProps {
   onCreateCategory?: (name: string) => string;
   onCreateProject?: (name: string) => string;
   onAddNote: (options?: Partial<Note>) => Note | null;
+  onUpdateNote: (id: string, updates: Partial<Note>) => void;
+  editingNote?: Note | null;
+  onCancelEdit?: () => void;
   dark: boolean;
 }
 
 function NoteComposer(props: ComposerProps) {
+  const isEditing = !!props.editingNote;
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
-  const [draftId] = useState(() => crypto.randomUUID());
+  const [draftId, setDraftId] = useState(() => crypto.randomUUID());
   const [category, setCategory] = useState(props.defaultCategory || "General");
   const [projectId, setProjectId] = useState(props.defaultProjectId || "");
   const [color, setColor] = useState<string>("default");
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // When entering edit mode, prefill from the note.
+  useEffect(() => {
+    if (props.editingNote) {
+      setOpen(true);
+      setTitle(props.editingNote.title);
+      setContent(props.editingNote.content);
+      setAttachments(props.editingNote.attachments ?? []);
+      setCategory(props.editingNote.category || "General");
+      setProjectId(props.editingNote.projectId || "");
+      setColor(props.editingNote.color || "default");
+      setDraftId(props.editingNote.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.editingNote?.id]);
 
   useEffect(() => {
     if (!open) return;
@@ -216,19 +235,32 @@ function NoteComposer(props: ComposerProps) {
     setCategory(props.defaultCategory || "General");
     setProjectId(props.defaultProjectId || "");
     setOpen(false);
+    setDraftId(crypto.randomUUID());
+    if (isEditing) props.onCancelEdit?.();
   };
 
   const commit = () => {
     if (!title.trim() && !content.trim() && attachments.length === 0) { reset(); return; }
-    props.onAddNote({
-      id: draftId,
-      title: title.trim(),
-      content: content.trim(),
-      category,
-      projectId: projectId || undefined,
-      color: color === "default" ? undefined : color,
-      attachments,
-    });
+    if (isEditing && props.editingNote) {
+      props.onUpdateNote(props.editingNote.id, {
+        title: title.trim(),
+        content: content.trim(),
+        category,
+        projectId: projectId || undefined,
+        color: color === "default" ? undefined : color,
+        attachments,
+      });
+    } else {
+      props.onAddNote({
+        id: draftId,
+        title: title.trim(),
+        content: content.trim(),
+        category,
+        projectId: projectId || undefined,
+        color: color === "default" ? undefined : color,
+        attachments,
+      });
+    }
     reset();
   };
 
