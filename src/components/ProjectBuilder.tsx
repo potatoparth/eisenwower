@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink } from "lucide-react";
-import { ProjectTemplate, ProjectTask, TaskDependencyType } from "@/types/project";
+import { ProjectTemplate, ProjectTask } from "@/types/project";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
