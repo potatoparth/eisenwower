@@ -77,7 +77,7 @@ export function TaskActionBar({
         {searchMode ? (
           <Popover open={open && matches.length > 0} onOpenChange={setOpen}>
             <PopoverAnchor asChild>
-              <div className="relative h-10 w-full">
+              <div className="relative h-12 w-full">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                 <Input
                   ref={inputRef}
@@ -86,7 +86,7 @@ export function TaskActionBar({
                   onFocus={() => setOpen(true)}
                   onKeyDown={(e) => { if (e.key === "Escape") exitSearch(); }}
                   placeholder="Search tasks..."
-                  className="h-10 w-full rounded-full bg-secondary/40 border-border/60 pl-10 pr-4 py-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="h-12 w-full rounded-full bg-secondary/40 border-border/60 pl-10 pr-4 py-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
               </div>
             </PopoverAnchor>
