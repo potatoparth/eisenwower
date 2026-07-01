@@ -200,8 +200,16 @@ export function CalendarView({
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDayOffset((n) => n - 1)} aria-label="Previous day">
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setDayOffset(0)} disabled={dayOffset === 0}>
-            Today
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setDayOffset(0)}
+            disabled={dayOffset === 0}
+            className="min-w-[80px] tabular-nums"
+          >
+            {dayOffset === 0
+              ? "Today"
+              : anchor.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDayOffset((n) => n + 1)} aria-label="Next day">
             <ChevronRight className="w-4 h-4" />
