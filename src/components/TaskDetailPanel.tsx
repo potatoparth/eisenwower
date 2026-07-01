@@ -3,7 +3,6 @@ import { X, Calendar, Tag, AlertCircle, FolderKanban, ChevronLeft, ChevronRight,
 import { Task, Quadrant, QuadrantInfo, Recurrence } from "@/types/task";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProjectTemplate } from "@/types/project";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays, isPast, isToday } from "date-fns";
@@ -11,6 +10,7 @@ import { isOverdue } from "@/lib/sort";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { RecurrenceField } from "@/components/RecurrenceField";
 import { TaskDescription } from "@/components/TaskDescription";
+import { SelectorWithCreate } from "@/components/SelectorWithCreate";
 
 interface TaskDetailPanelProps {
   task: Task;
@@ -26,9 +26,11 @@ interface TaskDetailPanelProps {
   onNavigate?: (task: Task) => void;
   onToggleStatus?: (id: string) => void;
   onSwitchToDialog?: () => void;
+  onCreateCategory?: (name: string) => string;
+  onCreateProject?: (name: string) => string;
 }
 
-export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose, getCategoryColor, projects = [], quadrants, quadrantMap, categories = [], navTasks = [], onNavigate, onToggleStatus, onSwitchToDialog }: TaskDetailPanelProps) {
+export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose, getCategoryColor, projects = [], quadrants, quadrantMap, categories = [], navTasks = [], onNavigate, onToggleStatus, onSwitchToDialog, onCreateCategory, onCreateProject }: TaskDetailPanelProps) {
   const [name, setName] = useState(task.name);
   const [description, setDescription] = useState(task.description || "");
   const [category, setCategory] = useState(task.category);
