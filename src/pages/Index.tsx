@@ -168,9 +168,9 @@ const Index = () => {
         onLogout={logout}
       />
 
-      <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 overflow-y-auto">
+      <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col overflow-hidden">
         {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban" || viewMode === "gantt" || viewMode === "projects") && (
-          <div className="mb-4">
+          <div className="mb-4 flex-shrink-0">
           <FilterBar
             dateFilter={dateFilter}
             onDateFilterChange={setDateFilter}
@@ -195,7 +195,7 @@ const Index = () => {
         )}
         <AnimatePresence mode="wait">
           {viewMode === "matrix" && (
-            <motion.div key="matrix" {...viewAnimation} className="h-full">
+            <motion.div key="matrix" {...viewAnimation} className="flex-1 min-h-0 flex flex-col">
               <MatrixView
                 tasks={filteredTasks} categories={taskCategories} onMoveTask={moveTask}
                 onToggleStatus={toggleStatus} onDeleteTask={handleDeleteTask} onAddTask={handleAddTask}
