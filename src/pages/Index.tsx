@@ -305,6 +305,7 @@ const Index = () => {
                 tasks={filteredTasks}
                 allTasks={tasks}
                 onUpdateTask={updateTask}
+                onToggleStatus={toggleStatus}
                 onTaskClick={setSelectedTask}
                 getCategoryColor={getCategoryColor}
               />

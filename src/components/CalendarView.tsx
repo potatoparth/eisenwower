@@ -1,6 +1,8 @@
-import { useMemo, useRef, useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, CalendarDays, Inbox } from "lucide-react";
+import { useMemo, useState, useRef } from "react";
+import { ChevronRight, GripVertical, Check as CheckIcon, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Task } from "@/types/task";
 import { cn } from "@/lib/utils";
 
@@ -8,325 +10,436 @@ interface CalendarViewProps {
   tasks: Task[];
   allTasks: Task[];
   onUpdateTask: (id: string, updates: Partial<Omit<Task, "id" | "createdAt">>) => void;
+  onToggleStatus?: (id: string) => void;
   onTaskClick: (task: Task) => void;
   getCategoryColor?: (name: string) => string | undefined;
 }
 
-const HOUR_HEIGHT = 48; // px per hour
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const UNSCHEDULED = "__unscheduled__";
+const MIN_GAP = 0.0001;
 
-function startOfWeek(d: Date) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  x.setDate(x.getDate() - x.getDay());
-  return x;
-}
 function fmtDate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
-function fmtTime(hh: number, mm: number) {
-  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+function addDays(base: Date, n: number) {
+  const d = new Date(base); d.setDate(d.getDate() + n); d.setHours(0, 0, 0, 0); return d;
 }
-function parseTime(t?: string): { h: number; m: number } | undefined {
-  if (!t) return undefined;
-  const [h, m] = t.split(":").map(Number);
-  if (Number.isNaN(h)) return undefined;
-  return { h, m: m || 0 };
-}
-function sameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+function orderOf(t: Task) {
+  return typeof t.sortOrder === "number" ? t.sortOrder : 0;
 }
 
-export function CalendarView({ tasks, onUpdateTask, onTaskClick, getCategoryColor }: CalendarViewProps) {
-  const [anchor, setAnchor] = useState(() => startOfWeek(new Date()));
-  const scrollRef = useRef<HTMLDivElement>(null);
+export function CalendarView({
+  tasks, onUpdateTask, onToggleStatus, onTaskClick, getCategoryColor,
+}: CalendarViewProps) {
+  const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
+  const dayDates = useMemo(() => [today, addDays(today, 1), addDays(today, 2)], [today]);
 
-  // Scroll to 7am on mount / week change
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = 7 * HOUR_HEIGHT;
-  }, []);
-
-  const days = useMemo(() => Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(anchor); d.setDate(anchor.getDate() + i); return d;
-  }), [anchor]);
-
-  const weekLabel = useMemo(() => {
-    const end = days[6];
-    const sameMonth = anchor.getMonth() === end.getMonth();
-    const monthFmt = (d: Date) => d.toLocaleDateString(undefined, { month: "short" });
-    return sameMonth
-      ? `${monthFmt(anchor)} ${anchor.getDate()} – ${end.getDate()}, ${end.getFullYear()}`
-      : `${monthFmt(anchor)} ${anchor.getDate()} – ${monthFmt(end)} ${end.getDate()}, ${end.getFullYear()}`;
-  }, [anchor, days]);
-
-  const unscheduled = useMemo(
-    () => tasks.filter((t) => !t.dueDate && t.status !== "done"),
-    [tasks]
+  // Category filter (multi-select)
+  const allCategories = useMemo(() => {
+    const s = new Set<string>();
+    tasks.forEach((t) => { if (t.category?.trim()) s.add(t.category.trim()); });
+    return Array.from(s).sort((a, b) => a.localeCompare(b));
+  }, [tasks]);
+  const [checkedCats, setCheckedCats] = useState<Set<string> | null>(null); // null = all
+  const activeCats = checkedCats ?? new Set(allCategories);
+  const visibleTasks = useMemo(
+    () => tasks.filter((t) => activeCats.has(t.category)),
+    [tasks, activeCats]
   );
 
-  // Bucket tasks by day
-  const byDay = useMemo(() => {
+  // Collapsed state per section
+  const sectionKeys = useMemo(
+    () => [UNSCHEDULED, ...dayDates.map(fmtDate)],
+    [dayDates]
+  );
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const toggleCollapse = (k: string) => setCollapsed((prev) => {
+    const next = new Set(prev);
+    next.has(k) ? next.delete(k) : next.add(k);
+    return next;
+  });
+  const expandAll = () => setCollapsed(new Set());
+  const collapseAll = () => setCollapsed(new Set(sectionKeys));
+
+  // Bucket tasks
+  const buckets = useMemo(() => {
     const map = new Map<string, Task[]>();
-    days.forEach((d) => map.set(fmtDate(d), []));
-    tasks.forEach((t) => {
-      if (!t.dueDate) return;
-      const key = t.dueDate;
+    sectionKeys.forEach((k) => map.set(k, []));
+    visibleTasks.forEach((t) => {
+      const key = t.dueDate ?? UNSCHEDULED;
       if (map.has(key)) map.get(key)!.push(t);
     });
+    map.forEach((arr) => arr.sort((a, b) => orderOf(a) - orderOf(b) || a.name.localeCompare(b.name)));
     return map;
-  }, [tasks, days]);
+  }, [visibleTasks, sectionKeys]);
 
-  const today = new Date();
-
-  // ---- Drag handlers ----
-  const onDragStart = (e: React.DragEvent, taskId: string) => {
-    e.dataTransfer.setData("text/task-id", taskId);
-    e.dataTransfer.effectAllowed = "move";
+  // Renormalize a bucket's sort orders back to 0,1,2,... in the background.
+  const renormalize = (list: Task[]) => {
+    list.forEach((t, i) => {
+      if (orderOf(t) !== i) onUpdateTask(t.id, { sortOrder: i });
+    });
   };
+
+  // ---- Drag & drop ----
+  const dragIdRef = useRef<string | null>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
+  // Where the drop indicator should show: {sectionKey, index} where index is insertion position
+  const [dropTarget, setDropTarget] = useState<{ key: string; index: number } | null>(null);
+
+  const onDragStart = (e: React.DragEvent, id: string) => {
+    dragIdRef.current = id;
+    setDragging(id);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/task-id", id);
+  };
+  const onDragEnd = () => {
+    dragIdRef.current = null;
+    setDragging(null);
+    setDropTarget(null);
+  };
+
+  const commitDrop = (sectionKey: string, insertIndex: number) => {
+    const id = dragIdRef.current;
+    if (!id) return;
+    const list = (buckets.get(sectionKey) ?? []).filter((t) => t.id !== id);
+
+    // Compute new sortOrder as midpoint of neighbors.
+    // insertIndex is position in `list` (list without the dragged task).
+    const before = list[insertIndex - 1];
+    const after = list[insertIndex];
+    let newOrder: number;
+    if (!before && !after) newOrder = 0;
+    else if (!before && after) newOrder = orderOf(after) - 1;
+    else if (before && !after) newOrder = orderOf(before) + 1;
+    else newOrder = (orderOf(before!) + orderOf(after!)) / 2;
+
+    const updates: Partial<Omit<Task, "id" | "createdAt">> = { sortOrder: newOrder };
+    if (sectionKey === UNSCHEDULED) {
+      updates.dueDate = undefined;
+      updates.dueTime = undefined;
+    } else {
+      updates.dueDate = sectionKey;
+    }
+    onUpdateTask(id, updates);
+
+    // If neighbor gap collapsed below threshold, schedule renormalization.
+    if (before && after && Math.abs(orderOf(after) - orderOf(before)) < MIN_GAP) {
+      const rebuilt = [...list];
+      rebuilt.splice(insertIndex, 0, { ...(tasks.find((t) => t.id === id) as Task), sortOrder: newOrder });
+      // Defer so state settles.
+      setTimeout(() => renormalize(rebuilt), 0);
+    }
+
+    setDropTarget(null);
+    setDragging(null);
+    dragIdRef.current = null;
+  };
+
+  return (
+    <div className="flex-1 min-h-0 flex flex-col rounded-2xl border border-border bg-card overflow-hidden">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border flex-wrap">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={expandAll}>Expand all</Button>
+          <span className="text-muted-foreground/40">·</span>
+          <Button variant="ghost" size="sm" onClick={collapseAll}>Collapse all</Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <CategoryFilter
+            categories={allCategories}
+            checked={activeCats}
+            onChange={(next) => setCheckedCats(next)}
+            getCategoryColor={getCategoryColor}
+          />
+        </div>
+      </div>
+
+      {/* Sections */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
+        {sectionKeys.map((key) => {
+          const items = buckets.get(key) ?? [];
+          const isUnsch = key === UNSCHEDULED;
+          const dayIdx = isUnsch ? -1 : sectionKeys.indexOf(key) - 1;
+          const label = isUnsch
+            ? "Unscheduled"
+            : dayIdx === 0 ? "Today" : dayIdx === 1 ? "Tomorrow" : dayDates[dayIdx].toLocaleDateString(undefined, { weekday: "long" });
+          const dateStr = isUnsch
+            ? undefined
+            : dayDates[dayIdx].toLocaleDateString(undefined, { month: "short", day: "numeric" });
+          const isCollapsed = collapsed.has(key);
+
+          return (
+            <DaySection
+              key={key}
+              sectionKey={key}
+              label={label}
+              dateStr={dateStr}
+              icon={isUnsch ? <Inbox className="w-3.5 h-3.5 text-muted-foreground" /> : null}
+              count={items.length}
+              collapsed={isCollapsed}
+              onToggleCollapsed={() => toggleCollapse(key)}
+              items={items}
+              dragging={dragging}
+              dropTarget={dropTarget}
+              setDropTarget={setDropTarget}
+              onCommitDrop={commitDrop}
+              onDragStart={onDragStart}
+              onDragEnd={onDragEnd}
+              onTaskClick={onTaskClick}
+              onToggleStatus={onToggleStatus}
+              getCategoryColor={getCategoryColor}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* -------------------- Day Section -------------------- */
+
+interface DaySectionProps {
+  sectionKey: string;
+  label: string;
+  dateStr?: string;
+  icon: React.ReactNode;
+  count: number;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
+  items: Task[];
+  dragging: string | null;
+  dropTarget: { key: string; index: number } | null;
+  setDropTarget: (t: { key: string; index: number } | null) => void;
+  onCommitDrop: (key: string, index: number) => void;
+  onDragStart: (e: React.DragEvent, id: string) => void;
+  onDragEnd: () => void;
+  onTaskClick: (t: Task) => void;
+  onToggleStatus?: (id: string) => void;
+  getCategoryColor?: (name: string) => string | undefined;
+}
+
+function DaySection({
+  sectionKey, label, dateStr, icon, count, collapsed, onToggleCollapsed,
+  items, dragging, dropTarget, setDropTarget, onCommitDrop,
+  onDragStart, onDragEnd, onTaskClick, onToggleStatus, getCategoryColor,
+}: DaySectionProps) {
   const allowDrop = (e: React.DragEvent) => {
     if (e.dataTransfer.types.includes("text/task-id")) {
       e.preventDefault();
       e.dataTransfer.dropEffect = "move";
     }
   };
-  const dropToSlot = (e: React.DragEvent, date: Date, hour: number) => {
-    const id = e.dataTransfer.getData("text/task-id");
-    if (!id) return;
-    e.preventDefault();
-    // Snap to 30-min based on drop y within the slot
-    const target = e.currentTarget as HTMLElement;
-    const rect = target.getBoundingClientRect();
-    const offset = e.clientY - rect.top;
-    const minute = offset > rect.height / 2 ? 30 : 0;
-    onUpdateTask(id, { dueDate: fmtDate(date), dueTime: fmtTime(hour, minute) });
-  };
-  const dropToAllDay = (e: React.DragEvent, date: Date) => {
-    const id = e.dataTransfer.getData("text/task-id");
-    if (!id) return;
-    e.preventDefault();
-    onUpdateTask(id, { dueDate: fmtDate(date), dueTime: undefined });
-  };
-  const dropToUnscheduled = (e: React.DragEvent) => {
-    const id = e.dataTransfer.getData("text/task-id");
-    if (!id) return;
-    e.preventDefault();
-    onUpdateTask(id, { dueDate: undefined, dueTime: undefined });
-  };
+
+  // Position of drop indicator: line above the row at `dropIdx`.
+  const isThisSection = dropTarget?.key === sectionKey;
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col rounded-2xl border border-border bg-card overflow-hidden">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setAnchor(startOfWeek(new Date()))}>
-            Today
-          </Button>
-          <div className="flex">
-            <Button variant="ghost" size="icon" className="h-8 w-8"
-              onClick={() => { const d = new Date(anchor); d.setDate(d.getDate() - 7); setAnchor(d); }}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8"
-              onClick={() => { const d = new Date(anchor); d.setDate(d.getDate() + 7); setAnchor(d); }}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-          <div className="text-sm font-semibold text-foreground pl-1">{weekLabel}</div>
-        </div>
-        <Button variant="outline" size="sm" disabled title="Coming soon — will sync deadlines to your Google Calendar.">
-          <CalendarDays className="w-4 h-4 mr-1.5" />
-          Sync Google Calendar (soon)
-        </Button>
-      </div>
+    <section className="rounded-lg border border-border bg-background/50 overflow-hidden">
+      {/* Header */}
+      <button
+        type="button"
+        onClick={onToggleCollapsed}
+        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors"
+      >
+        <ChevronRight
+          className={cn(
+            "w-4 h-4 text-muted-foreground transition-transform",
+            !collapsed && "rotate-90"
+          )}
+        />
+        {icon}
+        <span className="text-sm font-semibold text-foreground">{label}</span>
+        {dateStr && <span className="text-xs text-muted-foreground">{dateStr}</span>}
+        <span className="ml-auto text-xs text-muted-foreground tabular-nums">{count}</span>
+      </button>
 
       {/* Body */}
-      <div className="flex-1 min-h-0 flex overflow-hidden">
-        {/* Unscheduled sidebar */}
-        <aside
-          className="w-[220px] flex-shrink-0 border-r border-border flex flex-col bg-secondary/30"
-          onDragOver={allowDrop}
-          onDrop={dropToUnscheduled}
+      {!collapsed && (
+        <div
+          className="min-h-[44px]"
+          onDragOver={(e) => {
+            if (!e.dataTransfer.types.includes("text/task-id")) return;
+            e.preventDefault();
+            // Empty section → set drop index 0.
+            if (items.length === 0) setDropTarget({ key: sectionKey, index: 0 });
+          }}
+          onDrop={(e) => {
+            if (!isThisSection) return;
+            e.preventDefault();
+            onCommitDrop(sectionKey, dropTarget!.index);
+          }}
         >
-          <div className="px-3 py-2 border-b border-border flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <Inbox className="w-3.5 h-3.5" />
-            Unscheduled
-            <span className="ml-auto text-[10px] font-medium text-muted-foreground/70">{unscheduled.length}</span>
-          </div>
-          <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-            {unscheduled.length === 0 && (
-              <div className="text-[11px] text-muted-foreground text-center py-6 leading-relaxed px-2">
-                Drop tasks here to remove their deadline. Drag from here onto a day to schedule.
-              </div>
-            )}
-            {unscheduled.map((t) => (
-              <UnscheduledCard key={t.id} task={t} onDragStart={onDragStart} onClick={() => onTaskClick(t)} color={getCategoryColor?.(t.category)} />
-            ))}
-          </div>
-        </aside>
-
-        {/* Week grid */}
-        <div className="flex-1 min-w-0 flex flex-col">
-          {/* Day headers */}
-          <div className="grid border-b border-border" style={{ gridTemplateColumns: "56px repeat(7, minmax(0, 1fr))" }}>
-            <div />
-            {days.map((d) => {
-              const isToday = sameDay(d, today);
-              return (
-                <div key={d.toISOString()} className="px-2 py-2 text-center border-l border-border">
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{DAY_NAMES[d.getDay()]}</div>
-                  <div className={cn(
-                    "text-lg font-semibold tabular-nums",
-                    isToday ? "text-primary" : "text-foreground"
-                  )}>{d.getDate()}</div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* All-day row */}
-          <div className="grid border-b border-border bg-muted/20" style={{ gridTemplateColumns: "56px repeat(7, minmax(0, 1fr))" }}>
-            <div className="text-[10px] text-muted-foreground px-1 py-1 text-right pr-2">all-day</div>
-            {days.map((d) => {
-              const key = fmtDate(d);
-              const items = (byDay.get(key) ?? []).filter((t) => !t.dueTime);
-              return (
-                <div key={key} className="border-l border-border min-h-[36px] p-1 flex flex-wrap gap-1 content-start"
-                  onDragOver={allowDrop} onDrop={(e) => dropToAllDay(e, d)}>
-                  {items.map((t) => (
-                    <AllDayChip key={t.id} task={t} onDragStart={onDragStart} onClick={() => onTaskClick(t)} color={getCategoryColor?.(t.category)} />
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Time grid */}
-          <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto">
-            <div className="grid relative" style={{ gridTemplateColumns: "56px repeat(7, minmax(0, 1fr))" }}>
-              {/* Hours column */}
-              <div>
-                {HOURS.map((h) => (
-                  <div key={h} style={{ height: HOUR_HEIGHT }} className="text-[10px] text-muted-foreground pr-2 pt-1 text-right border-t border-border">
-                    {h === 0 ? "" : `${h % 12 === 0 ? 12 : h % 12} ${h < 12 ? "AM" : "PM"}`}
-                  </div>
-                ))}
-              </div>
-
-              {/* Day columns */}
-              {days.map((d) => {
-                const key = fmtDate(d);
-                const items = (byDay.get(key) ?? []).filter((t) => !!t.dueTime);
-                // Group by hour for side-by-side layout
-                const byHour = new Map<number, Task[]>();
-                items.forEach((t) => {
-                  const p = parseTime(t.dueTime)!;
-                  const arr = byHour.get(p.h) ?? [];
-                  arr.push(t);
-                  byHour.set(p.h, arr);
-                });
-                const isToday = sameDay(d, today);
-                return (
-                  <div key={key} className="relative border-l border-border">
-                    {HOURS.map((h) => (
-                      <div key={h}
-                        style={{ height: HOUR_HEIGHT }}
-                        className="border-t border-border hover:bg-muted/30 transition-colors"
-                        onDragOver={allowDrop}
-                        onDrop={(e) => dropToSlot(e, d, h)}
-                      />
-                    ))}
-                    {/* Now indicator */}
-                    {isToday && (
-                      <div
-                        className="absolute left-0 right-0 pointer-events-none z-10"
-                        style={{ top: (today.getHours() + today.getMinutes() / 60) * HOUR_HEIGHT }}
-                      >
-                        <div className="h-[2px] bg-primary/80" />
-                      </div>
-                    )}
-                    {/* Events */}
-                    {Array.from(byHour.entries()).map(([hour, hourTasks]) =>
-                      hourTasks.map((t, idx) => {
-                        const p = parseTime(t.dueTime)!;
-                        const top = (hour + p.m / 60) * HOUR_HEIGHT;
-                        const widthPct = 100 / hourTasks.length;
-                        const color = getCategoryColor?.(t.category) || "hsl(var(--primary))";
-                        return (
-                          <button
-                            key={t.id}
-                            draggable
-                            onDragStart={(e) => onDragStart(e, t.id)}
-                            onClick={() => onTaskClick(t)}
-                            className="absolute rounded-md px-1.5 py-1 text-[11px] font-medium text-left overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-                            style={{
-                              top,
-                              height: HOUR_HEIGHT - 2,
-                              left: `calc(${idx * widthPct}% + 2px)`,
-                              width: `calc(${widthPct}% - 4px)`,
-                              backgroundColor: `color-mix(in oklab, ${color} 22%, transparent)`,
-                              borderLeft: `3px solid ${color}`,
-                              color: "hsl(var(--foreground))",
-                              textDecoration: t.status === "done" ? "line-through" : undefined,
-                              opacity: t.status === "done" ? 0.6 : 1,
-                            }}
-                            title={`${t.name} · ${t.category} · ${t.dueTime}`}
-                          >
-                            <div className="truncate">{t.name}</div>
-                            <div className="text-[10px] text-muted-foreground truncate">{t.dueTime}</div>
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                );
-              })}
+          {items.length === 0 && (
+            <div
+              className={cn(
+                "text-xs text-muted-foreground text-center py-4 border-t border-dashed border-border/50",
+                isThisSection && "bg-primary/5 text-primary"
+              )}
+            >
+              Drop a task here
             </div>
-          </div>
+          )}
+
+          {items.map((t, idx) => {
+            const showIndicatorAbove = isThisSection && dropTarget!.index === idx;
+            return (
+              <div key={t.id}>
+                {showIndicatorAbove && <div className="h-0.5 mx-2 bg-primary rounded-full" />}
+                <TaskRow
+                  task={t}
+                  color={getCategoryColor?.(t.category)}
+                  isDragging={dragging === t.id}
+                  onDragStart={onDragStart}
+                  onDragEnd={onDragEnd}
+                  onDragOverRow={(e) => {
+                    allowDrop(e);
+                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                    const before = e.clientY - rect.top < rect.height / 2;
+                    setDropTarget({ key: sectionKey, index: before ? idx : idx + 1 });
+                  }}
+                  onDropRow={(e) => {
+                    if (!isThisSection) return;
+                    e.preventDefault();
+                    onCommitDrop(sectionKey, dropTarget!.index);
+                  }}
+                  onToggleStatus={onToggleStatus}
+                  onClick={() => onTaskClick(t)}
+                />
+              </div>
+            );
+          })}
+          {/* Indicator at the end */}
+          {isThisSection && dropTarget!.index === items.length && items.length > 0 && (
+            <div className="h-0.5 mx-2 bg-primary rounded-full" />
+          )}
         </div>
-      </div>
+      )}
+    </section>
+  );
+}
+
+/* -------------------- Task Row -------------------- */
+
+function TaskRow({
+  task, color, isDragging, onDragStart, onDragEnd, onDragOverRow, onDropRow,
+  onToggleStatus, onClick,
+}: {
+  task: Task; color?: string; isDragging: boolean;
+  onDragStart: (e: React.DragEvent, id: string) => void;
+  onDragEnd: () => void;
+  onDragOverRow: (e: React.DragEvent) => void;
+  onDropRow: (e: React.DragEvent) => void;
+  onToggleStatus?: (id: string) => void;
+  onClick: () => void;
+}) {
+  const c = color || "hsl(var(--muted-foreground))";
+  const done = task.status === "done";
+  return (
+    <div
+      draggable
+      onDragStart={(e) => onDragStart(e, task.id)}
+      onDragEnd={onDragEnd}
+      onDragOver={onDragOverRow}
+      onDrop={onDropRow}
+      onClick={onClick}
+      className={cn(
+        "group flex items-center gap-2 px-2 py-1.5 border-t border-border/60 cursor-pointer hover:bg-muted/40 transition-colors",
+        isDragging && "opacity-40"
+      )}
+      style={{ borderLeft: `3px solid ${c}` }}
+    >
+      <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0 cursor-grab" />
+      <span onClick={(e) => e.stopPropagation()}>
+        <Checkbox
+          checked={done}
+          onCheckedChange={() => onToggleStatus?.(task.id)}
+          className="h-3.5 w-3.5"
+        />
+      </span>
+      <span
+        className="w-2 h-2 rounded-full shrink-0"
+        style={{ backgroundColor: c }}
+        aria-hidden
+      />
+      <span
+        className={cn(
+          "text-sm truncate flex-1 min-w-0",
+          done && "line-through text-muted-foreground"
+        )}
+      >
+        {task.name}
+      </span>
+      {task.dueTime && (
+        <span className="text-[11px] text-muted-foreground tabular-nums shrink-0">{task.dueTime}</span>
+      )}
+      <span className="text-xs text-muted-foreground truncate max-w-[120px] text-right shrink-0">
+        {task.category}
+      </span>
     </div>
   );
 }
 
-function UnscheduledCard({ task, onDragStart, onClick, color }: {
-  task: Task; onDragStart: (e: React.DragEvent, id: string) => void; onClick: () => void; color?: string;
-}) {
-  const c = color || "hsl(var(--muted-foreground))";
-  return (
-    <button
-      draggable
-      onDragStart={(e) => onDragStart(e, task.id)}
-      onClick={onClick}
-      className="w-full text-left rounded-md p-2 bg-card border border-border hover:border-primary/50 hover:shadow-sm transition-all"
-      style={{ borderLeft: `3px solid ${c}` }}
-    >
-      <div className="text-[12px] font-medium text-foreground truncate">{task.name}</div>
-      <div className="text-[10px] text-muted-foreground truncate">{task.category}</div>
-    </button>
-  );
-}
+/* -------------------- Category filter dropdown -------------------- */
 
-function AllDayChip({ task, onDragStart, onClick, color }: {
-  task: Task; onDragStart: (e: React.DragEvent, id: string) => void; onClick: () => void; color?: string;
+function CategoryFilter({
+  categories, checked, onChange, getCategoryColor,
+}: {
+  categories: string[];
+  checked: Set<string>;
+  onChange: (next: Set<string> | null) => void;
+  getCategoryColor?: (name: string) => string | undefined;
 }) {
-  const c = color || "hsl(var(--primary))";
+  const total = categories.length;
+  const n = categories.filter((c) => checked.has(c)).length;
   return (
-    <button
-      draggable
-      onDragStart={(e) => onDragStart(e, task.id)}
-      onClick={onClick}
-      className="max-w-full rounded px-1.5 py-0.5 text-[10px] font-medium truncate hover:brightness-110 transition"
-      style={{
-        backgroundColor: `color-mix(in oklab, ${c} 22%, transparent)`,
-        borderLeft: `2px solid ${c}`,
-        color: "hsl(var(--foreground))",
-        textDecoration: task.status === "done" ? "line-through" : undefined,
-        opacity: task.status === "done" ? 0.6 : 1,
-      }}
-      title={task.name}
-    >
-      {task.name}
-    </button>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm">
+          Categories ({n}/{total})
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64 p-2">
+        <div className="flex items-center justify-between px-1 pb-2 mb-1 border-b border-border">
+          <button
+            className="text-xs text-primary hover:underline"
+            onClick={() => onChange(null)}
+          >
+            All
+          </button>
+          <button
+            className="text-xs text-muted-foreground hover:underline"
+            onClick={() => onChange(new Set())}
+          >
+            None
+          </button>
+        </div>
+        <div className="max-h-64 overflow-y-auto space-y-0.5">
+          {categories.length === 0 && (
+            <div className="text-xs text-muted-foreground px-2 py-1">No categories</div>
+          )}
+          {categories.map((cat) => {
+            const isChecked = checked.has(cat);
+            const color = getCategoryColor?.(cat) || "hsl(var(--muted-foreground))";
+            return (
+              <label
+                key={cat}
+                className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted/40 cursor-pointer text-sm"
+              >
+                <Checkbox
+                  checked={isChecked}
+                  onCheckedChange={(v) => {
+                    const next = new Set(checked);
+                    v ? next.add(cat) : next.delete(cat);
+                    onChange(next);
+                  }}
+                />
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                <span className="truncate">{cat}</span>
+              </label>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

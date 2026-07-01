@@ -40,6 +40,8 @@ export interface Task {
   isRecurringInstance?: boolean;
   recurringTemplateId?: string;
   attachments?: TaskAttachment[];
+  /** Ordering value used by the agenda/calendar for within-day drag reorder. */
+  sortOrder?: number;
 }
 
 export interface QuadrantInfo {

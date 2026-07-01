@@ -63,6 +63,7 @@ const fromRow = (row: TaskRow): Task => ({
   isRecurringInstance: !!row.is_recurring_instance,
   recurringTemplateId: row.recurring_template_id || undefined,
   attachments: Array.isArray(row.attachments) ? (row.attachments as TaskAttachment[]) : [],
+  sortOrder: typeof (row as unknown as { sort_order?: number }).sort_order === "number" ? (row as unknown as { sort_order: number }).sort_order : undefined,
 });
 
 const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => ({
@@ -82,6 +83,7 @@ const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => ({
   is_recurring_instance: updates.isRecurringInstance ?? undefined,
   recurring_template_id: updates.recurringTemplateId ?? undefined,
   attachments: updates.attachments ? (JSON.parse(JSON.stringify(updates.attachments)) as never) : undefined,
+  sort_order: updates.sortOrder,
 });
 
 export function useTasks(userId?: string) {
