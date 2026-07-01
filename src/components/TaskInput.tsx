@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback, type ReactNode } from "react";
-import { Calendar, Tag, CornerDownLeft, FolderKanban, AlignLeft, Zap } from "lucide-react";
+import { Calendar, Tag, CornerDownLeft, FolderKanban, Zap } from "lucide-react";
 import { Quadrant, QUADRANTS, QuadrantInfo, Recurrence } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { RecurrenceField } from "@/components/RecurrenceField";
+import { TaskDescription } from "@/components/TaskDescription";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@/lib/utils";
@@ -378,25 +379,11 @@ export function TaskInput({
                 </div>
                 <div className="space-y-2">
                   {/* Description (collapsed by default) */}
-                  {descOpen ? (
-                    <Input
-                      autoFocus
-                      type="text"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Description (optional)"
-                      className="border-0 bg-secondary/50 h-8 text-sm rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0"
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setDescOpen(true)}
-                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                    >
-                      <AlignLeft className="w-3 h-3" /> Add description
-                    </button>
-                  )}
+                  <TaskDescription
+                    value={description}
+                    onChange={setDescription}
+                    placeholder="Description (optional)"
+                  />
                   {/* Deadline */}
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
