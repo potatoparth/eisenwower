@@ -148,24 +148,23 @@ export function DateTimePicker({
   // Group days into weeks, tagging weeks that start a new month for divider labels.
   const weeks = useMemo(() => {
     const w: { days: Date[]; monthLabel?: string }[] = [];
+    // Track months already introduced so we never repeat a divider. The header
+    // already establishes viewMonth, so seed it as "already shown".
+    const seen = new Set<string>([format(viewMonth, "yyyy-MM")]);
     for (let i = 0; i < days.length; i += 7) {
       const chunk = days.slice(i, i + 7);
-      const prevChunk = i === 0 ? null : days.slice(i - 7, i);
-      const showLabel =
-        !prevChunk ||
-        chunk.some(
-          (d) =>
-            d.getDate() === 1 ||
-            (prevChunk && !isSameMonth(d, prevChunk[prevChunk.length - 1]))
-        );
-      // Only add label if the month changed vs the previous week (or first row)
-      const monthChanged =
-        !prevChunk ||
-        !isSameMonth(chunk[0], prevChunk[0]);
-      w.push({
-        days: chunk,
-        monthLabel: monthChanged ? format(chunk.find((d) => isSameMonth(d, chunk[3])) ?? chunk[0], "MMMM yyyy") : undefined,
-      });
+      // A week can span two months — introduce a divider only for a month whose
+      // FIRST day falls inside this week and that hasn't been introduced yet.
+      let label: string | undefined;
+      for (const d of chunk) {
+        const key = format(d, "yyyy-MM");
+        if (!seen.has(key) && d.getDate() === 1) {
+          label = format(d, "MMMM yyyy");
+          seen.add(key);
+          break;
+        }
+      }
+      w.push({ days: chunk, monthLabel: label });
     }
     return w;
   }, [days]);
