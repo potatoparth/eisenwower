@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Moon, Sun, Settings, LogOut, LayoutGrid, List, Columns3, GanttChart, FolderKanban, CalendarDays, CheckSquare, StickyNote } from "lucide-react";
+import { Moon, Sun, Settings, LogOut, LayoutGrid, List, Columns3, GanttChart, FolderKanban, CalendarDays, CheckSquare, StickyNote, Timer } from "lucide-react";
 import { ViewMode } from "./ViewToggle";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ const VIEW_OPTIONS: { id: ViewMode; label: string; icon: React.ElementType }[] =
   { id: "gantt", label: "Gantt", icon: GanttChart },
   { id: "projects", label: "Projects", icon: FolderKanban },
   { id: "notes", label: "Notes", icon: StickyNote },
+  { id: "sprint", label: "Sprint", icon: Timer },
 ];
 
 export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, enabledViews }: HeaderProps) {
