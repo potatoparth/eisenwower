@@ -5,7 +5,7 @@ import { Task, Quadrant, TaskStatus, QuadrantInfo } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import type { TaskAddOptions, TaskInputPickerProps } from "@/components/TaskInput";
 import { TaskCard } from "./TaskCard";
-import { TaskInput } from "./TaskInput";
+import { TaskActionBar } from "./TaskActionBar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -34,6 +34,9 @@ interface ListViewProps {
   deadlineThresholdDays?: number;
   quadrants: QuadrantInfo[];
   quadrantMap: Record<Quadrant, QuadrantInfo>;
+  allTasks: Task[];
+  onSelectTask: (task: Task) => void;
+  onDeleteAllDone: () => void;
 }
 
 export function ListView({
@@ -52,6 +55,9 @@ export function ListView({
   defaultCategory,
   onCreateCategory,
   onCreateProject,
+  allTasks,
+  onSelectTask,
+  onDeleteAllDone,
 }: ListViewProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -83,9 +89,11 @@ export function ListView({
   return (
     <div className="flex flex-col h-full">
       <div className="mb-6 max-w-2xl mx-auto w-full">
-        <TaskInput
+        <TaskActionBar
+          tasks={allTasks}
+          onSelectTask={onSelectTask}
+          onDeleteAllDone={onDeleteAllDone}
           onAddTask={onAddTask}
-          placeholder="Add a new task..."
           quadrants={quadrants}
           categories={categories}
           projects={projects}
