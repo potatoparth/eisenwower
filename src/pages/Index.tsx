@@ -13,6 +13,7 @@ import { GanttView } from "@/components/GanttView";
 import { CalendarView } from "@/components/CalendarView";
 import { ProjectBuilder } from "@/components/ProjectBuilder";
 import { NotesView } from "@/components/NotesView";
+import { SprintView, type SprintSeedTask } from "@/components/SprintView";
 import { useNotes } from "@/hooks/useNotes";
 import { Note } from "@/types/note";
 import { toast } from "@/hooks/use-toast";
@@ -60,6 +61,10 @@ const Index = () => {
     return localStorage.getItem("compactMode") === "1";
   });
 
+  // Selection → Sprint bridge: BulkActionBar pushes selected task ids here,
+  // then we flip to the Sprint view where SprintView consumes them once.
+  const [sprintSeed, setSprintSeed] = useState<SprintSeedTask[] | undefined>(undefined);
+
   useEffect(() => { localStorage.setItem("overdueMode", overdueMode); }, [overdueMode]);
   useEffect(() => { localStorage.setItem("compactMode", compactMode ? "1" : "0"); }, [compactMode]);
 
@@ -99,7 +104,7 @@ const Index = () => {
     const enabled = settings.enabledViews;
     if (!enabled) return;
     if (enabled[viewMode] === false) {
-        const fallback = (["matrix", "list", "kanban", "calendar", "gantt", "projects", "notes"] as ViewMode[])
+        const fallback = (["matrix", "list", "kanban", "calendar", "gantt", "projects", "notes", "sprint"] as ViewMode[])
         .find((v) => enabled[v] !== false);
       if (fallback) setViewMode(fallback);
     }
@@ -265,7 +270,7 @@ const Index = () => {
       />
 
       <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col overflow-hidden">
-        {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban" || viewMode === "gantt" || viewMode === "projects" || viewMode === "calendar" || viewMode === "notes") && (
+        {viewMode !== "sprint" && (
           <div className="mb-4 flex-shrink-0">
           <FilterBar
             dateFilter={dateFilter}
@@ -397,12 +402,32 @@ const Index = () => {
               />
             </motion.div>
           )}
+          {viewMode === "sprint" && (
+            <motion.div key="sprint" {...viewAnimation} className="flex-1 min-h-0 flex flex-col">
+              <SprintView
+                seedTasks={sprintSeed}
+                onSeedConsumed={() => setSprintSeed(undefined)}
+              />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
       <footer className="flex-shrink-0 h-10 border-t border-border/50" aria-hidden />
 
-      <BulkActionBar onBulkReschedule={handleBulkReschedule} />
+      <BulkActionBar
+        onBulkReschedule={handleBulkReschedule}
+        onAddToSprint={(ids) => {
+          const map = new Map(tasks.map((t) => [t.id, t] as const));
+          const seeds: SprintSeedTask[] = ids
+            .map((id) => map.get(id))
+            .filter((t): t is typeof tasks[number] => !!t)
+            .map((t) => ({ id: t.id, title: t.name }));
+          if (seeds.length === 0) return;
+          setSprintSeed(seeds);
+          setViewMode("sprint");
+        }}
+      />
 
       {selectedTask && useSidebarDetail && (
         <TaskDetailPanel

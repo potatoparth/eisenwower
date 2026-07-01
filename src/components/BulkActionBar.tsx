@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, CalendarClock } from "lucide-react";
+import { X, CalendarClock, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -10,13 +10,15 @@ import { Task } from "@/types/task";
 
 interface Props {
   onBulkReschedule: (ids: string[], iso: string) => void;
+  /** Send the current selection to the Sprint view (opens the composer prefilled). */
+  onAddToSprint?: (ids: string[]) => void;
 }
 
 /**
  * Floating bar shown when the user has tasks selected via the global Select
  * mode. Currently exposes a single bulk action: Reschedule.
  */
-export function BulkActionBar({ onBulkReschedule }: Props) {
+export function BulkActionBar({ onBulkReschedule, onAddToSprint }: Props) {
   const { selectMode, selectedIds, count, clear, setSelectMode } = useSelection();
   const [date, setDate] = useState<string | undefined>(undefined);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -36,6 +38,21 @@ export function BulkActionBar({ onBulkReschedule }: Props) {
       <span className="text-xs font-medium px-2 tabular-nums">
         {count} selected
       </span>
+      {onAddToSprint && (
+        <Button
+          size="sm"
+          variant="secondary"
+          className="rounded-full gap-1.5"
+          onClick={() => {
+            onAddToSprint(Array.from(selectedIds));
+            clear();
+            setSelectMode(false);
+          }}
+        >
+          <Timer className="w-3.5 h-3.5" />
+          Add to sprint
+        </Button>
+      )}
       <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
         <PopoverTrigger asChild>
           <Button size="sm" className="rounded-full gap-1.5">
