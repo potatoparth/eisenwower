@@ -68,6 +68,48 @@ export type Database = {
         }
         Relationships: []
       }
+      notes: {
+        Row: {
+          category: string
+          color: string | null
+          content: string
+          created_at: string
+          id: string
+          pinned: boolean
+          project_id: string | null
+          sort_order: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          color?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          project_id?: string | null
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          color?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          project_id?: string | null
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
