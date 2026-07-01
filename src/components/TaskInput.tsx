@@ -254,7 +254,7 @@ export function TaskInput({
             onFocus={() => setIsFocused(true)}
             placeholder={placeholder}
             className={cn(
-              "border-0 bg-transparent shadow-none p-0 h-auto placeholder:text-muted-foreground/50 focus-visible:ring-0",
+              "border-0 bg-transparent shadow-none p-0 h-auto placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
               compact ? "text-sm" : "text-base"
             )}
           />
@@ -327,7 +327,7 @@ export function TaskInput({
                       onChange={(e) => setDescription(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="Description (optional)"
-                      className="border-0 bg-secondary/50 h-8 text-sm rounded-lg"
+                      className="border-0 bg-secondary/50 h-8 text-sm rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   ) : (
                     <button
