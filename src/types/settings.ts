@@ -28,9 +28,9 @@ export interface AppSettings {
   /** Global primary/brand color (hex). Applied to buttons, links, focus rings. */
   primaryColor?: string;
   /** Which views are visible in the app. Off just hides UI; data is preserved. */
-  enabledViews?: { matrix: boolean; list: boolean; kanban: boolean; gantt: boolean; projects: boolean; calendar: boolean };
+  enabledViews?: { matrix: boolean; list: boolean; kanban: boolean; gantt: boolean; projects: boolean; calendar: boolean; notes: boolean };
   fontSize: "small" | "medium" | "large";
-  defaultView: "matrix" | "list" | "kanban" | "gantt" | "projects" | "calendar";
+  defaultView: "matrix" | "list" | "kanban" | "gantt" | "projects" | "calendar" | "notes";
   deadlineThresholdDays: number; // days before due date to show red warning
   categoryColors: CategoryColor[];
   colorCodingEnabled: boolean;
@@ -72,7 +72,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     dark: { ...DEFAULT_QUADRANT_ACCENTS.dark },
   },
   primaryColor: "#6D28D9",
-  enabledViews: { matrix: true, list: true, kanban: true, gantt: true, projects: true, calendar: true },
+  enabledViews: { matrix: true, list: true, kanban: true, gantt: true, projects: true, calendar: true, notes: true },
   fontSize: "medium",
   defaultView: "matrix",
   deadlineThresholdDays: 2,
