@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback, type ReactNode } from "react";
-import { Calendar, Tag, ChevronRight, FolderKanban, AlignLeft, Zap } from "lucide-react";
+import { Calendar, Tag, CornerDownLeft, FolderKanban, AlignLeft, Zap } from "lucide-react";
 import { Quadrant, QUADRANTS, QuadrantInfo, Recurrence } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import { Input } from "@/components/ui/input";
@@ -287,21 +287,23 @@ export function TaskInput({
               compact ? "text-sm" : "text-base"
             )}
           />
-          <Button
-              size="sm"
-              onClick={handleNameSubmit}
-              aria-disabled={!name.trim()}
-              tabIndex={name.trim() ? 0 : -1}
-              className={cn(
-                "absolute top-1/2 h-7 w-7 -translate-y-1/2 flex-shrink-0 rounded-full p-0 transition-opacity",
-                trailingElement
-                  ? (compact ? "right-11" : "right-14")
-                  : (compact ? "right-3" : "right-5"),
-                !name.trim() && "pointer-events-none opacity-0"
-              )}
-            >
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Button>
+          <button
+            type="button"
+            onClick={handleNameSubmit}
+            aria-label="Press Enter to continue"
+            aria-disabled={!name.trim()}
+            tabIndex={name.trim() ? 0 : -1}
+            className={cn(
+              "absolute top-1/2 -translate-y-1/2 flex-shrink-0 inline-flex items-center gap-1 h-6 px-2 rounded-md border border-border/70 bg-secondary/70 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:border-border transition-opacity",
+              trailingElement
+                ? (compact ? "right-11" : "right-14")
+                : (compact ? "right-3" : "right-5"),
+              !name.trim() && "pointer-events-none opacity-0"
+            )}
+          >
+            <CornerDownLeft className="w-3 h-3" />
+            <span className="tracking-wide">Enter</span>
+          </button>
           {trailingElement && (
             <div className={cn("flex h-full flex-shrink-0 items-center", compact ? "ml-1 -mr-1" : "ml-2 -mr-2")}>
               {trailingElement}

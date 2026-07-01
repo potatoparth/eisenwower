@@ -169,7 +169,7 @@ const Index = () => {
       />
 
       <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 overflow-y-auto">
-        {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban" || viewMode === "gantt") && (
+        {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban" || viewMode === "gantt" || viewMode === "projects") && (
           <div className="mb-4">
           <FilterBar
             dateFilter={dateFilter}
@@ -189,6 +189,7 @@ const Index = () => {
             hasNoProjectOption={cascadedProjectContext.hasNoProjectOption}
             compactMode={compactMode}
             onCompactModeChange={viewMode === "matrix" ? setCompactMode : undefined}
+            showProjectsFilter={viewMode !== "projects"}
           />
           </div>
         )}
@@ -254,7 +255,7 @@ const Index = () => {
           {viewMode === "projects" && (
             <motion.div key="projects" {...viewAnimation} className="h-full max-w-5xl mx-auto">
               <ProjectBuilder
-                projects={projects} allTasks={tasks} onAddProject={addProject} onUpdateProject={updateProject}
+                projects={projects} allTasks={filteredTasks} onAddProject={addProject} onUpdateProject={updateProject}
                 onDeleteProject={deleteProject} onAddTask={addTaskToProject}
                 onUpdateTask={updateProjectTask} onDeleteTask={deleteProjectTask}
                 onAddMatrixTask={handleAddTask}
