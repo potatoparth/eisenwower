@@ -140,10 +140,13 @@ const Index = () => {
       <Header
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        taskCount={filteredTasks.filter((t) => t.status === "open").length}
         onSettingsClick={() => setShowSettings(true)}
         onLogout={logout}
-        username={displayUsername}
+        tasks={tasks}
+        onSelectTask={setSelectedTask}
+        onDeleteAllDone={() => {
+          tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id));
+        }}
       />
 
       <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 overflow-y-auto">
