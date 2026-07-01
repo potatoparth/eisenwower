@@ -238,8 +238,8 @@ export function TaskInput({
             "flex items-center gap-2",
             step === "name"
               ? compact
-                ? "px-3 py-1.5"
-                : "px-5 py-2.5"
+                ? "h-10 px-3 py-0"
+                : "h-12 px-5 py-0"
               : compact
               ? "p-2"
               : "p-3"
@@ -254,15 +254,20 @@ export function TaskInput({
             onFocus={() => setIsFocused(true)}
             placeholder={placeholder}
             className={cn(
-              "border-0 bg-transparent shadow-none p-0 h-auto placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
+              "min-w-0 flex-1 border-0 bg-transparent shadow-none p-0 h-auto placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
               compact ? "text-sm" : "text-base"
             )}
           />
-          {name.trim() && step === "name" && (
+          {step === "name" && (
             <Button
               size="sm"
               onClick={handleNameSubmit}
-              className="rounded-full h-7 w-7 p-0"
+              aria-disabled={!name.trim()}
+              tabIndex={name.trim() ? 0 : -1}
+              className={cn(
+                "h-7 w-7 flex-shrink-0 rounded-full p-0 transition-opacity",
+                !name.trim() && "pointer-events-none opacity-0"
+              )}
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </Button>
