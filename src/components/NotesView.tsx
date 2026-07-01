@@ -1,13 +1,14 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pin, PinOff, Trash2, CheckSquare, Palette, FolderKanban, Tag, ListChecks, X, Plus } from "lucide-react";
+import { Pin, PinOff, Trash2, Palette, FolderKanban, Tag, ListChecks } from "lucide-react";
 import { Note, NOTE_COLORS, noteColorFor } from "@/types/note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SelectorWithCreate } from "@/components/SelectorWithCreate";
-import { Quadrant } from "@/types/task";
+import { TaskDescription } from "@/components/TaskDescription";
+import { TaskAttachments } from "@/components/TaskAttachments";
+import { TaskAttachment } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import { cn } from "@/lib/utils";
 
