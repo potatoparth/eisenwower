@@ -22,6 +22,7 @@ import { isOverdue } from "@/lib/sort";
 import { format, parseISO } from "date-fns";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { RecurrenceField } from "@/components/RecurrenceField";
+import { TaskDescription } from "@/components/TaskDescription";
 
 interface TaskDetailDialogProps {
   task: Task;
