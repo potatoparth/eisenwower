@@ -131,6 +131,7 @@ export function ProjectBuilder({
                 tasks={mappedTasks}
                 onSelectTask={(t) => onSelectTask?.(t)}
                 onDeleteAllDone={() => onDeleteAllDone?.()}
+                onRescheduleTasks={onRescheduleTasks}
                 onAddTask={handleAddMatrixTask}
                 quadrants={quadrants ?? []}
                 categories={categories}
