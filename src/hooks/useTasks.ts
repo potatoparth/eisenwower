@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Task, Quadrant, TaskStatus, Recurrence } from "@/types/task";
+import { Task, Quadrant, TaskStatus, Recurrence, TaskAttachment } from "@/types/task";
 
 function computeNextOccurrence(template: Task): string | undefined {
   const rec = template.recurrence ?? "none";
@@ -39,6 +39,7 @@ type TaskRow = {
   recurrence_time: string | null;
   is_recurring_instance: boolean | null;
   recurring_template_id: string | null;
+  attachments: unknown;
 };
 
 const fromRow = (row: TaskRow): Task => ({
@@ -59,6 +60,7 @@ const fromRow = (row: TaskRow): Task => ({
   recurrenceTime: row.recurrence_time || "22:00",
   isRecurringInstance: !!row.is_recurring_instance,
   recurringTemplateId: row.recurring_template_id || undefined,
+  attachments: Array.isArray(row.attachments) ? (row.attachments as TaskAttachment[]) : [],
 });
 
 const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => ({
@@ -76,6 +78,7 @@ const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => ({
   recurrence_time: updates.recurrenceTime ?? undefined,
   is_recurring_instance: updates.isRecurringInstance ?? undefined,
   recurring_template_id: updates.recurringTemplateId ?? undefined,
+  attachments: updates.attachments ?? undefined,
 });
 
 export function useTasks(userId?: string) {

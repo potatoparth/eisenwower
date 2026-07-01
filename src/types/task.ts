@@ -8,6 +8,17 @@ export type TaskStatus = "open" | "done";
 
 export type Recurrence = "none" | "daily" | "weekly" | "monthly";
 
+export interface TaskAttachment {
+  id: string;
+  name: string;
+  kind: "file" | "link";
+  /** For files: storage object path (bucket task-attachments). For links: the URL. */
+  path: string;
+  size?: number;
+  contentType?: string;
+  addedAt: string;
+}
+
 export interface Task {
   id: string;
   name: string;
@@ -26,6 +37,7 @@ export interface Task {
   recurrenceTime?: string; // HH:MM
   isRecurringInstance?: boolean;
   recurringTemplateId?: string;
+  attachments?: TaskAttachment[];
 }
 
 export interface QuadrantInfo {
