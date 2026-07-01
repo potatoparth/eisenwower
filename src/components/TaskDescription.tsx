@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlignLeft, ListOrdered, ListChecks, List, Link2, Plus } from "lucide-react";
+import { AlignLeft, ListOrdered, ListChecks, List, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -383,11 +383,6 @@ function DescriptionEditor({
           onClick={() => openLinkDialog()}
           title="Insert link (⌘K)"
           icon={<Link2 className="w-3.5 h-3.5" />}
-        />
-        <ToolbarBtn
-          onClick={() => insertLine(lines.length - 1, { type: "text", indent: 0, text: "" })}
-          title="New line"
-          icon={<Plus className="w-3.5 h-3.5" />}
         />
         {onCollapse && !value && (
           <button
