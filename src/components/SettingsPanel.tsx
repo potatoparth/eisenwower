@@ -43,6 +43,7 @@ const VIEW_LIST: { id: keyof NonNullable<AppSettings["enabledViews"]>; label: st
   { id: "calendar", label: "Calendar" },
   { id: "gantt", label: "Gantt" },
   { id: "projects", label: "Projects" },
+  { id: "notes", label: "Notes" },
 ];
 
 function Section({
