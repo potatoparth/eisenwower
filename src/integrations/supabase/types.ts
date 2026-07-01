@@ -226,6 +226,63 @@ export type Database = {
         }
         Relationships: []
       }
+      sprints: {
+        Row: {
+          actual_minutes: number | null
+          atmosphere: string | null
+          completed_at: number | null
+          created_at: string
+          duration: number
+          ended_early: boolean | null
+          id: string
+          is_active: boolean
+          no_timer: boolean
+          pause_offset: number
+          paused_at: number | null
+          start_time: number
+          tasks: Json
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_minutes?: number | null
+          atmosphere?: string | null
+          completed_at?: number | null
+          created_at?: string
+          duration: number
+          ended_early?: boolean | null
+          id: string
+          is_active?: boolean
+          no_timer?: boolean
+          pause_offset?: number
+          paused_at?: number | null
+          start_time: number
+          tasks?: Json
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_minutes?: number | null
+          atmosphere?: string | null
+          completed_at?: number | null
+          created_at?: string
+          duration?: number
+          ended_early?: boolean | null
+          id?: string
+          is_active?: boolean
+          no_timer?: boolean
+          pause_offset?: number
+          paused_at?: number | null
+          start_time?: number
+          tasks?: Json
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           attachments: Json
