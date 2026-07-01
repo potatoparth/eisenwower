@@ -12,6 +12,10 @@ import { KanbanView } from "@/components/KanbanView";
 import { GanttView } from "@/components/GanttView";
 import { CalendarView } from "@/components/CalendarView";
 import { ProjectBuilder } from "@/components/ProjectBuilder";
+import { NotesView } from "@/components/NotesView";
+import { useNotes } from "@/hooks/useNotes";
+import { Note } from "@/types/note";
+import { toast } from "@/hooks/use-toast";
 import { TaskDetailPanel } from "@/components/TaskDetailPanel";
 import { TaskDetailDialog } from "@/components/TaskDetailDialog";
 import { FilterBar, DateFilter, OverdueMode } from "@/components/FilterBar";
@@ -70,6 +74,8 @@ const Index = () => {
     addTaskToProject, updateProjectTask, deleteProjectTask,
   } = useProjects(currentUser?.id);
 
+  const { notes, addNote, updateNote, deleteNote } = useNotes(currentUser?.id);
+
   useEffect(() => {
     setViewMode(settings.defaultView as ViewMode);
   }, [settings.defaultView]);
@@ -79,7 +85,7 @@ const Index = () => {
     const enabled = settings.enabledViews;
     if (!enabled) return;
     if (enabled[viewMode] === false) {
-      const fallback = (["matrix", "list", "kanban", "calendar", "gantt", "projects"] as ViewMode[])
+        const fallback = (["matrix", "list", "kanban", "calendar", "gantt", "projects", "notes"] as ViewMode[])
         .find((v) => enabled[v] !== false);
       if (fallback) setViewMode(fallback);
     }
@@ -207,6 +213,28 @@ const Index = () => {
     const [datePart, timePart] = iso.split("T");
     const timeStr = timePart ? timePart.slice(0, 5) : undefined;
     ids.forEach((id) => updateTask(id, { dueDate: datePart, ...(timeStr ? { dueTime: timeStr } : {}) }));
+  };
+
+  const handleConvertNoteToTask = (note: Note) => {
+    // Title comes from note title; if empty, use first non-empty line of content;
+    // remainder of content becomes the task description.
+    let title = note.title.trim();
+    let description = note.content;
+    if (!title) {
+      const lines = note.content.split("\n");
+      const firstIdx = lines.findIndex((l) => l.trim().length > 0);
+      if (firstIdx >= 0) {
+        title = lines[firstIdx].trim();
+        description = lines.slice(firstIdx + 1).join("\n").replace(/^\n+/, "");
+      }
+    }
+    if (!title) { toast({ title: "Add a title or note content first" }); return; }
+    handleAddTask(title, "important-not-urgent", {
+      description: description.trim() || undefined,
+      category: note.category,
+      projectId: note.projectId,
+    });
+    toast({ title: "Task created", description: title });
   };
 
   const useSidebarDetail = settings.taskDetailView === "sidebar";
