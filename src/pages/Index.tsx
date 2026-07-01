@@ -72,6 +72,17 @@ const Index = () => {
     setViewMode(settings.defaultView as ViewMode);
   }, [settings.defaultView]);
 
+  // If the active view was disabled in settings, fall back to the first enabled one.
+  useEffect(() => {
+    const enabled = settings.enabledViews;
+    if (!enabled) return;
+    if (enabled[viewMode] === false) {
+      const fallback = (["matrix", "list", "kanban", "gantt", "projects"] as ViewMode[])
+        .find((v) => enabled[v] !== false);
+      if (fallback) setViewMode(fallback);
+    }
+  }, [settings.enabledViews, viewMode]);
+
   const taskCategories = useMemo(() => {
     const names = new Set<string>();
     tasks.forEach((t) => {
@@ -198,6 +209,7 @@ const Index = () => {
         onViewModeChange={setViewMode}
         onSettingsClick={() => setShowSettings(true)}
         onLogout={logout}
+        enabledViews={settings.enabledViews}
       />
 
       <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col overflow-hidden">

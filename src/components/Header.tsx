@@ -10,6 +10,7 @@ interface HeaderProps {
   onViewModeChange: (mode: ViewMode) => void;
   onSettingsClick?: () => void;
   onLogout?: () => void;
+  enabledViews?: Partial<Record<ViewMode, boolean>>;
 }
 
 const VIEW_OPTIONS: { id: ViewMode; label: string; icon: React.ElementType }[] = [
@@ -20,7 +21,7 @@ const VIEW_OPTIONS: { id: ViewMode; label: string; icon: React.ElementType }[] =
   { id: "projects", label: "Projects", icon: FolderKanban },
 ];
 
-export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout }: HeaderProps) {
+export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, enabledViews }: HeaderProps) {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== "undefined") {
       return document.documentElement.classList.contains("dark") ||
@@ -40,7 +41,8 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout }
     }
   }, [isDark]);
 
-  const currentView = VIEW_OPTIONS.find(v => v.id === viewMode) ?? VIEW_OPTIONS[0];
+  const visibleViews = VIEW_OPTIONS.filter(v => enabledViews?.[v.id] !== false);
+  const currentView = visibleViews.find(v => v.id === viewMode) ?? visibleViews[0] ?? VIEW_OPTIONS[0];
   const CurrentIcon = currentView.icon;
 
   return (
@@ -55,7 +57,7 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout }
             <SelectValue />
           </SelectTrigger>
           <SelectContent align="end">
-            {VIEW_OPTIONS.map((v) => {
+            {visibleViews.map((v) => {
               const Icon = v.icon;
               return (
                 <SelectItem key={v.id} value={v.id}>

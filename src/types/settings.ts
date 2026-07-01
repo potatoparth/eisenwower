@@ -25,6 +25,10 @@ export interface AppSettings {
     light: { 1: string; 2: string; 3: string; 4: string };
     dark: { 1: string; 2: string; 3: string; 4: string };
   };
+  /** Global primary/brand color (hex). Applied to buttons, links, focus rings. */
+  primaryColor?: string;
+  /** Which views are visible in the app. Off just hides UI; data is preserved. */
+  enabledViews?: { matrix: boolean; list: boolean; kanban: boolean; gantt: boolean; projects: boolean };
   fontSize: "small" | "medium" | "large";
   defaultView: "matrix" | "list" | "kanban" | "gantt" | "projects";
   deadlineThresholdDays: number; // days before due date to show red warning
@@ -67,6 +71,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
     light: { ...DEFAULT_QUADRANT_ACCENTS.light },
     dark: { ...DEFAULT_QUADRANT_ACCENTS.dark },
   },
+  primaryColor: "#6D28D9",
+  enabledViews: { matrix: true, list: true, kanban: true, gantt: true, projects: true },
   fontSize: "medium",
   defaultView: "matrix",
   deadlineThresholdDays: 2,

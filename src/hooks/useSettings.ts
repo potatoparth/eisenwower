@@ -140,6 +140,21 @@ function applyQuadrantColors(settings: AppSettings) {
   const tint = Math.max(0, Math.min(30, settings.quadrantTintIntensity ?? 10)) / 100;
   root.style.setProperty("--quadrant-tint-alpha", String(tint));
 
+  // Apply global primary color (buttons, links, rings)
+  const primary = settings.primaryColor;
+  if (primary) {
+    const hsl = hexToHSL(primary);
+    root.style.setProperty("--primary", hsl);
+    root.style.setProperty("--ring", hsl);
+    root.style.setProperty("--sidebar-primary", hsl);
+    root.style.setProperty("--sidebar-ring", hsl);
+  } else {
+    root.style.removeProperty("--primary");
+    root.style.removeProperty("--ring");
+    root.style.removeProperty("--sidebar-primary");
+    root.style.removeProperty("--sidebar-ring");
+  }
+
   // Apply per-theme accent overrides
   const mode = currentTheme();
   const accents = settings.quadrantAccents?.[mode] ?? DEFAULT_QUADRANT_ACCENTS[mode];
