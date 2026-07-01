@@ -86,6 +86,29 @@ export function CalendarView({
 
   const unscheduledTasks = buckets.get(UNSCHEDULED) ?? [];
 
+  // Options for the "move to…" quick action (works on mobile where HTML5 DnD is unavailable).
+  const moveOptions = useMemo(() => {
+    const opts: { key: string; label: string }[] = dayDates.map((d, i) => ({
+      key: fmtDate(d),
+      label: i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString(undefined, { weekday: "long" }),
+    }));
+    opts.push({ key: UNSCHEDULED, label: "Unscheduled" });
+    return opts;
+  }, [dayDates]);
+
+  const moveTaskToSection = (id: string, sectionKey: string) => {
+    const updates: Partial<Omit<Task, "id" | "createdAt">> = {};
+    if (sectionKey === UNSCHEDULED) {
+      updates.dueDate = undefined;
+      updates.dueTime = undefined;
+    } else {
+      updates.dueDate = sectionKey;
+      const t = tasks.find((x) => x.id === id);
+      if (t?.dueTime) updates.dueTime = t.dueTime;
+    }
+    onUpdateTask(id, updates);
+  };
+
   const toggleUnschId = (id: string) => setUnschSelected((prev) => {
     const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n;
   });
