@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from "react";
-import { ChevronRight, GripVertical, Check as CheckIcon, Inbox, MoveVertical } from "lucide-react";
+import { ChevronRight, ChevronLeft, GripVertical, Check as CheckIcon, Inbox, MoveVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -37,7 +37,9 @@ export function CalendarView({
   const sel = useSelectionOptional();
   const isSelectMode = !!sel?.selectMode;
   const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
-  const dayDates = useMemo(() => [today, addDays(today, 1), addDays(today, 2)], [today]);
+  const [dayOffset, setDayOffset] = useState(0);
+  const anchor = useMemo(() => addDays(today, dayOffset), [today, dayOffset]);
+  const dayDates = useMemo(() => [anchor, addDays(anchor, 1), addDays(anchor, 2)], [anchor]);
 
   // Category filter (multi-select)
   const allCategories = useMemo(() => {
