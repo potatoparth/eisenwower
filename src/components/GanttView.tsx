@@ -1,8 +1,10 @@
 import { useMemo } from "react";
+import { Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { Task, Quadrant, QuadrantInfo, QUADRANT_MAP } from "@/types/task";
 import { format, parseISO, differenceInDays, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isToday, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useSelectionOptional } from "@/hooks/useSelection";
 
 interface GanttViewProps {
   tasks: Task[];
@@ -12,6 +14,8 @@ interface GanttViewProps {
 }
 
 export function GanttView({ tasks, onTaskClick, getCategoryColor, quadrantMap = QUADRANT_MAP }: GanttViewProps) {
+  const sel = useSelectionOptional();
+  const isSelectMode = !!sel?.selectMode;
   // Only show tasks with due dates
   const tasksWithDates = useMemo(() =>
     tasks.filter(t => t.dueDate).sort((a, b) => a.dueDate!.localeCompare(b.dueDate!)),
@@ -131,10 +135,28 @@ export function GanttView({ tasks, onTaskClick, getCategoryColor, quadrantMap = 
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: rowIdx * 0.03 }}
-                className={cn("flex border-b border-border/50 hover:bg-accent/20 transition-colors cursor-pointer", task.status === "done" && "opacity-50")}
-                onClick={() => onTaskClick?.(task)}
+                className={cn(
+                  "flex border-b border-border/50 hover:bg-accent/20 transition-colors cursor-pointer",
+                  task.status === "done" && "opacity-50",
+                  isSelectMode && sel?.has(task.id) && "bg-primary/10"
+                )}
+                onClick={() => {
+                  if (isSelectMode) { sel?.toggle(task.id); return; }
+                  onTaskClick?.(task);
+                }}
               >
                 <div className="w-[200px] flex-shrink-0 p-2 text-sm truncate border-r border-border flex items-center gap-2">
+                  {isSelectMode && (
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors",
+                        sel?.has(task.id) ? "bg-primary border-primary" : "border-muted-foreground/50 bg-transparent"
+                      )}
+                    >
+                      {sel?.has(task.id) && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                    </span>
+                  )}
                   {getCategoryColor?.(task.category) && (
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getCategoryColor(task.category) }} />
                   )}
