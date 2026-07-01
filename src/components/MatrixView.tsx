@@ -15,7 +15,7 @@ import { ProjectTemplate } from "@/types/project";
 import type { TaskAddOptions, TaskInputPickerProps } from "@/components/TaskInput";
 import { QuadrantColumn } from "./QuadrantColumn";
 import { TaskCard } from "./TaskCard";
-import { TaskInput } from "./TaskInput";
+import { TaskActionBar } from "./TaskActionBar";
 import { QuadrantExpandDialog } from "./QuadrantExpandDialog";
 import { CompactQuadrantTile } from "./CompactQuadrantTile";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -46,6 +46,9 @@ interface MatrixViewProps {
   compactMode?: boolean;
   quadrants: QuadrantInfo[];
   quadrantMap: Record<Quadrant, QuadrantInfo>;
+  allTasks: Task[];
+  onSelectTask: (task: Task) => void;
+  onDeleteAllDone: () => void;
 }
 
 export function MatrixView({
@@ -71,6 +74,9 @@ export function MatrixView({
   defaultCategory,
   onCreateCategory,
   onCreateProject,
+  allTasks,
+  onSelectTask,
+  onDeleteAllDone,
 }: MatrixViewProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [expandedQuadrant, setExpandedQuadrant] = useState<QuadrantInfo | null>(null);
@@ -158,9 +164,11 @@ export function MatrixView({
     <div className={cn("flex flex-col min-h-0", showCompact ? "h-auto" : "h-full")}>
       {/* Global Task Input */}
       <div className="mb-3 max-w-2xl mx-auto w-full flex-shrink-0">
-        <TaskInput
+        <TaskActionBar
+          tasks={allTasks}
+          onSelectTask={onSelectTask}
+          onDeleteAllDone={onDeleteAllDone}
           onAddTask={onAddTask}
-          placeholder="Add a new task..."
           quadrants={quadrants}
           categories={categories}
           projects={projects}
