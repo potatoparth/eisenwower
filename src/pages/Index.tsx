@@ -76,6 +76,20 @@ const Index = () => {
 
   const { notes, addNote, updateNote, deleteNote } = useNotes(currentUser?.id);
 
+  const filteredNotes = useMemo(() => {
+    return notes.filter((n) => {
+      if (selectedCategories.length > 0 && !selectedCategories.includes(n.category)) return false;
+      if (activeProjectIds.length > 0) {
+        const wantsNone = activeProjectIds.includes("__none__");
+        const real = activeProjectIds.filter((id) => id !== "__none__");
+        const isNone = !n.projectId;
+        const matches = (isNone && wantsNone) || (n.projectId && real.includes(n.projectId));
+        if (!matches) return false;
+      }
+      return true;
+    });
+  }, [notes, selectedCategories, activeProjectIds]);
+
   useEffect(() => {
     setViewMode(settings.defaultView as ViewMode);
   }, [settings.defaultView]);
@@ -251,7 +265,7 @@ const Index = () => {
       />
 
       <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col overflow-hidden">
-        {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban" || viewMode === "gantt" || viewMode === "projects" || viewMode === "calendar") && (
+        {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban" || viewMode === "gantt" || viewMode === "projects" || viewMode === "calendar" || viewMode === "notes") && (
           <div className="mb-4 flex-shrink-0">
           <FilterBar
             dateFilter={dateFilter}
@@ -368,7 +382,7 @@ const Index = () => {
           {viewMode === "notes" && (
             <motion.div key="notes" {...viewAnimation} className="flex-1 min-h-0 flex flex-col">
               <NotesView
-                notes={notes}
+                notes={filteredNotes}
                 categories={taskCategories}
                 projects={projects}
                 defaultCategory={defaultCategory}
