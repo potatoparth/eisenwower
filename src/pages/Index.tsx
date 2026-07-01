@@ -168,9 +168,9 @@ const Index = () => {
         onLogout={logout}
       />
 
-      <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 overflow-y-auto">
+      <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col overflow-hidden">
         {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban" || viewMode === "gantt" || viewMode === "projects") && (
-          <div className="mb-4">
+          <div className="mb-4 flex-shrink-0">
           <FilterBar
             dateFilter={dateFilter}
             onDateFilterChange={setDateFilter}
@@ -195,7 +195,7 @@ const Index = () => {
         )}
         <AnimatePresence mode="wait">
           {viewMode === "matrix" && (
-            <motion.div key="matrix" {...viewAnimation} className="h-full">
+            <motion.div key="matrix" {...viewAnimation} className="flex-1 min-h-0 flex flex-col">
               <MatrixView
                 tasks={filteredTasks} categories={taskCategories} onMoveTask={moveTask}
                 onToggleStatus={toggleStatus} onDeleteTask={handleDeleteTask} onAddTask={handleAddTask}
@@ -217,7 +217,7 @@ const Index = () => {
             </motion.div>
           )}
           {viewMode === "list" && (
-            <motion.div key="list" {...viewAnimation} className="h-full max-w-4xl mx-auto">
+            <motion.div key="list" {...viewAnimation} className="flex-1 min-h-0 w-full max-w-4xl mx-auto overflow-y-auto">
               <ListView
                 tasks={filteredTasks} categories={taskCategories} onToggleStatus={toggleStatus}
                 onDeleteTask={handleDeleteTask} onAddTask={handleAddTask} onTaskClick={setSelectedTask}
@@ -236,7 +236,7 @@ const Index = () => {
             </motion.div>
           )}
           {viewMode === "kanban" && (
-            <motion.div key="kanban" {...viewAnimation} className="h-full">
+            <motion.div key="kanban" {...viewAnimation} className="flex-1 min-h-0 flex flex-col">
               <KanbanView
                 tasks={filteredTasks} columns={columns} onAddColumn={addColumn}
                 onRemoveColumn={removeColumn} onRenameColumn={renameColumn}
@@ -248,12 +248,12 @@ const Index = () => {
             </motion.div>
           )}
           {viewMode === "gantt" && (
-            <motion.div key="gantt" {...viewAnimation} className="h-full">
+            <motion.div key="gantt" {...viewAnimation} className="flex-1 min-h-0 overflow-auto">
               <GanttView tasks={filteredTasks} onTaskClick={setSelectedTask} getCategoryColor={getCategoryColor} quadrantMap={quadrantMap} />
             </motion.div>
           )}
           {viewMode === "projects" && (
-            <motion.div key="projects" {...viewAnimation} className="h-full max-w-5xl mx-auto">
+            <motion.div key="projects" {...viewAnimation} className="flex-1 min-h-0 w-full max-w-5xl mx-auto overflow-y-auto">
               <ProjectBuilder
                 projects={projects} allTasks={filteredTasks} onAddProject={addProject} onUpdateProject={updateProject}
                 onDeleteProject={deleteProject} onAddTask={addTaskToProject}
