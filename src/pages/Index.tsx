@@ -402,12 +402,32 @@ const Index = () => {
               />
             </motion.div>
           )}
+          {viewMode === "sprint" && (
+            <motion.div key="sprint" {...viewAnimation} className="flex-1 min-h-0 flex flex-col">
+              <SprintView
+                seedTasks={sprintSeed}
+                onSeedConsumed={() => setSprintSeed(undefined)}
+              />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
       <footer className="flex-shrink-0 h-10 border-t border-border/50" aria-hidden />
 
-      <BulkActionBar onBulkReschedule={handleBulkReschedule} />
+      <BulkActionBar
+        onBulkReschedule={handleBulkReschedule}
+        onAddToSprint={(ids) => {
+          const map = new Map(tasks.map((t) => [t.id, t] as const));
+          const seeds: SprintSeedTask[] = ids
+            .map((id) => map.get(id))
+            .filter((t): t is typeof tasks[number] => !!t)
+            .map((t) => ({ id: t.id, title: t.name }));
+          if (seeds.length === 0) return;
+          setSprintSeed(seeds);
+          setViewMode("sprint");
+        }}
+      />
 
       {selectedTask && useSidebarDetail && (
         <TaskDetailPanel
