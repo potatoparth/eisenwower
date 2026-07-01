@@ -1,3 +1,5 @@
+import { TaskAttachment } from "@/types/task";
+
 export interface Note {
   id: string;
   title: string;
@@ -9,6 +11,7 @@ export interface Note {
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
+  attachments?: TaskAttachment[];
 }
 
 /** Google-Keep-ish palette. First value is "default" (no tint). */

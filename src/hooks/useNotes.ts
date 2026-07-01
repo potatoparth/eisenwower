@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { Note } from "@/types/note";
+import { TaskAttachment } from "@/types/task";
 
 type NoteRow = {
   id: string; user_id: string; title: string; content: string; category: string;
   project_id: string | null; color: string | null; pinned: boolean; sort_order: number;
-  created_at: string; updated_at: string;
+  created_at: string; updated_at: string; attachments: unknown;
 };
 
 const fromRow = (r: NoteRow): Note => ({
@@ -19,6 +21,7 @@ const fromRow = (r: NoteRow): Note => ({
   sortOrder: r.sort_order,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
+  attachments: Array.isArray(r.attachments) ? (r.attachments as TaskAttachment[]) : [],
 });
 
 export function useNotes(userId?: string) {
@@ -45,11 +48,11 @@ export function useNotes(userId?: string) {
     return () => { supabase.removeChannel(channel); };
   }, [userId, load]);
 
-  const addNote = useCallback((options?: Partial<Omit<Note, "id" | "createdAt" | "updatedAt">>) => {
+  const addNote = useCallback((options?: Partial<Omit<Note, "createdAt" | "updatedAt">>) => {
     if (!userId) return null;
     const now = new Date().toISOString();
     const optimistic: Note = {
-      id: crypto.randomUUID(),
+      id: options?.id ?? crypto.randomUUID(),
       title: options?.title ?? "",
       content: options?.content ?? "",
       category: options?.category || "General",
@@ -57,6 +60,7 @@ export function useNotes(userId?: string) {
       color: options?.color,
       pinned: options?.pinned ?? false,
       sortOrder: options?.sortOrder ?? 0,
+      attachments: options?.attachments ?? [],
       createdAt: now,
       updatedAt: now,
     };
@@ -71,6 +75,7 @@ export function useNotes(userId?: string) {
       color: optimistic.color || null,
       pinned: optimistic.pinned,
       sort_order: optimistic.sortOrder,
+      attachments: (optimistic.attachments ?? []) as never,
     }).then(({ error }) => { if (error) load(); });
     return optimistic;
   }, [userId, load]);
@@ -82,6 +87,7 @@ export function useNotes(userId?: string) {
       title: string; content: string; category: string;
       project_id: string | null; color: string | null;
       pinned: boolean; sort_order: number;
+      attachments: Json;
     }> = {};
     if (updates.title !== undefined) payload.title = updates.title;
     if (updates.content !== undefined) payload.content = updates.content;
@@ -90,6 +96,7 @@ export function useNotes(userId?: string) {
     if (updates.color !== undefined) payload.color = updates.color || null;
     if (updates.pinned !== undefined) payload.pinned = updates.pinned;
     if (updates.sortOrder !== undefined) payload.sort_order = updates.sortOrder;
+    if (updates.attachments !== undefined) payload.attachments = JSON.parse(JSON.stringify(updates.attachments)) as Json;
     supabase.from("notes").update(payload).eq("id", id).eq("user_id", userId).then(({ error }) => { if (error) load(); });
   }, [userId, load]);
 

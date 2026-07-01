@@ -1,13 +1,16 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pin, PinOff, Trash2, CheckSquare, Palette, FolderKanban, Tag, ListChecks, X, Plus } from "lucide-react";
+import { Pin, PinOff, Trash2, Palette, FolderKanban, Tag, ListChecks } from "lucide-react";
 import { Note, NOTE_COLORS, noteColorFor } from "@/types/note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SelectorWithCreate } from "@/components/SelectorWithCreate";
-import { Quadrant } from "@/types/task";
+import { TaskDescription } from "@/components/TaskDescription";
+import { TaskAttachments } from "@/components/TaskAttachments";
+import { TaskAttachment } from "@/types/task";
+import { Paperclip } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ProjectTemplate } from "@/types/project";
 import { cn } from "@/lib/utils";
 
@@ -163,37 +166,47 @@ function NoteComposer(props: ComposerProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
+  const [draftId] = useState(() => crypto.randomUUID());
   const [category, setCategory] = useState(props.defaultCategory || "General");
   const [projectId, setProjectId] = useState(props.defaultProjectId || "");
   const [color, setColor] = useState<string>("default");
   const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) commit();
+      const target = e.target as Node;
+      if (containerRef.current && !containerRef.current.contains(target)) {
+        // Ignore clicks that land inside floating UI (radix popovers/dialogs) which
+        // are portaled to document.body.
+        const el = target as HTMLElement;
+        if (el.closest?.("[data-radix-popper-content-wrapper], [role='dialog']")) return;
+        commit();
+      }
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, title, content, category, projectId, color]);
+  }, [open, title, content, category, projectId, color, attachments]);
 
   const reset = () => {
-    setTitle(""); setContent(""); setColor("default");
+    setTitle(""); setContent(""); setColor("default"); setAttachments([]);
     setCategory(props.defaultCategory || "General");
     setProjectId(props.defaultProjectId || "");
     setOpen(false);
   };
 
   const commit = () => {
-    if (!title.trim() && !content.trim()) { reset(); return; }
+    if (!title.trim() && !content.trim() && attachments.length === 0) { reset(); return; }
     props.onAddNote({
+      id: draftId,
       title: title.trim(),
       content: content.trim(),
       category,
       projectId: projectId || undefined,
       color: color === "default" ? undefined : color,
+      attachments,
     });
     reset();
   };
@@ -216,7 +229,7 @@ function NoteComposer(props: ComposerProps) {
         {!open ? (
           <button
             className="w-full text-left px-4 py-3 text-sm text-muted-foreground"
-            onClick={() => { setOpen(true); setTimeout(() => contentRef.current?.focus(), 0); }}
+            onClick={() => setOpen(true)}
           >
             Take a note…
           </button>
@@ -229,12 +242,16 @@ function NoteComposer(props: ComposerProps) {
               placeholder="Title"
               className="border-0 bg-transparent focus-visible:ring-0 px-2 text-base font-medium h-9"
             />
-            <Textarea
-              ref={contentRef}
+            <TaskDescription
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={setContent}
               placeholder="Take a note…"
-              className="border-0 bg-transparent focus-visible:ring-0 px-2 min-h-[80px] resize-none text-sm"
+              alwaysOpen
+            />
+            <TaskAttachments
+              taskId={draftId}
+              value={attachments}
+              onChange={setAttachments}
             />
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <SelectorWithCreate
@@ -292,6 +309,24 @@ function NoteCard(props: CardProps) {
 
   useEffect(() => { if (!editing) { setTitle(note.title); setContent(note.content); } }, [note.title, note.content, editing]);
 
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Commit when the user clicks outside the card (ignoring portaled popovers/dialogs).
+  useEffect(() => {
+    if (!editing) return;
+    const onDown = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (cardRef.current && !cardRef.current.contains(target)) {
+        const el = target as HTMLElement;
+        if (el.closest?.("[data-radix-popper-content-wrapper], [role='dialog']")) return;
+        commitEdit();
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing, title, content]);
+
   const bg = noteColorFor(note.color, dark ? "dark" : "light");
   const catColor = props.getCategoryColor?.(note.category);
   const catOptions = (props.categories.length ? props.categories : ["General"]).map((c) => ({ value: c, label: c }));
@@ -306,6 +341,7 @@ function NoteCard(props: CardProps) {
 
   return (
     <motion.div
+      ref={cardRef}
       layout
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -325,13 +361,19 @@ function NoteCard(props: CardProps) {
                   placeholder="Title"
                   className="border-0 bg-transparent focus-visible:ring-0 px-1 text-base font-medium h-8"
                 />
-                <Textarea
+                <TaskDescription
                   value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                  onChange={setContent}
                   placeholder="Note"
-                  className="border-0 bg-transparent focus-visible:ring-0 px-1 min-h-[60px] resize-none text-sm"
-                  autoFocus
+                  alwaysOpen
                 />
+                <div className="pt-1">
+                  <TaskAttachments
+                    taskId={note.id}
+                    value={note.attachments ?? []}
+                    onChange={(next) => props.onUpdate(note.id, { attachments: next })}
+                  />
+                </div>
               </>
             ) : (
               <div
@@ -342,12 +384,15 @@ function NoteCard(props: CardProps) {
                   <div className="font-semibold text-sm mb-1 break-words">{note.title}</div>
                 )}
                 {note.content ? (
-                  <div className="text-sm whitespace-pre-wrap break-words leading-snug">
-                    {note.content}
-                  </div>
-                ) : !note.title ? (
+                  <NotePreview text={note.content} />
+                ) : !note.title && (!note.attachments || note.attachments.length === 0) ? (
                   <div className="text-sm text-muted-foreground italic">Empty note</div>
                 ) : null}
+                {!editing && note.attachments && note.attachments.length > 0 && (
+                  <div className="mt-2">
+                    <NoteAttachmentPreview attachments={note.attachments} />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -472,5 +517,111 @@ function ColorPicker({ value, onChange, dark }: { value: string; onChange: (v: s
         </div>
       </PopoverContent>
     </Popover>
+  );
+}
+
+/* ---------------- Read-only preview ---------------- */
+
+const LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>]+)/gi;
+
+function renderLinkified(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  const re = new RegExp(LINK_RE.source, "gi");
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) nodes.push(text.slice(last, m.index));
+    const label = m[1] ?? m[3];
+    const href = m[2] ?? m[3];
+    nodes.push(
+      <a
+        key={`${m.index}-${href}`}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary underline decoration-primary/40 hover:decoration-primary"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {label}
+      </a>
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
+}
+
+type PreviewLine = { type: "text" | "ordered" | "check" | "bullet"; indent: number; text: string; checked?: boolean; label?: string };
+
+function parsePreview(source: string): PreviewLine[] {
+  const raw = source.split(/\r?\n/);
+  const out: PreviewLine[] = [];
+  const counters: number[] = [];
+  for (const line of raw) {
+    const m = line.match(/^((?:  )*)/);
+    const indent = Math.min(4, (m ? m[1].length : 0) / 2);
+    const body = line.slice(indent * 2);
+    let type: PreviewLine["type"] = "text";
+    let text = body;
+    let checked: boolean | undefined;
+    let label: string | undefined;
+    let mm: RegExpMatchArray | null;
+    if ((mm = body.match(/^\d+\.\s?(.*)$/))) {
+      type = "ordered"; text = mm[1];
+      counters.length = indent + 1;
+      for (let k = 0; k <= indent; k++) if (counters[k] == null) counters[k] = 0;
+      counters[indent] = (counters[indent] ?? 0) + 1;
+      label = counters.slice(0, indent + 1).join(".") + ".";
+    } else if ((mm = body.match(/^-\s\[([ xX])\]\s?(.*)$/))) {
+      type = "check"; checked = mm[1].toLowerCase() === "x"; text = mm[2];
+      counters.length = Math.min(counters.length, indent + 1);
+    } else if ((mm = body.match(/^[-•]\s?(.*)$/))) {
+      type = "bullet"; text = mm[1];
+      counters.length = Math.min(counters.length, indent + 1);
+    } else {
+      counters.length = Math.min(counters.length, indent + 1);
+    }
+    out.push({ type, indent, text, checked, label });
+  }
+  return out;
+}
+
+function NotePreview({ text }: { text: string }) {
+  const lines = useMemo(() => parsePreview(text), [text]);
+  return (
+    <div className="text-sm leading-snug space-y-0.5">
+      {lines.map((l, i) => {
+        if (l.type === "text" && !l.text) return <div key={i} className="h-3" />;
+        const marker =
+          l.type === "ordered" ? (
+            <span className="text-xs font-medium text-muted-foreground tabular-nums min-w-[1.5rem] text-right">{l.label}</span>
+          ) : l.type === "check" ? (
+            <span className="pt-[3px]"><Checkbox checked={!!l.checked} disabled className="h-3.5 w-3.5" /></span>
+          ) : l.type === "bullet" ? (
+            <span className="text-muted-foreground min-w-[1rem] text-center">•</span>
+          ) : null;
+        return (
+          <div key={i} className="flex items-start gap-1.5" style={{ paddingLeft: l.indent * 12 }}>
+            {marker}
+            <span className={cn("whitespace-pre-wrap break-words flex-1", l.type === "check" && l.checked && "line-through text-muted-foreground")}>
+              {renderLinkified(l.text)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function NoteAttachmentPreview({ attachments }: { attachments: TaskAttachment[] }) {
+  return (
+    <div className="flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
+      {attachments.map((a) => (
+        <span key={a.id} className="inline-flex items-center gap-1 rounded-md bg-secondary/60 px-1.5 py-0.5 max-w-full">
+          <Paperclip className="w-3 h-3 shrink-0" />
+          <span className="truncate max-w-[10rem]">{a.name}</span>
+        </span>
+      ))}
+    </div>
   );
 }

@@ -70,6 +70,7 @@ export type Database = {
       }
       notes: {
         Row: {
+          attachments: Json
           category: string
           color: string | null
           content: string
@@ -83,6 +84,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          attachments?: Json
           category?: string
           color?: string | null
           content?: string
@@ -96,6 +98,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          attachments?: Json
           category?: string
           color?: string | null
           content?: string

@@ -8,6 +8,7 @@ const BUCKET = "task-attachments";
 const MAX_BYTES = 25 * 1024 * 1024; // 25 MB
 
 interface Props {
+  /** Folder segment used inside the user's bucket path. Any stable id works. */
   taskId: string;
   value: TaskAttachment[];
   onChange: (next: TaskAttachment[]) => void;
