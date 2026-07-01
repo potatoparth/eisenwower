@@ -49,6 +49,7 @@ interface MatrixViewProps {
   allTasks: Task[];
   onSelectTask: (task: Task) => void;
   onDeleteAllDone: () => void;
+  onRescheduleTasks?: (ids: string[], newDueDate: string) => void;
 }
 
 export function MatrixView({
@@ -77,6 +78,7 @@ export function MatrixView({
   allTasks,
   onSelectTask,
   onDeleteAllDone,
+  onRescheduleTasks,
 }: MatrixViewProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [expandedQuadrant, setExpandedQuadrant] = useState<QuadrantInfo | null>(null);
