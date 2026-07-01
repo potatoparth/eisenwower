@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from "react";
-import { ChevronRight, GripVertical, Check as CheckIcon, Inbox, MoveVertical } from "lucide-react";
+import { ChevronRight, ChevronLeft, GripVertical, Check as CheckIcon, Inbox, MoveVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -37,7 +37,9 @@ export function CalendarView({
   const sel = useSelectionOptional();
   const isSelectMode = !!sel?.selectMode;
   const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
-  const dayDates = useMemo(() => [today, addDays(today, 1), addDays(today, 2)], [today]);
+  const [dayOffset, setDayOffset] = useState(0);
+  const anchor = useMemo(() => addDays(today, dayOffset), [today, dayOffset]);
+  const dayDates = useMemo(() => [anchor, addDays(anchor, 1), addDays(anchor, 2)], [anchor]);
 
   // Category filter (multi-select)
   const allCategories = useMemo(() => {
@@ -195,6 +197,16 @@ export function CalendarView({
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border flex-wrap">
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDayOffset((n) => n - 1)} aria-label="Previous day">
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setDayOffset(0)} disabled={dayOffset === 0}>
+            Today
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDayOffset((n) => n + 1)} aria-label="Next day">
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+          <span className="text-muted-foreground/40">·</span>
           <Button variant="ghost" size="sm" onClick={expandAll}>Expand all</Button>
           <span className="text-muted-foreground/40">·</span>
           <Button variant="ghost" size="sm" onClick={collapseAll}>Collapse all</Button>
@@ -224,8 +236,10 @@ export function CalendarView({
           const renderSection = (key: string) => {
             const items = buckets.get(key) ?? [];
             const dayIdx = sectionKeys.indexOf(key) - 1;
-            const label = dayIdx === 0 ? "Today" : dayIdx === 1 ? "Tomorrow" : dayDates[dayIdx].toLocaleDateString(undefined, { weekday: "long" });
-            const dateStr = dayDates[dayIdx].toLocaleDateString(undefined, { month: "short", day: "numeric" });
+            const d = dayDates[dayIdx];
+            const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
+            const label = diff === 0 ? "Today" : diff === 1 ? "Tomorrow" : diff === -1 ? "Yesterday" : d.toLocaleDateString(undefined, { weekday: "long" });
+            const dateStr = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
             const isCollapsed = collapsed.has(key);
             return (
               <DaySection
