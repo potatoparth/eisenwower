@@ -78,7 +78,11 @@ export function useNotes(userId?: string) {
   const updateNote = useCallback((id: string, updates: Partial<Omit<Note, "id" | "createdAt">>) => {
     setNotes((prev) => prev.map((n) => n.id === id ? { ...n, ...updates, updatedAt: new Date().toISOString() } : n));
     if (!userId) return;
-    const payload: Record<string, unknown> = {};
+    const payload: Partial<{
+      title: string; content: string; category: string;
+      project_id: string | null; color: string | null;
+      pinned: boolean; sort_order: number;
+    }> = {};
     if (updates.title !== undefined) payload.title = updates.title;
     if (updates.content !== undefined) payload.content = updates.content;
     if (updates.category !== undefined) payload.category = updates.category;
