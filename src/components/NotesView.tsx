@@ -221,7 +221,7 @@ function NoteComposer(props: ComposerProps) {
       <div
         ref={containerRef}
         className={cn(
-          "w-full max-w-xl rounded-2xl border border-border shadow-sm transition-shadow",
+          "w-full max-w-xl rounded-2xl border border-border shadow-sm transition-shadow overflow-hidden",
           open && "shadow-lg"
         )}
         style={{ backgroundColor: bg }}
@@ -234,54 +234,88 @@ function NoteComposer(props: ComposerProps) {
             Take a note…
           </button>
         ) : (
-          <div className="p-3 space-y-2">
-            <Input
-              autoFocus
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Title"
-              className="border-0 bg-transparent focus-visible:ring-0 px-2 text-base font-medium h-9"
-            />
-            <TaskDescription
-              value={content}
-              onChange={setContent}
-              placeholder="Take a note…"
-              alwaysOpen
-            />
-            <TaskAttachments
-              taskId={draftId}
-              value={attachments}
-              onChange={setAttachments}
-            />
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <SelectorWithCreate
-                options={catOptions}
-                value={category}
-                onChange={setCategory}
-                onCreate={props.onCreateCategory}
-                placeholder="Category"
-                compact
-                icon={<Tag className="w-3.5 h-3.5" />}
+          <div className="flex flex-col">
+            {/* Body */}
+            <div className="px-4 pt-4 pb-3 space-y-3">
+              <Input
+                autoFocus
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Title"
+                className="border-0 bg-transparent focus-visible:ring-0 px-0 text-lg font-semibold h-8 placeholder:text-muted-foreground/60"
               />
-              <SelectorWithCreate
-                options={projectOptions}
-                value={projectId}
-                onChange={setProjectId}
-                onCreate={props.onCreateProject}
-                placeholder="No project"
-                compact
-                icon={<FolderKanban className="w-3.5 h-3.5" />}
+              <TaskDescription
+                value={content}
+                onChange={setContent}
+                placeholder="Take a note…"
+                alwaysOpen
               />
-              <ColorPicker value={color} onChange={setColor} dark={props.dark} />
+              {attachments.length > 0 && (
+                <TaskAttachments
+                  taskId={draftId}
+                  value={attachments}
+                  onChange={setAttachments}
+                />
+              )}
+            </div>
+
+            {/* Footer bar */}
+            <div className="px-3 py-2.5 bg-muted/40 border-t border-border/60 flex items-center gap-2">
+              <div className="flex items-center gap-1 flex-wrap">
+                <SelectorWithCreate
+                  options={catOptions}
+                  value={category}
+                  onChange={setCategory}
+                  onCreate={props.onCreateCategory}
+                  placeholder="Category"
+                  compact
+                  icon={<Tag className="w-3.5 h-3.5" />}
+                />
+                <SelectorWithCreate
+                  options={projectOptions}
+                  value={projectId}
+                  onChange={setProjectId}
+                  onCreate={props.onCreateProject}
+                  placeholder="No project"
+                  compact
+                  icon={<FolderKanban className="w-3.5 h-3.5" />}
+                />
+                <span className="w-px h-5 bg-border mx-1" />
+                <ColorPicker value={color} onChange={setColor} dark={props.dark} />
+                <InlineAttachTrigger
+                  taskId={draftId}
+                  value={attachments}
+                  onChange={setAttachments}
+                />
+              </div>
               <div className="ml-auto flex items-center gap-1">
-                <Button size="sm" variant="ghost" onClick={reset}>Cancel</Button>
-                <Button size="sm" onClick={commit}>Done</Button>
+                <Button size="sm" variant="ghost" onClick={reset} className="h-8">Cancel</Button>
+                <Button size="sm" onClick={commit} className="h-8 px-4">Done</Button>
               </div>
             </div>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+/* Compact attach trigger — renders TaskAttachments UI inside a popover so the
+ * footer stays a single tidy row. */
+function InlineAttachTrigger({
+  taskId, value, onChange,
+}: { taskId: string; value: TaskAttachment[]; onChange: (n: TaskAttachment[]) => void }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-7 w-7" title="Attach file or link">
+          <Paperclip className="w-3.5 h-3.5" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-2" align="start">
+        <TaskAttachments taskId={taskId} value={value} onChange={onChange} />
+      </PopoverContent>
+    </Popover>
   );
 }
 
