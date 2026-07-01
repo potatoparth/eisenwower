@@ -164,37 +164,47 @@ function NoteComposer(props: ComposerProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
+  const [draftId] = useState(() => crypto.randomUUID());
   const [category, setCategory] = useState(props.defaultCategory || "General");
   const [projectId, setProjectId] = useState(props.defaultProjectId || "");
   const [color, setColor] = useState<string>("default");
   const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) commit();
+      const target = e.target as Node;
+      if (containerRef.current && !containerRef.current.contains(target)) {
+        // Ignore clicks that land inside floating UI (radix popovers/dialogs) which
+        // are portaled to document.body.
+        const el = target as HTMLElement;
+        if (el.closest?.("[data-radix-popper-content-wrapper], [role='dialog']")) return;
+        commit();
+      }
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, title, content, category, projectId, color]);
+  }, [open, title, content, category, projectId, color, attachments]);
 
   const reset = () => {
-    setTitle(""); setContent(""); setColor("default");
+    setTitle(""); setContent(""); setColor("default"); setAttachments([]);
     setCategory(props.defaultCategory || "General");
     setProjectId(props.defaultProjectId || "");
     setOpen(false);
   };
 
   const commit = () => {
-    if (!title.trim() && !content.trim()) { reset(); return; }
+    if (!title.trim() && !content.trim() && attachments.length === 0) { reset(); return; }
     props.onAddNote({
+      id: draftId,
       title: title.trim(),
       content: content.trim(),
       category,
       projectId: projectId || undefined,
       color: color === "default" ? undefined : color,
+      attachments,
     });
     reset();
   };
@@ -217,7 +227,7 @@ function NoteComposer(props: ComposerProps) {
         {!open ? (
           <button
             className="w-full text-left px-4 py-3 text-sm text-muted-foreground"
-            onClick={() => { setOpen(true); setTimeout(() => contentRef.current?.focus(), 0); }}
+            onClick={() => setOpen(true)}
           >
             Take a note…
           </button>
@@ -230,12 +240,16 @@ function NoteComposer(props: ComposerProps) {
               placeholder="Title"
               className="border-0 bg-transparent focus-visible:ring-0 px-2 text-base font-medium h-9"
             />
-            <Textarea
-              ref={contentRef}
+            <TaskDescription
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={setContent}
               placeholder="Take a note…"
-              className="border-0 bg-transparent focus-visible:ring-0 px-2 min-h-[80px] resize-none text-sm"
+              alwaysOpen
+            />
+            <TaskAttachments
+              taskId={draftId}
+              value={attachments}
+              onChange={setAttachments}
             />
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <SelectorWithCreate
