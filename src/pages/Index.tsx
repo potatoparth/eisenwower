@@ -255,7 +255,7 @@ const Index = () => {
           {viewMode === "projects" && (
             <motion.div key="projects" {...viewAnimation} className="h-full max-w-5xl mx-auto">
               <ProjectBuilder
-                projects={projects} allTasks={tasks} onAddProject={addProject} onUpdateProject={updateProject}
+                projects={projects} allTasks={filteredTasks} onAddProject={addProject} onUpdateProject={updateProject}
                 onDeleteProject={deleteProject} onAddTask={addTaskToProject}
                 onUpdateTask={updateProjectTask} onDeleteTask={deleteProjectTask}
                 onAddMatrixTask={handleAddTask}
