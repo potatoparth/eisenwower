@@ -83,8 +83,9 @@ function computeOrderedLabels(lines: Line[]): (string | null)[] {
 
   lines.forEach((line, i) => {
     if (line.type !== "ordered") {
-      // A non-ordered line at indent d breaks the ordered run at d and deeper.
-      counters.length = Math.min(counters.length, line.indent);
+      // A non-ordered line only invalidates DEEPER counters — siblings at the
+      // same indent should keep counting past an interleaved note or checkbox.
+      counters.length = Math.min(counters.length, line.indent + 1);
       lastOrderedIndent = -1;
       return;
     }
