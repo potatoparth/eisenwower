@@ -443,30 +443,51 @@ function TaskRow({
   onToggleStatus?: (id: string) => void;
   onClick: () => void;
 }) {
+  const sel = useSelectionOptional();
+  const isSelectMode = !!sel?.selectMode;
+  const isSelected = !!sel?.has(task.id);
   const c = color || "hsl(var(--muted-foreground))";
   const done = task.status === "done";
   return (
     <div
-      draggable
-      onDragStart={(e) => onDragStart(e, task.id)}
+      draggable={!isSelectMode}
+      onDragStart={(e) => { if (!isSelectMode) onDragStart(e, task.id); }}
       onDragEnd={onDragEnd}
       onDragOver={onDragOverRow}
       onDrop={onDropRow}
-      onClick={onClick}
+      onClick={(e) => {
+        if (isSelectMode) { e.stopPropagation(); sel?.toggle(task.id); return; }
+        onClick();
+      }}
       className={cn(
         "group flex items-center gap-2 px-2 py-1.5 border-t border-border/60 cursor-pointer hover:bg-muted/40 transition-colors",
-        isDragging && "opacity-40"
+        isDragging && "opacity-40",
+        isSelectMode && isSelected && "bg-primary/10"
       )}
       style={{ borderLeft: `3px solid ${c}` }}
     >
-      <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0 cursor-grab" />
-      <span onClick={(e) => e.stopPropagation()}>
-        <Checkbox
-          checked={done}
-          onCheckedChange={() => onToggleStatus?.(task.id)}
-          className="h-3.5 w-3.5"
-        />
-      </span>
+      {isSelectMode ? (
+        <span
+          aria-hidden
+          className={cn(
+            "flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors",
+            isSelected ? "bg-primary border-primary" : "border-muted-foreground/50 bg-transparent"
+          )}
+        >
+          {isSelected && <CheckIcon className="w-2.5 h-2.5 text-primary-foreground" />}
+        </span>
+      ) : (
+        <>
+          <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0 cursor-grab" />
+          <span onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+              checked={done}
+              onCheckedChange={() => onToggleStatus?.(task.id)}
+              className="h-3.5 w-3.5"
+            />
+          </span>
+        </>
+      )}
       <span
         className="w-2 h-2 rounded-full shrink-0"
         style={{ backgroundColor: c }}
