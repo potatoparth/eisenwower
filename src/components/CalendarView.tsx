@@ -119,6 +119,9 @@ export function CalendarView({
       updates.dueTime = undefined;
     } else {
       updates.dueDate = sectionKey;
+      // Preserve the task's existing time-of-day when moving between days.
+      const dragged = tasks.find((t) => t.id === id);
+      if (dragged?.dueTime) updates.dueTime = dragged.dueTime;
     }
     onUpdateTask(id, updates);
 
@@ -156,20 +159,20 @@ export function CalendarView({
 
       {/* Sections */}
       <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
-        {sectionKeys.map((key) => {
-          const items = buckets.get(key) ?? [];
-          const isUnsch = key === UNSCHEDULED;
-          const dayIdx = isUnsch ? -1 : sectionKeys.indexOf(key) - 1;
-          const label = isUnsch
-            ? "Unscheduled"
-            : dayIdx === 0 ? "Today" : dayIdx === 1 ? "Tomorrow" : dayDates[dayIdx].toLocaleDateString(undefined, { weekday: "long" });
-          const dateStr = isUnsch
-            ? undefined
-            : dayDates[dayIdx].toLocaleDateString(undefined, { month: "short", day: "numeric" });
-          const isCollapsed = collapsed.has(key);
-
-          return (
-            <DaySection
+        {(() => {
+          const renderSection = (key: string) => {
+            const items = buckets.get(key) ?? [];
+            const isUnsch = key === UNSCHEDULED;
+            const dayIdx = isUnsch ? -1 : sectionKeys.indexOf(key) - 1;
+            const label = isUnsch
+              ? "Unscheduled"
+              : dayIdx === 0 ? "Today" : dayIdx === 1 ? "Tomorrow" : dayDates[dayIdx].toLocaleDateString(undefined, { weekday: "long" });
+            const dateStr = isUnsch
+              ? undefined
+              : dayDates[dayIdx].toLocaleDateString(undefined, { month: "short", day: "numeric" });
+            const isCollapsed = collapsed.has(key);
+            return (
+              <DaySection
               key={key}
               sectionKey={key}
               label={label}
@@ -188,9 +191,19 @@ export function CalendarView({
               onTaskClick={onTaskClick}
               onToggleStatus={onToggleStatus}
               getCategoryColor={getCategoryColor}
-            />
+              />
+            );
+          };
+          const dayKeys = sectionKeys.filter((k) => k !== UNSCHEDULED);
+          return (
+            <>
+              {renderSection(UNSCHEDULED)}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
+                {dayKeys.map((k) => renderSection(k))}
+              </div>
+            </>
           );
-        })}
+        })()}
       </div>
     </div>
   );
