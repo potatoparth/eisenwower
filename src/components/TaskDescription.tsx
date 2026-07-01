@@ -421,6 +421,58 @@ function DescriptionEditor({
           />
         ))}
       </div>
+
+      <Dialog open={!!linkDialog} onOpenChange={(o) => !o && setLinkDialog(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Insert link</DialogTitle>
+          </DialogHeader>
+          {linkDialog && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                applyLink();
+              }}
+              className="space-y-3"
+            >
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Text</label>
+                <Input
+                  autoFocus={!linkDialog.text}
+                  value={linkDialog.text}
+                  onChange={(e) =>
+                    setLinkDialog({ ...linkDialog, text: e.target.value })
+                  }
+                  placeholder="Link label"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">URL</label>
+                <Input
+                  autoFocus={!!linkDialog.text}
+                  value={linkDialog.url}
+                  onChange={(e) =>
+                    setLinkDialog({ ...linkDialog, url: e.target.value })
+                  }
+                  placeholder="https://…"
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setLinkDialog(null)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={!linkDialog.url.trim()}>
+                  Insert
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
