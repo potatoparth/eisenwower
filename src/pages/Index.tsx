@@ -156,6 +156,10 @@ const Index = () => {
 
   const handleCreateProject = (name: string) => addProject(name).id;
 
+  const handleRescheduleTasks = (ids: string[], newDueDate: string) => {
+    ids.forEach((id) => updateTask(id, { dueDate: newDueDate }));
+  };
+
   const useSidebarDetail = settings.taskDetailView === "sidebar";
   const displayUsername = currentUser.username;
 
@@ -212,6 +216,7 @@ const Index = () => {
                 onCreateProject={handleCreateProject}
                 onSelectTask={setSelectedTask}
                 onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
+                onRescheduleTasks={handleRescheduleTasks}
                 allTasks={tasks}
               />
             </motion.div>
@@ -231,6 +236,7 @@ const Index = () => {
                 onCreateProject={handleCreateProject}
                 onSelectTask={setSelectedTask}
                 onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
+                onRescheduleTasks={handleRescheduleTasks}
                 allTasks={tasks}
               />
             </motion.div>
@@ -265,6 +271,7 @@ const Index = () => {
                 onCreateProject={handleCreateProject}
                 onSelectTask={setSelectedTask}
                 onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
+                onRescheduleTasks={handleRescheduleTasks}
               />
             </motion.div>
           )}

@@ -34,13 +34,14 @@ interface ProjectBuilderProps {
   onCreateProject?: TaskInputPickerProps["onCreateProject"];
   onSelectTask?: (task: Task) => void;
   onDeleteAllDone?: () => void;
+  onRescheduleTasks?: (ids: string[], newDueDate: string) => void;
 }
 
 export function ProjectBuilder({
   projects, allTasks = [], onAddProject, onUpdateProject, onDeleteProject,
   onAddTask, onUpdateTask, onDeleteTask,
   onAddMatrixTask, quadrants, categories = [], onCreateCategory, onCreateProject,
-  onSelectTask, onDeleteAllDone,
+  onSelectTask, onDeleteAllDone, onRescheduleTasks,
 }: ProjectBuilderProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
@@ -130,6 +131,7 @@ export function ProjectBuilder({
                 tasks={mappedTasks}
                 onSelectTask={(t) => onSelectTask?.(t)}
                 onDeleteAllDone={() => onDeleteAllDone?.()}
+                onRescheduleTasks={onRescheduleTasks}
                 onAddTask={handleAddMatrixTask}
                 quadrants={quadrants ?? []}
                 categories={categories}
