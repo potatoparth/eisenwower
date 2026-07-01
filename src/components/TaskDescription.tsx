@@ -487,16 +487,22 @@ function AutoTextarea({
   inputRef,
 }: AutoTextareaProps) {
   const localRef = useRef<HTMLTextAreaElement | null>(null);
+  const [focused, setFocused] = useState(false);
 
   useEffect(() => {
     const el = localRef.current;
     if (!el) return;
     el.style.height = "auto";
     el.style.height = el.scrollHeight + "px";
-  }, [value]);
+  }, [value, focused]);
+
+  const hasLink = !focused && !!value && LINK_RE.test(value);
+  // reset regex lastIndex after test()
+  LINK_RE.lastIndex = 0;
 
   return (
-    <textarea
+    <div className="flex-1 min-w-0 relative">
+      <textarea
       ref={(el) => {
         localRef.current = el;
         inputRef(el);
@@ -506,11 +512,65 @@ function AutoTextarea({
       onChange={(e) => onChange(e.target.value)}
       onKeyDown={onKeyDown}
       placeholder={placeholder}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
       className={cn(
-        "flex-1 min-w-0 resize-none bg-transparent border-0 text-sm leading-6 focus:outline-none placeholder:text-muted-foreground/60 p-0",
-        strikethrough && "line-through text-muted-foreground"
+        "block w-full resize-none bg-transparent border-0 text-sm leading-6 focus:outline-none placeholder:text-muted-foreground/60 p-0",
+        strikethrough && "line-through text-muted-foreground",
+        hasLink && "invisible"
       )}
       style={{ overflow: "hidden" }}
-    />
+      />
+      {hasLink && (
+        <div
+          onMouseDown={(e) => {
+            // Focus the textarea when the user clicks empty space, but let
+            // link clicks navigate normally.
+            const target = e.target as HTMLElement;
+            if (target.tagName === "A") return;
+            e.preventDefault();
+            localRef.current?.focus();
+            const end = value.length;
+            localRef.current?.setSelectionRange(end, end);
+          }}
+          className={cn(
+            "absolute inset-0 text-sm leading-6 whitespace-pre-wrap break-words cursor-text",
+            strikethrough && "line-through text-muted-foreground"
+          )}
+        >
+          {renderLinkified(value)}
+        </div>
+      )}
+    </div>
   );
+}
+
+// Matches either markdown links [text](url) or bare http(s) URLs.
+const LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>]+)/gi;
+
+function renderLinkified(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  const re = new RegExp(LINK_RE.source, "gi");
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) nodes.push(text.slice(last, m.index));
+    const label = m[1] ?? m[3];
+    const href = m[2] ?? m[3];
+    nodes.push(
+      <a
+        key={`${m.index}-${href}`}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary underline decoration-primary/40 hover:decoration-primary"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        {label}
+      </a>
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
 }
