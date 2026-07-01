@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Tag, ChevronRight, FolderKanban, AlignLeft } from "lucide-react";
 import { Quadrant, QUADRANTS, QuadrantInfo, Recurrence } from "@/types/task";
@@ -38,7 +38,7 @@ interface TaskInputProps {
   placeholder?: string;
   className?: string;
   compact?: boolean;
-  leadingElement?: React.ReactNode;
+  leadingElement?: ReactNode;
   quadrants?: QuadrantInfo[];
   categories?: string[];
   projects?: ProjectTemplate[];
