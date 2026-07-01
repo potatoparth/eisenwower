@@ -81,16 +81,6 @@ export function TaskDetailDialog({
   const qInfo = quadrantMap[quadrant];
   const doFirstLabel = quadrantMap["important-urgent"].title;
 
-  const applyFormat = (kind: "bold" | "italic" | "bullet" | "check") => {
-    const map = {
-      bold: "**bold**",
-      italic: "*italic*",
-      bullet: "\n- ",
-      check: "\n- [ ] ",
-    };
-    setDescription((d) => d + map[kind]);
-  };
-
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-[640px] rounded-2xl p-0 overflow-hidden backdrop-blur-xl">
