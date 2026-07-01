@@ -262,8 +262,7 @@ export function TaskInput({
             <Button
               size="sm"
               onClick={handleNameSubmit}
-              disabled={!name.trim()}
-              aria-hidden={!name.trim()}
+              aria-disabled={!name.trim()}
               tabIndex={name.trim() ? 0 : -1}
               className={cn(
                 "h-7 w-7 flex-shrink-0 rounded-full p-0 transition-opacity",
