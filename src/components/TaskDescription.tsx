@@ -254,6 +254,8 @@ function DescriptionEditor({
           ? { type: "text", indent: line.indent, text: "" }
           : line.type === "ordered"
           ? { type: "ordered", indent: line.indent, text: "" }
+          : line.type === "bullet"
+          ? { type: "bullet", indent: line.indent, text: "" }
           : { type: "check", indent: line.indent, text: "", checked: false };
       insertLine(idx, newLine);
       return;
@@ -279,7 +281,7 @@ function DescriptionEditor({
     }
   };
 
-  const convertActive = (type: "ordered" | "check") => {
+  const convertActive = (type: "ordered" | "check" | "bullet") => {
     // Convert the currently-focused line (or last one) to the requested type.
     const active = document.activeElement as HTMLTextAreaElement | null;
     let idx = inputRefs.current.findIndex((el) => el === active);
@@ -296,6 +298,27 @@ function DescriptionEditor({
     setFocusIndex(idx);
   };
 
+  const insertLink = () => {
+    const url = window.prompt("Link URL", "https://");
+    if (!url) return;
+    const label = window.prompt("Link text", url) || url;
+    const active = document.activeElement as HTMLTextAreaElement | null;
+    let idx = inputRefs.current.findIndex((el) => el === active);
+    if (idx < 0) idx = lines.length - 1;
+    const el = inputRefs.current[idx];
+    const line = lines[idx];
+    const md = `[${label}](${url})`;
+    if (el && document.activeElement === el) {
+      const start = el.selectionStart ?? line.text.length;
+      const end = el.selectionEnd ?? line.text.length;
+      const next = line.text.slice(0, start) + md + line.text.slice(end);
+      updateLine(idx, { text: next });
+    } else {
+      updateLine(idx, { text: (line.text ? line.text + " " : "") + md });
+    }
+    setFocusIndex(idx);
+  };
+
   return (
     <div className={cn("space-y-1.5", className)}>
       {/* Toolbar */}
@@ -306,9 +329,19 @@ function DescriptionEditor({
           icon={<ListOrdered className="w-3.5 h-3.5" />}
         />
         <ToolbarBtn
+          onClick={() => convertActive("bullet")}
+          title="Bullet list"
+          icon={<List className="w-3.5 h-3.5" />}
+        />
+        <ToolbarBtn
           onClick={() => convertActive("check")}
           title="Checklist"
           icon={<ListChecks className="w-3.5 h-3.5" />}
+        />
+        <ToolbarBtn
+          onClick={insertLink}
+          title="Insert link"
+          icon={<Link2 className="w-3.5 h-3.5" />}
         />
         <ToolbarBtn
           onClick={() => insertLine(lines.length - 1, { type: "text", indent: 0, text: "" })}
@@ -328,7 +361,7 @@ function DescriptionEditor({
 
       {/* Lines */}
       <div
-        className="rounded-lg bg-secondary/50 p-2 space-y-0.5"
+        className="rounded-lg bg-secondary/50 p-2 space-y-0.5 min-h-[5.25rem]"
         onBlur={(e) => {
           // fire commit when focus leaves the whole editor
           if (!e.currentTarget.contains(e.relatedTarget as Node)) onCommit?.();
