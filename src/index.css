@@ -442,3 +442,30 @@
 
 @keyframes sprint-fade-in { from { opacity: 0; } to { opacity: 1; } }
 .animate-fade-in { animation: sprint-fade-in 0.4s ease both; }
+
+/* Sprint immersive mode: fills the whole screen with the media background */
+body.sprint-immersive header {
+  background: transparent !important;
+  border-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+body.sprint-immersive main {
+  padding: 0 !important;
+}
+body.sprint-immersive footer {
+  border-color: transparent !important;
+  background: transparent !important;
+}
+body.sprint-immersive .sprint-scope {
+  border-radius: 0 !important;
+}
+/* Keep the view-picker chip readable over any background */
+body.sprint-immersive header [role="combobox"] {
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+body.sprint-immersive header button {
+  color: rgba(255, 255, 255, 0.85);
+}
