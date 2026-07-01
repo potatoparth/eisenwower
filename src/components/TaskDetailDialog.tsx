@@ -98,7 +98,7 @@ export function TaskDetailDialog({
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(var(--quadrant-${qInfo.color}))` }} />
             {qInfo.title}
           </DialogTitle>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 mr-8">
             {onToggleStatus && (
               <Button
                 variant={task.status === "done" ? "secondary" : "outline"}
