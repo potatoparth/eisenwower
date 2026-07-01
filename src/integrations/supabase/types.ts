@@ -183,6 +183,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          attachments: Json
           category: string
           created_at: string
           deadline_threshold_override: number | null
@@ -204,6 +205,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          attachments?: Json
           category?: string
           created_at?: string
           deadline_threshold_override?: number | null
@@ -225,6 +227,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          attachments?: Json
           category?: string
           created_at?: string
           deadline_threshold_override?: number | null
