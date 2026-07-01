@@ -189,6 +189,7 @@ export type Database = {
           deadline_threshold_override: number | null
           description: string | null
           due_date: string | null
+          due_time: string | null
           id: string
           is_recurring_instance: boolean
           kanban_column: string | null
@@ -211,6 +212,7 @@ export type Database = {
           deadline_threshold_override?: number | null
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
           id?: string
           is_recurring_instance?: boolean
           kanban_column?: string | null
@@ -233,6 +235,7 @@ export type Database = {
           deadline_threshold_override?: number | null
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
           id?: string
           is_recurring_instance?: boolean
           kanban_column?: string | null
