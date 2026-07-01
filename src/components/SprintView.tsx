@@ -4,7 +4,6 @@ import { CreateSprintModal } from "@/components/sprint/CreateSprintModal";
 import { Countdown } from "@/components/sprint/Countdown";
 import { FocusMode } from "@/components/sprint/FocusMode";
 import { CompleteScreen } from "@/components/sprint/CompleteScreen";
-import { ThemeToggle } from "@/components/sprint/ThemeToggle";
 import { CustomizeModal } from "@/components/sprint/CustomizeModal";
 import { MediaBackground } from "@/components/sprint/MediaBackground";
 import {
@@ -120,13 +119,29 @@ export function SprintView({ seedTasks, onSeedConsumed }: Props) {
 
   const exitToHome = () => {
     setPhase("home");
-    if (active && !active.completedAt) setResumable(active);
+    if (active && !active.completedAt) {
+      // Pause on exit so the timer freezes until the user resumes.
+      const paused: Sprint =
+        active.pausedAt != null ? active : { ...active, pausedAt: Date.now() };
+      saveActiveSprint(paused);
+      setResumable(paused);
+    }
     setActive(null);
   };
 
-  const resume = () => {
-    if (!resumable) return;
-    setActive(resumable);
+  const unpause = (s: Sprint): Sprint => {
+    if (s.pausedAt == null) return s;
+    const addedOffset = Date.now() - s.pausedAt;
+    return { ...s, pauseOffset: s.pauseOffset + addedOffset, pausedAt: null };
+  };
+
+  const resume = (s?: Sprint) => {
+    const target = s ?? resumable;
+    if (!target) return;
+    const running = unpause(target);
+    saveActiveSprint(running);
+    setActive(running);
+    setResumable(null);
     setPhase("focus");
   };
 
@@ -236,7 +251,7 @@ export function SprintView({ seedTasks, onSeedConsumed }: Props) {
                 {resumable && (
                   <div className="w-full flex flex-col items-center">
                     <button
-                      onClick={resume}
+                      onClick={() => resume()}
                       className="w-full flex items-center justify-between text-left transition-colors"
                       style={{
                         border: `0.5px solid ${resumeCardBorder}`,
@@ -306,7 +321,7 @@ export function SprintView({ seedTasks, onSeedConsumed }: Props) {
                 </button>
               </div>
 
-              {sprints.length > 0 && (
+              {(resumable || sprints.length > 0) && (
                 <div className="animate-fade-up-delay mt-16 w-full max-w-md text-left">
                   <div className="flex items-baseline justify-between mb-3">
                     <span
@@ -319,20 +334,54 @@ export function SprintView({ seedTasks, onSeedConsumed }: Props) {
                       className="font-mono"
                       style={{ fontSize: 10, color: fgNav }}
                     >
-                      {sprints.length}
+                      {sprints.length + (resumable ? 1 : 0)}
                     </span>
                   </div>
                   <ul className="flex flex-col gap-1.5">
-                    {sprints.slice(0, 8).map((s) => {
+                    {[
+                      ...(resumable
+                        ? [{
+                            s: resumable,
+                            status: (resumable.pausedAt != null ? "paused" : "ongoing") as
+                              | "paused"
+                              | "ongoing"
+                              | "completed"
+                              | "incomplete",
+                          }]
+                        : []),
+                      ...sprints.slice(0, 8).map((s) => {
+                        const total = s.tasks.length;
+                        const done = s.tasks.filter((t) => t.done).length;
+                        const status: "completed" | "incomplete" =
+                          total > 0 && done < total ? "incomplete" : "completed";
+                        return { s, status };
+                      }),
+                    ].map(({ s, status }) => {
                       const done = s.tasks.filter((t) => t.done).length;
                       const total = s.tasks.length;
-                      const when = s.completedAt
-                        ? new Date(s.completedAt).toLocaleDateString(undefined, {
-                            month: "short",
-                            day: "numeric",
-                          })
-                        : "—";
+                      const ref = s.completedAt ?? s.startTime;
+                      const when = new Date(ref).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                      });
                       const mins = s.actualMinutes ?? s.duration;
+                      const pillFg =
+                        status === "completed"
+                          ? isLight ? "#16a34a" : "#4ade80"
+                          : status === "ongoing"
+                          ? isLight ? "#2563eb" : "#60a5fa"
+                          : status === "paused"
+                          ? fgNav
+                          : isLight ? "#dc2626" : "#f87171";
+                      const pillBg =
+                        status === "completed"
+                          ? isLight ? "rgba(34,197,94,0.1)" : "rgba(74,222,128,0.12)"
+                          : status === "ongoing"
+                          ? isLight ? "rgba(59,130,246,0.1)" : "rgba(96,165,250,0.12)"
+                          : status === "paused"
+                          ? isLight ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.05)"
+                          : isLight ? "rgba(220,38,38,0.1)" : "rgba(248,113,113,0.12)";
+                      const isLive = status === "paused" || status === "ongoing";
                       return (
                         <li
                           key={s.id}
@@ -343,9 +392,27 @@ export function SprintView({ seedTasks, onSeedConsumed }: Props) {
                             padding: "10px 14px",
                           }}
                         >
-                          <div className="min-w-0">
-                            <div className="truncate" style={{ fontSize: 13, color: fgMain }}>
-                              {s.title}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="truncate"
+                                style={{ fontSize: 13, color: fgMain }}
+                              >
+                                {s.title}
+                              </div>
+                              <span
+                                className="font-mono uppercase shrink-0"
+                                style={{
+                                  fontSize: 9,
+                                  letterSpacing: "0.12em",
+                                  padding: "2px 7px",
+                                  borderRadius: 100,
+                                  background: pillBg,
+                                  color: pillFg,
+                                }}
+                              >
+                                {status}
+                              </span>
                             </div>
                             <div
                               className="font-mono mt-0.5"
@@ -354,11 +421,31 @@ export function SprintView({ seedTasks, onSeedConsumed }: Props) {
                               {when} · {mins}m · {done}/{total} tasks
                               {s.endedEarly ? " · ended early" : ""}
                             </div>
+                            {isLive && (
+                              <button
+                                onClick={() => resume(s)}
+                                className="font-mono mt-1.5 transition-colors"
+                                style={{
+                                  fontSize: 11,
+                                  color: fgMain,
+                                  background: "transparent",
+                                  border: "none",
+                                  padding: 0,
+                                }}
+                              >
+                                Resume →
+                              </button>
+                            )}
                           </div>
                           <button
-                            onClick={() =>
-                              setSprints(sprints.filter((x) => x.id !== s.id))
-                            }
+                            onClick={() => {
+                              if (isLive) {
+                                saveActiveSprint(null);
+                                setResumable(null);
+                              } else {
+                                setSprints(sprints.filter((x) => x.id !== s.id));
+                              }
+                            }}
                             className="font-mono shrink-0 transition-opacity opacity-40 hover:opacity-100"
                             style={{ fontSize: 10, color: fgNav, background: "transparent" }}
                             aria-label="Remove sprint"
