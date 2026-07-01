@@ -10,6 +10,7 @@ import { MatrixView } from "@/components/MatrixView";
 import { ListView } from "@/components/ListView";
 import { KanbanView } from "@/components/KanbanView";
 import { GanttView } from "@/components/GanttView";
+import { CalendarView } from "@/components/CalendarView";
 import { ProjectBuilder } from "@/components/ProjectBuilder";
 import { TaskDetailPanel } from "@/components/TaskDetailPanel";
 import { TaskDetailDialog } from "@/components/TaskDetailDialog";
@@ -77,7 +78,7 @@ const Index = () => {
     const enabled = settings.enabledViews;
     if (!enabled) return;
     if (enabled[viewMode] === false) {
-      const fallback = (["matrix", "list", "kanban", "gantt", "projects"] as ViewMode[])
+      const fallback = (["matrix", "list", "kanban", "calendar", "gantt", "projects"] as ViewMode[])
         .find((v) => enabled[v] !== false);
       if (fallback) setViewMode(fallback);
     }
@@ -213,7 +214,7 @@ const Index = () => {
       />
 
       <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col overflow-hidden">
-        {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban" || viewMode === "gantt" || viewMode === "projects") && (
+        {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban" || viewMode === "gantt" || viewMode === "projects" || viewMode === "calendar") && (
           <div className="mb-4 flex-shrink-0">
           <FilterBar
             dateFilter={dateFilter}
@@ -296,6 +297,17 @@ const Index = () => {
           {viewMode === "gantt" && (
             <motion.div key="gantt" {...viewAnimation} className="flex-1 min-h-0 overflow-auto">
               <GanttView tasks={filteredTasks} onTaskClick={setSelectedTask} getCategoryColor={getCategoryColor} quadrantMap={quadrantMap} />
+            </motion.div>
+          )}
+          {viewMode === "calendar" && (
+            <motion.div key="calendar" {...viewAnimation} className="flex-1 min-h-0 flex flex-col">
+              <CalendarView
+                tasks={filteredTasks}
+                allTasks={tasks}
+                onUpdateTask={updateTask}
+                onTaskClick={setSelectedTask}
+                getCategoryColor={getCategoryColor}
+              />
             </motion.div>
           )}
           {viewMode === "projects" && (

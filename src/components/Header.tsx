@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Moon, Sun, Settings, LogOut, LayoutGrid, List, Columns3, GanttChart, FolderKanban } from "lucide-react";
+import { Moon, Sun, Settings, LogOut, LayoutGrid, List, Columns3, GanttChart, FolderKanban, CalendarDays } from "lucide-react";
 import { ViewMode } from "./ViewToggle";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ const VIEW_OPTIONS: { id: ViewMode; label: string; icon: React.ElementType }[] =
   { id: "matrix", label: "Matrix", icon: LayoutGrid },
   { id: "list", label: "List", icon: List },
   { id: "kanban", label: "Kanban", icon: Columns3 },
+  { id: "calendar", label: "Calendar", icon: CalendarDays },
   { id: "gantt", label: "Gantt", icon: GanttChart },
   { id: "projects", label: "Projects", icon: FolderKanban },
 ];

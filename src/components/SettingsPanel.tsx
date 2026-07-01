@@ -40,6 +40,7 @@ const VIEW_LIST: { id: keyof NonNullable<AppSettings["enabledViews"]>; label: st
   { id: "matrix", label: "Matrix" },
   { id: "list", label: "List" },
   { id: "kanban", label: "Kanban" },
+  { id: "calendar", label: "Calendar" },
   { id: "gantt", label: "Gantt" },
   { id: "projects", label: "Projects" },
 ];
@@ -100,7 +101,7 @@ export function SettingsPanel({
     return Array.from(map.entries()).map(([name, color]) => ({ name, color }));
   })();
 
-  const enabledViews = settings.enabledViews ?? { matrix: true, list: true, kanban: true, gantt: true, projects: true };
+  const enabledViews = settings.enabledViews ?? { matrix: true, list: true, kanban: true, gantt: true, projects: true, calendar: true };
   const primaryColor = settings.primaryColor ?? "#6D28D9";
 
   return (
