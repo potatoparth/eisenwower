@@ -410,21 +410,17 @@ export function TaskInput({
                     }}
                     compact
                   />
-                  <div className="flex items-center gap-1.5">
-                    <Tag className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                    <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger className="flex-1 h-8 text-xs bg-secondary/50 border-0 rounded-lg">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categoryOptions.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <SelectorWithCreate
+                    icon={<Tag className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
+                    options={categoryOptions}
+                    value={category}
+                    onChange={setCategory}
+                    onCreate={onCreateCategory}
+                    placeholder="Select category"
+                    searchPlaceholder="Search categories…"
+                    createPlaceholder="New category name…"
+                    compact
+                  />
                   <SelectorWithCreate
                     icon={<FolderKanban className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
                     options={projectOptions}
