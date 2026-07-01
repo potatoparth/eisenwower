@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { TaskInput, type TaskAddOptions, type TaskInputPickerProps } from "@/components/TaskInput";
+import { type TaskAddOptions, type TaskInputPickerProps } from "@/components/TaskInput";
+import { TaskActionBar } from "@/components/TaskActionBar";
 import {
   Select,
   SelectContent,
@@ -31,12 +32,15 @@ interface ProjectBuilderProps {
   categories?: string[];
   onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
   onCreateProject?: TaskInputPickerProps["onCreateProject"];
+  onSelectTask?: (task: Task) => void;
+  onDeleteAllDone?: () => void;
 }
 
 export function ProjectBuilder({
   projects, allTasks = [], onAddProject, onUpdateProject, onDeleteProject,
   onAddTask, onUpdateTask, onDeleteTask,
   onAddMatrixTask, quadrants, categories = [], onCreateCategory, onCreateProject,
+  onSelectTask, onDeleteAllDone,
 }: ProjectBuilderProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
@@ -119,13 +123,15 @@ export function ProjectBuilder({
             </Button>
           </div>
 
-          {/* Matrix-style task input — a quadrant selection is required. */}
+          {/* Matrix-style action bar: add task + search + clear-done. */}
           {onAddMatrixTask && (
-            <div className="max-w-2xl w-full mx-auto">
-              <TaskInput
+            <div className="max-w-2xl w-full mx-auto flex-shrink-0">
+              <TaskActionBar
+                tasks={mappedTasks}
+                onSelectTask={(t) => onSelectTask?.(t)}
+                onDeleteAllDone={() => onDeleteAllDone?.()}
                 onAddTask={handleAddMatrixTask}
-                placeholder="Add a task to this project..."
-                quadrants={quadrants}
+                quadrants={quadrants ?? []}
                 categories={categories}
                 projects={projects}
                 defaultProjectId={selectedProject.id}
