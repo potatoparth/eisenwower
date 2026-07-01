@@ -257,6 +257,11 @@ const Index = () => {
                 projects={projects} allTasks={tasks} onAddProject={addProject} onUpdateProject={updateProject}
                 onDeleteProject={deleteProject} onAddTask={addTaskToProject}
                 onUpdateTask={updateProjectTask} onDeleteTask={deleteProjectTask}
+                onAddMatrixTask={handleAddTask}
+                quadrants={quadrants}
+                categories={taskCategories}
+                onCreateCategory={handleCreateCategory}
+                onCreateProject={handleCreateProject}
               />
             </motion.div>
           )}
