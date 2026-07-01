@@ -170,6 +170,7 @@ export function MatrixView({
           tasks={allTasks}
           onSelectTask={onSelectTask}
           onDeleteAllDone={onDeleteAllDone}
+          onRescheduleTasks={onRescheduleTasks}
           onAddTask={onAddTask}
           quadrants={quadrants}
           categories={categories}
