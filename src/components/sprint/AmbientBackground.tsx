@@ -15,7 +15,7 @@ export function AmbientBackground({ atmosphere, intense = false }: Props) {
 
   return (
     <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
-      <div className="absolute inset-0 bg-grid opacity-60" />
+      {/* grid overlay removed for cleaner sprint canvas */}
       {/* floating orbs */}
       <motion.div
         className="absolute -top-32 left-1/4 h-[40rem] w-[40rem] rounded-full blur-3xl"
