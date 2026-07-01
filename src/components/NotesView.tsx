@@ -425,7 +425,7 @@ function NoteCard(props: CardProps) {
           )}
         </div>
 
-        <div className="flex items-center gap-0.5 mt-2 opacity-70 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-0.5 mt-2 opacity-90">
           {editing ? (
             <Button size="sm" onClick={commitEdit} className="h-7 text-xs">Done</Button>
           ) : (
