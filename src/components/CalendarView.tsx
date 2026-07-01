@@ -463,7 +463,7 @@ function DaySection({
 
 function TaskRow({
   task, color, isDragging, onDragStart, onDragEnd, onDragOverRow, onDropRow,
-  onToggleStatus, onClick,
+  onToggleStatus, onClick, moveOptions, onMove,
 }: {
   task: Task; color?: string; isDragging: boolean;
   onDragStart: (e: React.DragEvent, id: string) => void;
@@ -472,6 +472,8 @@ function TaskRow({
   onDropRow: (e: React.DragEvent) => void;
   onToggleStatus?: (id: string) => void;
   onClick: () => void;
+  moveOptions: { key: string; label: string }[];
+  onMove: (id: string, sectionKey: string) => void;
 }) {
   const sel = useSelectionOptional();
   const isSelectMode = !!sel?.selectMode;
@@ -537,6 +539,33 @@ function TaskRow({
       <span className="text-xs text-muted-foreground truncate max-w-[120px] text-right shrink-0">
         {task.category}
       </span>
+      {!isSelectMode && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              onClick={(e) => e.stopPropagation()}
+              className="shrink-0 p-1 -mr-1 rounded hover:bg-muted text-muted-foreground/70 hover:text-foreground"
+              aria-label="Move task"
+            >
+              <MoveVertical className="w-3.5 h-3.5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-40 p-1" onClick={(e) => e.stopPropagation()}>
+            <div className="text-[11px] font-medium text-muted-foreground px-2 py-1">Move to…</div>
+            {moveOptions.map((o) => (
+              <button
+                key={o.key}
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onMove(task.id, o.key); }}
+                className="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted"
+              >
+                {o.label}
+              </button>
+            ))}
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 }
