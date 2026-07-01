@@ -251,7 +251,7 @@ const Index = () => {
       />
 
       <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col overflow-hidden">
-        {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban" || viewMode === "gantt" || viewMode === "projects" || viewMode === "calendar") && (
+        {(viewMode === "matrix" || viewMode === "list" || viewMode === "kanban" || viewMode === "gantt" || viewMode === "projects" || viewMode === "calendar" || viewMode === "notes") && (
           <div className="mb-4 flex-shrink-0">
           <FilterBar
             dateFilter={dateFilter}
