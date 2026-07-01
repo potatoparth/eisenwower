@@ -79,7 +79,7 @@ export function TaskActionBar({
         {searchMode ? (
           <Popover open={open && matches.length > 0} onOpenChange={setOpen}>
             <PopoverAnchor asChild>
-              <div className="relative flex h-12 w-full items-center rounded-full border border-border/60 bg-secondary/40 px-3">
+              <div className="relative flex h-[50px] w-full items-center rounded-full border border-border/60 bg-secondary/40 px-5">
                 <div className="mr-2 -ml-2 flex h-full flex-shrink-0 items-center">
                   {searchToggle}
                 </div>
