@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from "react";
-import { ChevronRight, GripVertical, Check as CheckIcon, Inbox } from "lucide-react";
+import { ChevronRight, GripVertical, Check as CheckIcon, Inbox, MoveVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
