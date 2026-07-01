@@ -415,7 +415,7 @@ function LineRow({
     >
       {marker}
       <AutoTextarea
-        ref={inputRef}
+        inputRef={inputRef}
         value={line.text}
         onChange={onTextChange}
         onKeyDown={onKeyDown}
@@ -432,7 +432,7 @@ interface AutoTextareaProps {
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   placeholder?: string;
   strikethrough?: boolean;
-  ref: (el: HTMLTextAreaElement | null) => void;
+  inputRef: (el: HTMLTextAreaElement | null) => void;
 }
 
 function AutoTextarea({
@@ -441,7 +441,7 @@ function AutoTextarea({
   onKeyDown,
   placeholder,
   strikethrough,
-  ref,
+  inputRef,
 }: AutoTextareaProps) {
   const localRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -456,7 +456,7 @@ function AutoTextarea({
     <textarea
       ref={(el) => {
         localRef.current = el;
-        ref(el);
+        inputRef(el);
       }}
       rows={1}
       value={value}
