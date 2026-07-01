@@ -199,8 +199,8 @@ function NoteComposer(props: ComposerProps) {
   };
 
   const bg = noteColorFor(color, props.dark ? "dark" : "light");
-  const catOptions = Array.from(new Set([...(categories(props.categories))])).map((c) => ({ value: c, label: c }));
-  function categories(list: string[]) { return list.length ? list : ["General"]; }
+  const catList = props.categories.length ? props.categories : ["General"];
+  const catOptions = catList.map((c) => ({ value: c, label: c }));
   const projectOptions = [{ value: "", label: "No project" }, ...props.projects.map((p) => ({ value: p.id, label: p.name }))];
 
   return (
