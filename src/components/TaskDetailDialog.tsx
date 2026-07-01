@@ -16,6 +16,7 @@ import { format, parseISO } from "date-fns";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { RecurrenceField } from "@/components/RecurrenceField";
 import { TaskDescription } from "@/components/TaskDescription";
+import { TaskAttachments } from "@/components/TaskAttachments";
 import { SelectorWithCreate } from "@/components/SelectorWithCreate";
 
 interface TaskDetailDialogProps {
@@ -198,6 +199,15 @@ export function TaskDetailDialog({
             onCommit={save}
             placeholder="Add a description…"
           />
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-medium text-muted-foreground">Attachments</label>
+            <TaskAttachments
+              taskId={task.id}
+              value={task.attachments ?? []}
+              onChange={(next) => onUpdate(task.id, { attachments: next })}
+            />
+          </div>
 
           {/* Deadline */}
           <div className="space-y-1">
