@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   addMonths,
@@ -400,13 +401,29 @@ export function DateTimePicker({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{Trigger}</PopoverTrigger>
+      {open &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            onClick={cancel}
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[1px] animate-in fade-in-0"
+            aria-hidden
+          />,
+          document.body
+        )}
       <PopoverContent
+        side="bottom"
         align="start"
         sideOffset={6}
-        className="p-4 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border bg-popover"
-        style={{ width: 300 }}
+        avoidCollisions
+        collisionPadding={16}
+        className="z-50 p-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.45)] border bg-popover flex flex-col overflow-hidden"
+        style={{
+          width: 320,
+          maxHeight: "min(620px, calc(100vh - 32px))",
+        }}
       >
-        {Body}
+        <div className="flex-1 overflow-y-auto pr-1 -mr-1">{Body}</div>
         {Footer}
       </PopoverContent>
     </Popover>
