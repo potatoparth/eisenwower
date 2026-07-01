@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Paperclip, Link2, X, FileText, ExternalLink, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskAttachment } from "@/types/task";
@@ -8,16 +8,20 @@ const BUCKET = "task-attachments";
 const MAX_BYTES = 25 * 1024 * 1024; // 25 MB
 
 interface Props {
-  userId?: string;
   taskId: string;
   value: TaskAttachment[];
   onChange: (next: TaskAttachment[]) => void;
 }
 
-export function TaskAttachments({ userId, taskId, value, onChange }: Props) {
+export function TaskAttachments({ taskId, value, onChange }: Props) {
   const attachments = value ?? [];
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [userId, setUserId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id));
+  }, []);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
