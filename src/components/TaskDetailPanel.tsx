@@ -233,30 +233,28 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
             <Tag className="w-3.5 h-3.5" />
             Category
           </label>
-          <div className="flex items-center gap-2">
-            {getCategoryColor && getCategoryColor(category) && (
-              <div
-                className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: getCategoryColor(category) }}
-              />
-            )}
-            <Select
-              value={category}
-              onValueChange={(v) => {
-                setCategory(v);
-                onUpdate(task.id, { category: v });
-              }}
-            >
-              <SelectTrigger className="border-0 bg-secondary/50 rounded-xl">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from(new Set([...categories, "General", category].filter(Boolean))).sort((a, b) => a.localeCompare(b)).map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <SelectorWithCreate
+            icon={
+              getCategoryColor && getCategoryColor(category) ? (
+                <span
+                  className="w-3 h-3 rounded-full flex-shrink-0 inline-block"
+                  style={{ backgroundColor: getCategoryColor(category) }}
+                />
+              ) : undefined
+            }
+            options={Array.from(new Set([...categories, "General", category].filter(Boolean)))
+              .sort((a, b) => a.localeCompare(b))
+              .map((c) => ({ value: c, label: c }))}
+            value={category}
+            onChange={(v) => {
+              setCategory(v);
+              onUpdate(task.id, { category: v });
+            }}
+            onCreate={onCreateCategory}
+            placeholder="Select category"
+            searchPlaceholder="Search categories…"
+            createPlaceholder="New category name…"
+          />
         </div>
 
         {/* Project */}
@@ -265,24 +263,22 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
             <FolderKanban className="w-3.5 h-3.5" />
             Project
           </label>
-          <Select
+          <SelectorWithCreate
+            options={[
+              { value: "__none__", label: "No project" },
+              ...projects.map((p) => ({ value: p.id, label: p.name })),
+            ]}
             value={projectId ?? "__none__"}
-            onValueChange={(v) => {
+            onChange={(v) => {
               const next = v === "__none__" ? undefined : v;
               setProjectId(next);
               onUpdate(task.id, { projectId: next });
             }}
-          >
-            <SelectTrigger className="border-0 bg-secondary/50 rounded-xl">
-              <SelectValue placeholder="No project" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__">No project</SelectItem>
-              {projects.map(p => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onCreate={onCreateProject}
+            placeholder="No project"
+            searchPlaceholder="Search projects…"
+            createPlaceholder="New project name…"
+          />
         </div>
 
         {/* Metadata */}
