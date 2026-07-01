@@ -292,7 +292,12 @@ const Index = () => {
           getCategoryColor={getCategoryColor}
           projects={projects}
           quadrants={quadrants}
+          quadrantMap={quadrantMap}
           categories={taskCategories}
+          navTasks={filteredTasks}
+          onNavigate={setSelectedTask}
+          onToggleStatus={(id) => toggleStatus(id)}
+          onSwitchToDialog={() => updateSettings({ taskDetailView: "popup" })}
         />
       )}
       {selectedTask && !useSidebarDetail && (
@@ -309,6 +314,9 @@ const Index = () => {
           quadrants={quadrants}
           quadrantMap={quadrantMap}
           categories={taskCategories}
+          navTasks={filteredTasks}
+          onNavigate={setSelectedTask}
+          onToggleStatus={(id) => toggleStatus(id)}
         />
       )}
 

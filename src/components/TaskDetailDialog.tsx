@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, Tag, FolderKanban, PanelRightOpen, AlertCircle } from "lucide-react";
+import { Calendar, Tag, FolderKanban, PanelRightOpen, AlertCircle, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +34,9 @@ interface TaskDetailDialogProps {
   quadrants: QuadrantInfo[];
   quadrantMap: Record<Quadrant, QuadrantInfo>;
   categories?: string[];
+  navTasks?: Task[];
+  onNavigate?: (task: Task) => void;
+  onToggleStatus?: (id: string) => void;
 }
 
 export function TaskDetailDialog({
@@ -46,6 +49,9 @@ export function TaskDetailDialog({
   quadrants,
   quadrantMap,
   categories = [],
+  navTasks = [],
+  onNavigate,
+  onToggleStatus,
 }: TaskDetailDialogProps) {
   const [name, setName] = useState(task.name);
   const [description, setDescription] = useState(task.description || "");
@@ -80,27 +86,43 @@ export function TaskDetailDialog({
   const overdue = isOverdue(task);
   const qInfo = quadrantMap[quadrant];
   const doFirstLabel = quadrantMap["important-urgent"].title;
+  const idx = navTasks.findIndex((t) => t.id === task.id);
+  const prevTask = idx > 0 ? navTasks[idx - 1] : null;
+  const nextTask = idx >= 0 && idx < navTasks.length - 1 ? navTasks[idx + 1] : null;
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-[640px] rounded-2xl p-0 overflow-hidden backdrop-blur-xl">
-        <DialogHeader className="px-5 pt-4 pb-2 flex flex-row items-center justify-between space-y-0">
-          <DialogTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <span
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: `hsl(var(--quadrant-${qInfo.color}))` }}
-            />
-            {qInfo.title}
-          </DialogTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onSwitchToSidebar}
-            className="h-7 text-xs gap-1.5 rounded-lg"
-            title="Open as sidebar"
-          >
-            <PanelRightOpen className="w-3.5 h-3.5" /> Sidebar view
-          </Button>
+        <DialogHeader className="px-3 pt-3 pb-2 flex flex-row items-center justify-between space-y-0 gap-1">
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => prevTask && onNavigate?.(prevTask)} disabled={!prevTask} className="h-8 w-8 p-0 rounded-lg" title="Previous task">
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => nextTask && onNavigate?.(nextTask)} disabled={!nextTask} className="h-8 w-8 p-0 rounded-lg" title="Next task">
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+            <DialogTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2 ml-2">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(var(--quadrant-${qInfo.color}))` }} />
+              {qInfo.title}
+            </DialogTitle>
+          </div>
+          <div className="flex items-center gap-1">
+            {onToggleStatus && (
+              <Button
+                variant={task.status === "done" ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => onToggleStatus(task.id)}
+                className="h-8 text-xs gap-1.5 rounded-lg"
+                title={task.status === "done" ? "Mark as open" : "Mark as done"}
+              >
+                <Check className="w-3.5 h-3.5" />
+                {task.status === "done" ? "Done" : "Mark done"}
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" onClick={onSwitchToSidebar} className="h-8 text-xs gap-1.5 rounded-lg" title="Open as sidebar">
+              <PanelRightOpen className="w-3.5 h-3.5" /> Sidebar
+            </Button>
+          </div>
         </DialogHeader>
 
         <div className="px-5 pb-5 space-y-4">
@@ -273,9 +295,17 @@ export function TaskDetailDialog({
             </Select>
           </div>
 
-          <p className="text-[10px] text-muted-foreground pt-1">
-            Created {format(parseISO(task.createdAt), "MMM d, yyyy")}
-          </p>
+          <div className="pt-2 border-t space-y-1">
+            <p className="text-[11px] text-muted-foreground">
+              Created: {format(parseISO(task.createdAt), "MMM d, yyyy 'at' h:mm a")}
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              Updated: {format(parseISO(task.updatedAt), "MMM d, yyyy 'at' h:mm a")}
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              Status: {task.status === "done" ? "Done" : "Open"}
+            </p>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
