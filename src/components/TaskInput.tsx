@@ -192,23 +192,35 @@ export function TaskInput({
   };
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Element;
+    const hasOpenFloatingLayer = () =>
+      Boolean(
+        document.querySelector("[data-radix-popper-content-wrapper]") ||
+          document.querySelector("[data-radix-select-content][data-state='open']") ||
+          document.querySelector("[data-radix-popover-content][data-state='open']") ||
+          document.querySelector("[role='listbox'][data-state='open']") ||
+          document.querySelector("[cmdk-root]")
+      );
+
+    const handleClickOutside = (e: PointerEvent) => {
+      const target = e.target instanceof Element ? e.target : null;
+      if (!target) return;
+
       if (
         target.closest("[data-radix-popper-content-wrapper]") ||
+        target.closest("[data-radix-select-content]") ||
+        target.closest("[data-radix-popover-content]") ||
+        target.closest("[role='listbox']") ||
         target.closest("[cmdk-root]")
       ) {
         return;
       }
-      // If any Radix popover/select/dropdown is currently open, let that
-      // click just dismiss the popper — don't also commit/reset the task.
-      if (
-        document.querySelector("[data-radix-popper-content-wrapper]") ||
-        document.querySelector("[data-state=open][data-radix-select-trigger]") ||
-        document.querySelector("[data-radix-focus-guard]")
-      ) {
+
+      // Run in capture phase before Radix closes portaled menus. If a picker is
+      // open, the first outside click should only dismiss it, not save the task.
+      if (hasOpenFloatingLayer()) {
         return;
       }
+
       if (containerRef.current && !containerRef.current.contains(target)) {
         if (step === "details" && canComplete) {
           handleComplete();
@@ -218,8 +230,8 @@ export function TaskInput({
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("pointerdown", handleClickOutside, true);
+    return () => document.removeEventListener("pointerdown", handleClickOutside, true);
   }, [step, canComplete, handleComplete]);
 
   const getQuadrantButtonClass = (q: QuadrantInfo) => {
