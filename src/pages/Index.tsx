@@ -263,6 +263,8 @@ const Index = () => {
                 categories={taskCategories}
                 onCreateCategory={handleCreateCategory}
                 onCreateProject={handleCreateProject}
+                onSelectTask={setSelectedTask}
+                onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
               />
             </motion.div>
           )}
