@@ -93,18 +93,12 @@ export function TaskDetailDialog({
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-[640px] rounded-2xl p-0 overflow-hidden backdrop-blur-xl">
-        <DialogHeader className="px-3 pt-3 pb-2 grid grid-cols-[1fr_auto_1fr] items-center space-y-0 gap-2">
-          <Button variant="ghost" size="sm" onClick={() => prevTask && onNavigate?.(prevTask)} disabled={!prevTask} className="h-8 w-8 p-0 rounded-lg justify-self-start" title="Previous task">
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <DialogTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2 justify-self-center">
+        <DialogHeader className="px-3 pt-3 pb-2 flex flex-row items-center justify-between space-y-0 gap-2">
+          <DialogTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(var(--quadrant-${qInfo.color}))` }} />
             {qInfo.title}
           </DialogTitle>
-          <div className="flex items-center gap-1 justify-self-end">
-            <Button variant="ghost" size="sm" onClick={() => nextTask && onNavigate?.(nextTask)} disabled={!nextTask} className="h-8 w-8 p-0 rounded-lg" title="Next task">
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+          <div className="flex items-center gap-1">
             {onToggleStatus && (
               <Button
                 variant={task.status === "done" ? "secondary" : "outline"}
@@ -124,13 +118,21 @@ export function TaskDetailDialog({
         </DialogHeader>
 
         <div className="px-5 pb-5 space-y-4">
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={save}
-            className="text-[18px] font-medium border-0 px-0 h-auto focus-visible:ring-1 focus-visible:ring-ring shadow-none bg-transparent text-center"
-            placeholder="Task name"
-          />
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => prevTask && onNavigate?.(prevTask)} disabled={!prevTask} className="h-8 w-8 p-0 rounded-lg flex-shrink-0" title="Previous task">
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={save}
+              className="text-[18px] font-medium border-0 px-0 h-auto focus-visible:ring-1 focus-visible:ring-ring shadow-none bg-transparent text-center flex-1"
+              placeholder="Task name"
+            />
+            <Button variant="ghost" size="sm" onClick={() => nextTask && onNavigate?.(nextTask)} disabled={!nextTask} className="h-8 w-8 p-0 rounded-lg flex-shrink-0" title="Next task">
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
 
           {overdue && (
             <div className="flex items-center gap-2 flex-wrap">
