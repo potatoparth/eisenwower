@@ -48,11 +48,11 @@ export function useNotes(userId?: string) {
     return () => { supabase.removeChannel(channel); };
   }, [userId, load]);
 
-  const addNote = useCallback((options?: Partial<Omit<Note, "id" | "createdAt" | "updatedAt">>) => {
+  const addNote = useCallback((options?: Partial<Omit<Note, "createdAt" | "updatedAt">>) => {
     if (!userId) return null;
     const now = new Date().toISOString();
     const optimistic: Note = {
-      id: crypto.randomUUID(),
+      id: options?.id ?? crypto.randomUUID(),
       title: options?.title ?? "",
       content: options?.content ?? "",
       category: options?.category || "General",
@@ -60,6 +60,7 @@ export function useNotes(userId?: string) {
       color: options?.color,
       pinned: options?.pinned ?? false,
       sortOrder: options?.sortOrder ?? 0,
+      attachments: options?.attachments ?? [],
       createdAt: now,
       updatedAt: now,
     };
