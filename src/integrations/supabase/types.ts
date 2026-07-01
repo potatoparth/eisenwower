@@ -226,6 +226,71 @@ export type Database = {
         }
         Relationships: []
       }
+      sprint_preferences: {
+        Row: {
+          active_upload_id: string | null
+          background_enabled: boolean
+          spotify_url: string | null
+          updated_at: string
+          user_id: string
+          youtube_url: string | null
+        }
+        Insert: {
+          active_upload_id?: string | null
+          background_enabled?: boolean
+          spotify_url?: string | null
+          updated_at?: string
+          user_id: string
+          youtube_url?: string | null
+        }
+        Update: {
+          active_upload_id?: string | null
+          background_enabled?: boolean
+          spotify_url?: string | null
+          updated_at?: string
+          user_id?: string
+          youtube_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sprint_preferences_active_upload_id_fkey"
+            columns: ["active_upload_id"]
+            isOneToOne: false
+            referencedRelation: "sprint_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sprint_uploads: {
+        Row: {
+          created_at: string
+          id: string
+          mime: string
+          name: string
+          size: number
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mime: string
+          name: string
+          size: number
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mime?: string
+          name?: string
+          size?: number
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sprints: {
         Row: {
           actual_minutes: number | null
