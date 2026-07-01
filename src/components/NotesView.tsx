@@ -307,6 +307,24 @@ function NoteCard(props: CardProps) {
 
   useEffect(() => { if (!editing) { setTitle(note.title); setContent(note.content); } }, [note.title, note.content, editing]);
 
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Commit when the user clicks outside the card (ignoring portaled popovers/dialogs).
+  useEffect(() => {
+    if (!editing) return;
+    const onDown = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (cardRef.current && !cardRef.current.contains(target)) {
+        const el = target as HTMLElement;
+        if (el.closest?.("[data-radix-popper-content-wrapper], [role='dialog']")) return;
+        commitEdit();
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing, title, content]);
+
   const bg = noteColorFor(note.color, dark ? "dark" : "light");
   const catColor = props.getCategoryColor?.(note.category);
   const catOptions = (props.categories.length ? props.categories : ["General"]).map((c) => ({ value: c, label: c }));
@@ -321,6 +339,7 @@ function NoteCard(props: CardProps) {
 
   return (
     <motion.div
+      ref={cardRef}
       layout
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -340,13 +359,19 @@ function NoteCard(props: CardProps) {
                   placeholder="Title"
                   className="border-0 bg-transparent focus-visible:ring-0 px-1 text-base font-medium h-8"
                 />
-                <Textarea
+                <TaskDescription
                   value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                  onChange={setContent}
                   placeholder="Note"
-                  className="border-0 bg-transparent focus-visible:ring-0 px-1 min-h-[60px] resize-none text-sm"
-                  autoFocus
+                  alwaysOpen
                 />
+                <div className="pt-1">
+                  <TaskAttachments
+                    taskId={note.id}
+                    value={note.attachments ?? []}
+                    onChange={(next) => props.onUpdate(note.id, { attachments: next })}
+                  />
+                </div>
               </>
             ) : (
               <div
@@ -357,12 +382,15 @@ function NoteCard(props: CardProps) {
                   <div className="font-semibold text-sm mb-1 break-words">{note.title}</div>
                 )}
                 {note.content ? (
-                  <div className="text-sm whitespace-pre-wrap break-words leading-snug">
-                    {note.content}
-                  </div>
-                ) : !note.title ? (
+                  <NotePreview text={note.content} />
+                ) : !note.title && (!note.attachments || note.attachments.length === 0) ? (
                   <div className="text-sm text-muted-foreground italic">Empty note</div>
                 ) : null}
+                {!editing && note.attachments && note.attachments.length > 0 && (
+                  <div className="mt-2">
+                    <NoteAttachmentPreview attachments={note.attachments} />
+                  </div>
+                )}
               </div>
             )}
           </div>
