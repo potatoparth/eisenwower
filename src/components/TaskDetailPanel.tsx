@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Calendar, Tag, AlertCircle, FolderKanban } from "lucide-react";
+import { X, Calendar, Tag, AlertCircle, FolderKanban, ChevronLeft, ChevronRight, Check, PanelRightClose } from "lucide-react";
 import { Task, Quadrant, QuadrantInfo, Recurrence } from "@/types/task";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ProjectTemplate } from "@/types/project";
 import { cn } from "@/lib/utils";
 import { format, parseISO, differenceInDays, isPast, isToday } from "date-fns";
+import { isOverdue } from "@/lib/sort";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { RecurrenceField } from "@/components/RecurrenceField";
 import { TaskDescription } from "@/components/TaskDescription";
@@ -19,16 +20,20 @@ interface TaskDetailPanelProps {
   getCategoryColor?: (name: string) => string | undefined;
   projects?: ProjectTemplate[];
   quadrants: QuadrantInfo[];
+  quadrantMap: Record<Quadrant, QuadrantInfo>;
   categories?: string[];
+  navTasks?: Task[];
+  onNavigate?: (task: Task) => void;
+  onToggleStatus?: (id: string) => void;
+  onSwitchToDialog?: () => void;
 }
 
-export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose, getCategoryColor, projects = [], quadrants, categories = [] }: TaskDetailPanelProps) {
+export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose, getCategoryColor, projects = [], quadrants, quadrantMap, categories = [], navTasks = [], onNavigate, onToggleStatus, onSwitchToDialog }: TaskDetailPanelProps) {
   const [name, setName] = useState(task.name);
   const [description, setDescription] = useState(task.description || "");
   const [category, setCategory] = useState(task.category);
   const [dueDate, setDueDate] = useState(task.dueDate || "");
   const [quadrant, setQuadrant] = useState<Quadrant>(task.quadrant);
-  const [deadlineThreshold, setDeadlineThreshold] = useState<number | undefined>(task.deadlineThresholdOverride);
   const [projectId, setProjectId] = useState<string | undefined>(task.projectId);
   const [recurrence, setRecurrence] = useState<Recurrence>(task.recurrence ?? "none");
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>(task.recurrenceDays ?? []);
@@ -39,7 +44,6 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
     setCategory(task.category);
     setDueDate(task.dueDate || "");
     setQuadrant(task.quadrant);
-    setDeadlineThreshold(task.deadlineThresholdOverride);
     setProjectId(task.projectId);
     setRecurrence(task.recurrence ?? "none");
     setRecurrenceDays(task.recurrenceDays ?? []);
@@ -52,29 +56,60 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
       category,
       dueDate: dueDate || undefined,
       quadrant,
-      deadlineThresholdOverride: deadlineThreshold,
     });
   };
 
   // Auto-save on blur
   const handleBlur = () => handleSave();
 
-  const effectiveThreshold = deadlineThreshold ?? deadlineThresholdDays;
-  
+  const effectiveThreshold = task.deadlineThresholdOverride ?? deadlineThresholdDays;
+
   const isDeadlineWarning = task.dueDate && (() => {
     const date = parseISO(task.dueDate!);
     const daysLeft = differenceInDays(date, new Date());
     return (daysLeft <= effectiveThreshold && !isPast(date)) || (isPast(date) && !isToday(date));
   })();
 
+  const overdue = isOverdue(task);
+  const doFirstLabel = quadrantMap["important-urgent"].title;
+  const idx = navTasks.findIndex((t) => t.id === task.id);
+  const prevTask = idx > 0 ? navTasks[idx - 1] : null;
+  const nextTask = idx >= 0 && idx < navTasks.length - 1 ? navTasks[idx + 1] : null;
+
   return (
     <div className="fixed inset-y-0 left-0 w-full max-w-md bg-card border-r shadow-medium z-50 flex flex-col animate-slide-in-left">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <h2 className="font-semibold text-foreground">Task Details</h2>
-        <Button variant="ghost" size="sm" onClick={onClose} className="rounded-lg">
-          <X className="w-4 h-4" />
-        </Button>
+      <div className="flex items-center justify-between p-3 border-b gap-1">
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => prevTask && onNavigate?.(prevTask)} disabled={!prevTask} className="h-8 w-8 p-0 rounded-lg" title="Previous task">
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => nextTask && onNavigate?.(nextTask)} disabled={!nextTask} className="h-8 w-8 p-0 rounded-lg" title="Next task">
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+        <div className="flex items-center gap-1">
+          {onToggleStatus && (
+            <Button
+              variant={task.status === "done" ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => onToggleStatus(task.id)}
+              className="h-8 text-xs gap-1.5 rounded-lg"
+              title={task.status === "done" ? "Mark as open" : "Mark as done"}
+            >
+              <Check className="w-3.5 h-3.5" />
+              {task.status === "done" ? "Done" : "Mark done"}
+            </Button>
+          )}
+          {onSwitchToDialog && (
+            <Button variant="ghost" size="sm" onClick={onSwitchToDialog} className="h-8 text-xs gap-1.5 rounded-lg" title="Open as popup">
+              <PanelRightClose className="w-3.5 h-3.5" /> Popup
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0 rounded-lg" title="Close">
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Content */}
@@ -89,6 +124,25 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
             className="text-base font-medium border-0 bg-secondary/50 rounded-xl"
           />
         </div>
+
+        {overdue && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-destructive font-medium flex items-center gap-1">
+              <AlertCircle className="w-3.5 h-3.5" /> Overdue
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setQuadrant("important-urgent");
+                onUpdate(task.id, { quadrant: "important-urgent" });
+              }}
+              className="h-7 text-xs rounded-lg"
+            >
+              Move to {doFirstLabel}
+            </Button>
+          </div>
+        )}
 
         {/* Description */}
         <div className="space-y-1.5">
@@ -227,27 +281,6 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
               ))}
             </SelectContent>
           </Select>
-        </div>
-
-        {/* Per-task deadline threshold override */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            Deadline Warning (days before due)
-          </label>
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              min={0}
-              value={deadlineThreshold ?? ""}
-              onChange={e => setDeadlineThreshold(e.target.value ? parseInt(e.target.value) : undefined)}
-              onBlur={handleBlur}
-              placeholder={`Global: ${deadlineThresholdDays}`}
-              className="border-0 bg-secondary/50 rounded-xl w-32"
-            />
-            <span className="text-xs text-muted-foreground">
-              {deadlineThreshold !== undefined ? "Custom" : "Using global"}
-            </span>
-          </div>
         </div>
 
         {/* Metadata */}
