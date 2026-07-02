@@ -16,7 +16,10 @@ import {
   MAX_UPLOADS,
   MAX_TOTAL_BYTES,
   type BgMeta,
+  setActivePreset,
+  getActivePresetId,
 } from "@/lib/sprint/customization-store";
+import { PRESETS } from "@/lib/sprint/presets";
 import { useTheme } from "@/lib/sprint/theme-store";
 
 interface Props {
@@ -34,6 +37,8 @@ export function CustomizeModal({ open, onClose }: Props) {
   const [err, setErr] = useState<string | null>(null);
   const [ytInput, setYtInput] = useState("");
   const [ytErr, setYtErr] = useState<string | null>(null);
+  const [showPresets, setShowPresets] = useState(false);
+  const [presetId, setPresetId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const { uploads, activeUploadId, usedBytes } = useUploads();
 
@@ -46,6 +51,7 @@ export function CustomizeModal({ open, onClose }: Props) {
     setYtInput(m?.type === "youtube" ? m.name : "");
     setErr(null);
     setYtErr(null);
+    setPresetId(getActivePresetId());
   }, [open]);
 
   if (!open) return null;
@@ -248,6 +254,72 @@ export function CustomizeModal({ open, onClose }: Props) {
             {uploads.length} / {MAX_UPLOADS} files · {(usedBytes / (1024 * 1024)).toFixed(1)} /{" "}
             {Math.round(MAX_TOTAL_BYTES / 1024 / 1024)} MB
           </div>
+
+          {/* View presets */}
+          <button
+            onClick={() => setShowPresets((v) => !v)}
+            style={{
+              width: "100%",
+              marginTop: 10,
+              padding: "12px",
+              borderRadius: 100,
+              border: `0.5px solid ${border}`,
+              background: "transparent",
+              color: fg,
+              fontSize: 13,
+              cursor: "pointer",
+            }}
+          >
+            {showPresets ? "Hide presets" : "View presets"}
+          </button>
+          {showPresets && (
+            <div
+              style={{
+                marginTop: 12,
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 8,
+              }}
+            >
+              {PRESETS.map((p) => {
+                const active = presetId === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={async () => {
+                      const next = active ? null : p.id;
+                      await setActivePreset(next);
+                      setPresetId(next);
+                      setMeta(getBgMeta());
+                      setEnabled(getBgEnabled());
+                      if (next) setYtInput("");
+                    }}
+                    title={p.name}
+                    style={{
+                      position: "relative",
+                      aspectRatio: "16 / 10",
+                      borderRadius: 10,
+                      overflow: "hidden",
+                      border: active
+                        ? `2px solid ${isLight ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.85)"}`
+                        : `0.5px solid ${border}`,
+                      padding: 0,
+                      cursor: "pointer",
+                      background: "transparent",
+                    }}
+                  >
+                    <img
+                      src={p.url}
+                      alt={p.name}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      loading="lazy"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <input
             ref={fileRef}
             type="file"

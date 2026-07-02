@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { presetById } from "./presets";
 
 /* ---------------- Types ---------------- */
 
@@ -34,6 +35,17 @@ const CHANGE = "sprint.customization.change";
 const emit = () => {
   if (typeof window !== "undefined") window.dispatchEvent(new Event(CHANGE));
 };
+
+const PRESET_KEY = "sprint.preset.activeId";
+function readPresetId(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(PRESET_KEY);
+}
+function writePresetId(id: string | null) {
+  if (typeof window === "undefined") return;
+  if (id) window.localStorage.setItem(PRESET_KEY, id);
+  else window.localStorage.removeItem(PRESET_KEY);
+}
 
 /* ---------------- In-memory cache ---------------- */
 
@@ -184,6 +196,11 @@ export function toSpotifyEmbed(input: string): string | null {
 
 function metaFromCache(): BgMeta | null {
   const { prefs, uploads } = cache;
+  const presetId = readPresetId();
+  const preset = presetById(presetId);
+  if (preset && !prefs.activeUploadId && !prefs.youtubeUrl) {
+    return { type: "image", mime: "image/jpeg", name: preset.name };
+  }
   if (prefs.activeUploadId) {
     const u = uploads.find((x) => x.id === prefs.activeUploadId);
     if (u) {
@@ -199,6 +216,19 @@ function metaFromCache(): BgMeta | null {
     if (id) return { type: "youtube", mime: "video/youtube", name: prefs.youtubeUrl, youtubeId: id };
   }
   return null;
+}
+
+export async function setActivePreset(id: string | null): Promise<void> {
+  writePresetId(id);
+  if (id) {
+    // Selecting a preset clears any user upload / youtube background.
+    await upsertPreferences({ activeUploadId: null, youtubeUrl: "", backgroundEnabled: true });
+  }
+  emit();
+}
+
+export function getActivePresetId(): string | null {
+  return readPresetId();
 }
 
 /** Upload a new background file. Errors bubble up (e.g. limit reached). */
@@ -238,6 +268,7 @@ export async function saveBackground(file: File): Promise<BgMeta> {
     throw insErr ?? new Error("Failed to save upload.");
   }
   await hydrate(true);
+  writePresetId(null);
   await setActiveUpload((row as { id: string }).id);
   return metaFromCache()!;
 }
@@ -251,6 +282,7 @@ export async function deleteUpload(id: string): Promise<void> {
 }
 
 export async function setActiveUpload(id: string | null): Promise<void> {
+  if (id) writePresetId(null);
   await upsertPreferences({ activeUploadId: id, youtubeUrl: id ? "" : cache.prefs.youtubeUrl });
   const u = id ? cache.uploads.find((x) => x.id === id) : null;
   cache = { ...cache, activeUrl: u ? await signUrl(u.storagePath) : null };
@@ -260,6 +292,7 @@ export async function setActiveUpload(id: string | null): Promise<void> {
 export async function saveYouTubeBackground(url: string): Promise<BgMeta | null> {
   const id = parseYouTubeId(url);
   if (!id) return null;
+  writePresetId(null);
   await upsertPreferences({ youtubeUrl: url, activeUploadId: null });
   cache = { ...cache, activeUrl: null };
   emit();
@@ -267,6 +300,7 @@ export async function saveYouTubeBackground(url: string): Promise<BgMeta | null>
 }
 
 export async function clearBackground(): Promise<void> {
+  writePresetId(null);
   await upsertPreferences({ activeUploadId: null, youtubeUrl: "" });
   cache = { ...cache, activeUrl: null };
   emit();
@@ -321,8 +355,17 @@ export function useBackground() {
     const meta = metaFromCache();
     const enabled = cache.prefs.backgroundEnabled && meta != null;
     let url: string | null = null;
-    if (meta?.type === "youtube") url = meta.youtubeId ?? null;
-    else url = cache.activeUrl;
+    if (meta?.type === "youtube") {
+      url = meta.youtubeId ?? null;
+    } else {
+      const presetId = readPresetId();
+      const preset = presetById(presetId);
+      if (preset && !cache.prefs.activeUploadId && !cache.prefs.youtubeUrl) {
+        url = preset.url;
+      } else {
+        url = cache.activeUrl;
+      }
+    }
     return { url, meta, enabled };
   });
 }
