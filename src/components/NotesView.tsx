@@ -92,60 +92,50 @@ export function NotesView(props: NotesViewProps) {
   return (
     <div className="flex-1 min-h-0 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-1 pb-8">
-        <div ref={composerWrapRef}>
-          {searchOpen ? (
-            <div className="pt-4 pb-2 flex justify-center">
-              <div className="relative flex h-[50px] w-full max-w-xl items-center rounded-full border border-border/60 bg-secondary/40 px-5">
-                <Input
-                  ref={searchInputRef}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); }
-                  }}
-                  placeholder="Search notes..."
-                  className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-full -mr-2 flex-shrink-0"
-                  onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
-                  title="Close search"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
+        <div ref={composerWrapRef} className="pt-4 pb-2 flex justify-center">
+          <div className="grid w-full max-w-xl grid-cols-[minmax(0,1fr)_2.5rem] items-start gap-2">
+            <div className="min-w-0">
+              {searchOpen ? (
+                <div className="relative flex h-[50px] w-full items-center rounded-full border border-border/60 bg-secondary/40 px-5">
+                  <Input
+                    ref={searchInputRef}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); }
+                    }}
+                    placeholder="Search notes..."
+                    className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
+                </div>
+              ) : (
+                <div className="[&>div]:pt-0 [&>div]:pb-0 [&>div]:flex [&>div]:justify-stretch">
+                  <NoteComposer
+                    categories={categories}
+                    projects={projects}
+                    defaultCategory={defaultCategory}
+                    defaultProjectId={defaultProjectId}
+                    onCreateCategory={onCreateCategory}
+                    onCreateProject={onCreateProject}
+                    onAddNote={onAddNote}
+                    onUpdateNote={onUpdateNote}
+                    editingNote={editingNote}
+                    onCancelEdit={() => setEditingId(null)}
+                    dark={dark}
+                  />
+                </div>
+              )}
             </div>
-          ) : (
-            <NoteComposer
-            categories={categories}
-            projects={projects}
-            defaultCategory={defaultCategory}
-            defaultProjectId={defaultProjectId}
-            onCreateCategory={onCreateCategory}
-            onCreateProject={onCreateProject}
-            onAddNote={onAddNote}
-            onUpdateNote={onUpdateNote}
-            editingNote={editingNote}
-            onCancelEdit={() => setEditingId(null)}
-            dark={dark}
-          />
-          )}
-          {!searchOpen && (
-            <div className="flex justify-center -mt-1 pb-1">
-              <div className="w-full max-w-xl flex justify-end">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1.5 text-xs text-muted-foreground rounded-full"
-                  onClick={() => setSearchOpen(true)}
-                >
-                  <Search className="w-3.5 h-3.5" /> Search notes
-                </Button>
-              </div>
-            </div>
-          )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-full mt-0"
+              onClick={() => (searchOpen ? (setSearchOpen(false), setSearchQuery("")) : setSearchOpen(true))}
+              title={searchOpen ? "Close search" : "Search notes"}
+            >
+              {searchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+            </Button>
+          </div>
         </div>
 
         {pinned.length > 0 && (
@@ -242,11 +232,12 @@ interface ComposerProps {
   editingNote?: Note | null;
   onCancelEdit?: () => void;
   dark: boolean;
+  autoOpen?: boolean;
 }
 
 export function NoteComposer(props: ComposerProps) {
   const isEditing = !!props.editingNote;
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!props.autoOpen);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [attachments, setAttachments] = useState<TaskAttachment[]>([]);

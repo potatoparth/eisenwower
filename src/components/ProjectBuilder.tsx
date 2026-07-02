@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote } from "lucide-react";
+import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search } from "lucide-react";
 import { ProjectTemplate, ProjectTask } from "@/types/project";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { Note, noteColorFor } from "@/types/note";
@@ -12,6 +12,7 @@ import { type TaskAddOptions, type TaskInputPickerProps } from "@/components/Tas
 import { TaskActionBar } from "@/components/TaskActionBar";
 import { NoteComposer } from "@/components/NotesView";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -58,10 +59,22 @@ export function ProjectBuilder({
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerMode, setComposerMode] = useState<"create" | "edit">("create");
+  const [noteSearchMode, setNoteSearchMode] = useState(false);
+  const [noteQuery, setNoteQuery] = useState("");
+  const [notePopoverOpen, setNotePopoverOpen] = useState(false);
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const mappedTasks = selectedProject ? allTasks.filter(t => t.projectId === selectedProject.id) : [];
   const mappedNotes = selectedProject ? allNotes.filter(n => n.projectId === selectedProject.id) : [];
+  const filteredMappedNotes = useMemo(() => {
+    const q = noteQuery.trim().toLowerCase();
+    if (!q) return mappedNotes;
+    return mappedNotes.filter(n =>
+      n.title.toLowerCase().includes(q) ||
+      n.content.toLowerCase().includes(q) ||
+      (n.category || "").toLowerCase().includes(q)
+    );
+  }, [mappedNotes, noteQuery]);
   const editingNote = editingNoteId ? mappedNotes.find(n => n.id === editingNoteId) ?? null : null;
 
   const openCreateNote = () => { setEditingNoteId(null); setComposerMode("create"); setComposerOpen(true); };
@@ -251,20 +264,58 @@ export function ProjectBuilder({
                 Notes · {mappedNotes.length}
               </h4>
               {onAddNote && (
-                <button
-                  onClick={openCreateNote}
-                  className="mb-3 flex h-[50px] w-full items-center rounded-full border border-border/60 bg-secondary/40 px-5 text-left text-sm text-muted-foreground/80 hover:bg-secondary/60 transition-colors"
-                >
-                  <span aria-hidden className="flex h-8 w-8 items-center justify-center text-muted-foreground/60 -ml-2 mr-1">
-                    <StickyNote className="w-4 h-4" strokeWidth={1.75} />
-                  </span>
-                  Add a new note...
-                </button>
+                <div className="mb-3 grid w-full grid-cols-[minmax(0,1fr)_2.5rem_2.5rem] items-center gap-2">
+                  <div className="min-w-0">
+                    {noteSearchMode ? (
+                      <div className="relative flex h-[50px] w-full items-center rounded-full border border-border/60 bg-secondary/40 px-5">
+                        <NoteSearchInput
+                          value={noteQuery}
+                          onChange={setNoteQuery}
+                          onEscape={() => { setNoteSearchMode(false); setNoteQuery(""); }}
+                        />
+                        <div className="ml-2 -mr-2 flex h-full flex-shrink-0 items-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => { setNoteSearchMode(false); setNoteQuery(""); }}
+                            className="h-8 w-8 rounded-full"
+                            title="Close search"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={openCreateNote}
+                        className="flex h-[50px] w-full items-center rounded-full border border-border/60 bg-secondary/40 px-5 text-left text-sm text-muted-foreground/80 hover:bg-secondary/60 transition-colors"
+                      >
+                        <span aria-hidden className="flex h-8 w-8 items-center justify-center text-muted-foreground/60 -ml-2 mr-1">
+                          <StickyNote className="w-4 h-4" strokeWidth={1.75} />
+                        </span>
+                        <span className="flex-1 truncate">Add a new note...</span>
+                        <span aria-hidden className="flex h-8 w-8 items-center justify-center text-muted-foreground/60 -mr-2">
+                          <Search className="w-4 h-4 opacity-0" />
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 rounded-full"
+                    onClick={() => (noteSearchMode ? (setNoteSearchMode(false), setNoteQuery("")) : setNoteSearchMode(true))}
+                    title={noteSearchMode ? "Close search" : "Search notes"}
+                  >
+                    {noteSearchMode ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+                  </Button>
+                  <div aria-hidden />
+                </div>
               )}
               <div className="flex-1 overflow-y-auto pr-1">
-                {mappedNotes.length > 0 ? (
+                {filteredMappedNotes.length > 0 ? (
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
-                    {mappedNotes.map(n => (
+                    {filteredMappedNotes.map(n => (
                     <button
                       key={n.id}
                       onClick={() => openEditNote(n)}
@@ -286,7 +337,7 @@ export function ProjectBuilder({
                   </div>
                 ) : (
                   <div className="text-center py-10 text-muted-foreground">
-                    <p className="text-xs">No notes for this project.</p>
+                    <p className="text-xs">{noteQuery ? "No notes match your search." : "No notes for this project."}</p>
                   </div>
                 )}
               </div>
@@ -312,6 +363,7 @@ export function ProjectBuilder({
               defaultProjectId={selectedProjectId ?? undefined}
               onCreateCategory={onCreateCategory}
               onCreateProject={onCreateProject}
+              autoOpen
               onAddNote={(opts) => {
                 const n = onAddNote({ ...opts, projectId: opts?.projectId ?? selectedProjectId ?? undefined });
                 closeComposer();
@@ -326,5 +378,22 @@ export function ProjectBuilder({
         </Dialog>
       )}
     </div>
+  );
+}
+
+function NoteSearchInput({
+  value, onChange, onEscape,
+}: { value: string; onChange: (v: string) => void; onEscape: () => void }) {
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => { ref.current?.focus(); }, []);
+  return (
+    <Input
+      ref={ref}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={(e) => { if (e.key === "Escape") onEscape(); }}
+      placeholder="Search notes..."
+      className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+    />
   );
 }
