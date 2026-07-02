@@ -1,3 +1,5 @@
+import { TaskAttachment } from "./task";
+
 export type TaskDependencyType = "sync" | "async"; // sync = sequential (blocked), async = parallel
 
 export interface ProjectTask {
@@ -35,6 +37,7 @@ export interface PresetTask {
   category?: string;
   dueDate?: string;
   dueTime?: string;
+  attachments?: TaskAttachment[];
 }
 
 export interface ProjectTemplatePreset {

@@ -10,6 +10,8 @@ import { ProjectTemplatePreset, PresetTask } from "@/types/project";
 import { QUADRANTS, Quadrant } from "@/types/task";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { TaskDescription } from "@/components/TaskDescription";
+import { TaskAttachments } from "@/components/TaskAttachments";
+import { TaskAttachment } from "@/types/task";
 import { format, parseISO } from "date-fns";
 
 interface Props {
@@ -319,17 +321,35 @@ function PresetTaskRow({ task, index, total, categories, onPatch, onRemove, onMo
       {/* Description */}
       <Popover>
         <PopoverTrigger asChild>
-          <Button size="sm" variant="ghost" className={cn("h-7 px-2 gap-1 text-xs", task.description && "text-primary")} title="Description">
+          <Button
+            size="sm"
+            variant="ghost"
+            className={cn(
+              "h-7 px-2 gap-1 text-xs",
+              (task.description || (task.attachments?.length ?? 0) > 0) && "text-primary",
+            )}
+            title="Notes"
+          >
             <FileText className="w-3.5 h-3.5" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-96 p-3" align="end">
+        <PopoverContent className="w-96 p-3 space-y-3" align="end">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <FileText className="w-3.5 h-3.5" /> Notes
+          </div>
           <TaskDescription
             value={task.description || ""}
             onChange={(v) => onPatch({ description: v })}
             alwaysOpen
             placeholder="Notes (optional)"
           />
+          <div className="pt-2 border-t border-border">
+            <TaskAttachments
+              taskId={`preset-${task.id}`}
+              value={task.attachments ?? []}
+              onChange={(next: TaskAttachment[]) => onPatch({ attachments: next })}
+            />
+          </div>
         </PopoverContent>
       </Popover>
 
