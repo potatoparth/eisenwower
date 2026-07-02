@@ -379,7 +379,9 @@ const Index = () => {
                 onCreateCategory={handleCreateCategory}
                 onCreateProject={handleCreateProject}
                 onSelectTask={setSelectedTask}
-                onSelectNote={() => setViewMode("notes")}
+                onAddNote={(opts) => addNote(opts)}
+                onUpdateNote={updateNote}
+                onDeleteNote={deleteNote}
                 onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
                 onRescheduleTasks={handleRescheduleTasks}
               />
