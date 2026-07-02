@@ -72,27 +72,53 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, 
         )}
       </div>
       <div className="flex items-center gap-1 shrink-0">
-        <Select value={viewMode} onValueChange={(v) => onViewModeChange(v as ViewMode)}>
-          <SelectTrigger className="h-9 rounded-xl w-[120px] sm:w-[140px] px-3" aria-label="Change view">
-            <div className="flex items-center gap-2 min-w-0">
-              <CurrentIcon className="w-4 h-4 shrink-0" />
-              <span className="truncate">{currentView.label}</span>
-            </div>
-          </SelectTrigger>
-          <SelectContent align="end">
-            {visibleViews.map((v) => {
-              const Icon = v.icon;
-              return (
-                <SelectItem key={v.id} value={v.id}>
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4" />
-                    <span>{v.label}</span>
-                  </div>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
+        {/* Mobile: dropdown */}
+        <div className="md:hidden">
+          <Select value={viewMode} onValueChange={(v) => onViewModeChange(v as ViewMode)}>
+            <SelectTrigger className="h-9 rounded-xl w-[120px] sm:w-[140px] px-3" aria-label="Change view">
+              <div className="flex items-center gap-2 min-w-0">
+                <CurrentIcon className="w-4 h-4 shrink-0" />
+                <span className="truncate">{currentView.label}</span>
+              </div>
+            </SelectTrigger>
+            <SelectContent align="end">
+              {visibleViews.map((v) => {
+                const Icon = v.icon;
+                return (
+                  <SelectItem key={v.id} value={v.id}>
+                    <div className="flex items-center gap-2">
+                      <Icon className="w-4 h-4" />
+                      <span>{v.label}</span>
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+        {/* Desktop: horizontal segmented toggle */}
+        <div className="hidden md:inline-flex items-center gap-0.5 p-1 rounded-xl bg-secondary">
+          {visibleViews.map((v) => {
+            const Icon = v.icon;
+            const active = v.id === viewMode;
+            return (
+              <button
+                key={v.id}
+                onClick={() => onViewModeChange(v.id)}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 flex items-center gap-1.5",
+                  active
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                aria-pressed={active}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{v.label}</span>
+              </button>
+            );
+          })}
+        </div>
 
         <Button variant="ghost" size="icon" onClick={() => setIsDark(!isDark)} className="rounded-xl w-9 h-9 sm:w-10 sm:h-10">
           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
