@@ -320,13 +320,13 @@ export function SettingsPanel({
                         value={label.title}
                         onChange={e => onUpdateQuadrantLabel(q.id, { title: e.target.value })}
                         placeholder="Title"
-                        className="h-8 text-xs font-semibold rounded-lg"
+                        className="h-8 text-xs font-semibold rounded-lg border-0 bg-background/40 focus-visible:ring-1 focus-visible:ring-ring/40 focus-visible:ring-offset-0"
                       />
                       <Input
                         value={label.subtitle}
                         onChange={e => onUpdateQuadrantLabel(q.id, { subtitle: e.target.value })}
                         placeholder="Description"
-                        className="h-8 text-[11px] rounded-lg"
+                        className="h-8 text-[11px] rounded-lg border-0 bg-background/40 focus-visible:ring-1 focus-visible:ring-ring/40 focus-visible:ring-offset-0"
                       />
                     </div>
                     <div className="flex flex-col items-center gap-0.5 flex-shrink-0 pt-0.5">
