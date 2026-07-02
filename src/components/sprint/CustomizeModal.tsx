@@ -133,7 +133,7 @@ export function CustomizeModal({ open, onClose }: Props) {
             Background
           </div>
           <p style={{ fontSize: 13, color: sub, marginBottom: 14 }}>
-            Upload a photo or video as your focus background. Stored on this device only.
+            Upload photos or videos to your library ({MAX_UPLOADS} files, 50MB total). Saved to your account.
           </p>
 
           {/* Uploads list (per-user, max 3 / 50MB) */}
