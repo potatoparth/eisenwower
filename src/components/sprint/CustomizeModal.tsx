@@ -9,7 +9,6 @@ import {
   setBgEnabled,
   getSpotifyUrl,
   setSpotifyUrl,
-  toSpotifyEmbed,
   useUploads,
   setActiveUpload,
   deleteUpload,
