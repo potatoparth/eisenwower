@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink } from "lucide-react";
 import { ProjectTemplate, ProjectTask } from "@/types/project";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
+import { Note, noteColorFor } from "@/types/note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +21,8 @@ import {
 interface ProjectBuilderProps {
   projects: ProjectTemplate[];
   allTasks?: Task[];
+  allNotes?: Note[];
+  onSelectNote?: (note: Note) => void;
   onAddProject: (name: string, description?: string) => ProjectTemplate;
   onUpdateProject: (id: string, updates: Partial<Omit<ProjectTemplate, "id" | "createdAt">>) => void;
   onDeleteProject: (id: string) => void;
@@ -38,10 +41,10 @@ interface ProjectBuilderProps {
 }
 
 export function ProjectBuilder({
-  projects, allTasks = [], onAddProject, onUpdateProject, onDeleteProject,
+  projects, allTasks = [], allNotes = [], onAddProject, onUpdateProject, onDeleteProject,
   onAddTask, onUpdateTask, onDeleteTask,
   onAddMatrixTask, quadrants, categories = [], onCreateCategory, onCreateProject,
-  onSelectTask, onDeleteAllDone, onRescheduleTasks,
+  onSelectTask, onSelectNote, onDeleteAllDone, onRescheduleTasks,
 }: ProjectBuilderProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
@@ -50,6 +53,7 @@ export function ProjectBuilder({
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const mappedTasks = selectedProject ? allTasks.filter(t => t.projectId === selectedProject.id) : [];
+  const mappedNotes = selectedProject ? allNotes.filter(n => n.projectId === selectedProject.id) : [];
 
   const handleCreateProject = () => {
     if (!newProjectName.trim()) return;
@@ -83,7 +87,7 @@ export function ProjectBuilder({
           >
             {p.name}
             <span className="ml-1.5 text-xs opacity-70">
-              {p.tasks.length + allTasks.filter(t => t.projectId === p.id).length}
+              {p.tasks.length + allTasks.filter(t => t.projectId === p.id).length + allNotes.filter(n => n.projectId === p.id).length}
             </span>
           </button>
         ))}
