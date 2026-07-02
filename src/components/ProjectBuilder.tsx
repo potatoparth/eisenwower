@@ -211,7 +211,11 @@ export function ProjectBuilder({
             {mappedTasks.length > 0 && (
               <div className="space-y-2">
                 {mappedTasks.map(t => (
-                  <div key={t.id} className="flex items-center gap-3 bg-card rounded-xl border border-border p-3">
+                  <button
+                    key={t.id}
+                    onClick={() => onSelectTask?.(t)}
+                    className="w-full text-left flex items-center gap-3 bg-card rounded-xl border border-border p-3 hover:border-primary/50 transition-colors"
+                  >
                     <div className={cn("w-2 h-2 rounded-full flex-shrink-0", t.status === "done" ? "bg-emerald-500" : "bg-primary")} />
                     <div className="flex-1 min-w-0">
                       <p className={cn("text-sm font-medium truncate", t.status === "done" && "line-through text-muted-foreground")}>{t.name}</p>
@@ -221,8 +225,37 @@ export function ProjectBuilder({
                         {t.dueDate && <span>• due {t.dueDate}</span>}
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))}
+              </div>
+            )}
+
+            {mappedNotes.length > 0 && (
+              <div className="pt-2">
+                <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">
+                  Notes · {mappedNotes.length}
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {mappedNotes.map(n => (
+                    <button
+                      key={n.id}
+                      onClick={() => onSelectNote?.(n)}
+                      className="text-left rounded-xl border border-border p-3 hover:border-primary/50 transition-colors"
+                      style={{ backgroundColor: noteColorFor(n.color, "dark") }}
+                    >
+                      {n.title && <p className="text-sm font-semibold truncate mb-1">{n.title}</p>}
+                      {n.content && (
+                        <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-wrap">
+                          {n.content}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-2">
+                        {n.category && <span>{n.category}</span>}
+                        {n.pinned && <span>• pinned</span>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
