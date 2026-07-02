@@ -363,6 +363,7 @@ export function ProjectBuilder({
               defaultProjectId={selectedProjectId ?? undefined}
               onCreateCategory={onCreateCategory}
               onCreateProject={onCreateProject}
+              autoOpen
               onAddNote={(opts) => {
                 const n = onAddNote({ ...opts, projectId: opts?.projectId ?? selectedProjectId ?? undefined });
                 closeComposer();
@@ -377,5 +378,22 @@ export function ProjectBuilder({
         </Dialog>
       )}
     </div>
+  );
+}
+
+function NoteSearchInput({
+  value, onChange, onEscape,
+}: { value: string; onChange: (v: string) => void; onEscape: () => void }) {
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => { ref.current?.focus(); }, []);
+  return (
+    <Input
+      ref={ref}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={(e) => { if (e.key === "Escape") onEscape(); }}
+      placeholder="Search notes..."
+      className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+    />
   );
 }
