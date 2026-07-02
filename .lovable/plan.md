@@ -1,63 +1,45 @@
-## Project Collaboration with Realtime Sync
 
-Add the ability to invite others to a project via a shareable link, pick which items they see, give them Editor or Viewer rights, and keep everything live-synced. The owner can revoke access at any time.
+## Kanban revamp + Matrix ↔ Kanban sync
 
-### 1. Roles & sharing model
+### 1. Default board — auto-syncs with tasks
+- The current single Kanban becomes the **"Default"** board.
+- Its columns are fixed: **To Do**, **Overdue**, **Done** (rename current "In Progress" → "Overdue").
+- Column placement is **derived from task state**, so completing anywhere (Matrix, List, etc.) instantly moves it to Done:
+  - `status === "done"` → Done
+  - `status === "open"` and `dueDate` before today → Overdue
+  - otherwise → To Do
+- Users cannot rename/add/remove columns on Default (or drag between them — status is the source of truth). Toggling status via drag between Todo/Done still works and calls `toggleStatus`.
 
-- Two roles per collaborator: **Editor** (add/edit/delete tasks & notes) or **Viewer** (read-only).
-- Two share scopes per collaborator:
-  - **All items** — every current & future task and note in the project.
-  - **Selected items** — owner picks specific tasks/notes from a bulk picker.
-- Only the project owner (creator) can invite, change scope/role, or revoke.
+### 2. Custom boards (up to 10)
+- Add a **board switcher** at the top of the Kanban view (chips: Default • Board A • Board B • + New board).
+- **"+ New board"** prompts for a name, then asks for **column names (1–6)**.
+- Custom boards store tasks explicitly (a task must be assigned to a custom board — it doesn't auto-show).
+- Columns are renamable / removable per custom board (still capped at 6). Boards can be renamed / deleted.
+- Cap enforced at 10; "+ New board" disabled at cap.
 
-### 2. Invite flow (link-based)
+### 3. Expand a column
+- Every column shows an **expand icon** in its header, and clicking anywhere on the header title expands it.
+- Expanded state = full-screen focus dialog showing that column's tasks large, with the same TaskCard interactions.
 
-- On a project, a new **Share** button opens a dialog:
-  - "Generate invite link" — pick role (Editor/Viewer) and scope (All / Selected items with checkbox picker for tasks + notes).
-  - Produces a URL: `/join/:token`. Copy-to-clipboard.
-  - Links can be revoked, and expire after 7 days by default (configurable later).
-- Recipient opens the link while logged in → sees project name + inviter + role → clicks **Join**. If logged out, they're sent to auth first and returned.
-- Same dialog lists current collaborators with their role/scope and a **Revoke** button (owner only).
+### 4. Bulk action bar → new "Add to Kanban" button
+- After Reschedule / Add to sprint / Delete, add a **4th button "Add to Kanban"**.
+- Clicking reveals a popover with:
+  - **Add to new Kanban** (hidden if boards.length ≥ 10) — opens the new-board flow prefilled with the selected tasks going into the first column.
+  - **Add to existing Kanban** — lists all custom boards; picking one prompts for which column, then assigns the selected tasks.
 
-### 3. Data access & live sync
+### 5. Data model (backend)
+- New table `kanban_boards(id, user_id, name, sort_order, is_default, created_at)`.
+- Extend `kanban_columns` with `board_id` (nullable — legacy rows migrated to a per-user Default board that's system-managed).
+- New table `kanban_board_items(board_id, task_id, column_key, sort_order)` for custom-board placement (many-to-many so one task can appear on multiple custom boards).
+- RLS + GRANTs added on new tables scoped to `auth.uid()`; realtime enabled so board changes propagate.
 
-- Collaborators see the shared project inside their normal Projects view alongside their own.
-- All task/note CRUD respects role: Editors can mutate, Viewers cannot (UI hides controls + DB enforces).
-- Changes propagate within ~1 second via Realtime subscriptions on tasks, notes, collaborators, and shared-items — both users see edits, additions, deletions, and revocations live.
-- Revoking access removes the project from the collaborator's view immediately.
+### 6. Realtime sync fix
+- Ensure `tasks`, `kanban_boards`, `kanban_board_items`, `kanban_columns` are added to `supabase_realtime` and the client subscriptions invalidate the right queries. This fixes Matrix ↔ Kanban not syncing on complete.
 
-### 4. Technical section
+### Technical notes
+- Default board columns are computed client-side from `Task.status` + `dueDate` — no writes needed when moving between them, which is what fixes the sync bug.
+- Legacy `Task.kanbanColumn` is deprecated for Default (ignored). For custom boards, membership lives in `kanban_board_items`.
+- `useKanbanColumns` becomes `useKanbanBoards` returning `{ boards, columnsByBoard, itemsByBoard, addBoard, renameBoard, deleteBoard, addColumn, renameColumn, removeColumn, assignTasks(boardId, columnKey, taskIds) }`.
+- `KanbanView` gains a `board` prop; if `board.isDefault` it renders derived columns and blocks structural edits; otherwise it renders stored columns and enables edit/DnD writes to `kanban_board_items`.
 
-**New tables**
-- `project_collaborators(id, project_id, user_id, role, scope, invited_by, created_at)` — `role ∈ {editor,viewer}`, `scope ∈ {all,selected}`. Unique on `(project_id, user_id)`.
-- `project_shared_items(id, project_id, collaborator_user_id, item_type, item_id, created_at)` — `item_type ∈ {task,note}`. Only used when scope='selected'.
-- `project_invites(id, token, project_id, role, scope, item_ids jsonb, created_by, expires_at, revoked_at, accepted_by, accepted_at)`.
-
-**Security-definer helpers** (avoid recursive RLS)
-- `is_project_owner(uid, project_id) → boolean`
-- `is_project_collaborator(uid, project_id) → boolean`
-- `project_role(uid, project_id) → text` (`owner|editor|viewer|null`)
-- `can_see_item(uid, project_id, item_type, item_id) → boolean` (owner OR scope='all' OR row in `project_shared_items`).
-
-**RLS updates**
-- `project_templates`: SELECT allowed if owner or collaborator; UPDATE/DELETE owner-only.
-- `project_tasks` & `notes`: SELECT/UPDATE/DELETE allowed if the row is visible via `can_see_item` and the caller has editor+ rights for writes. INSERT allowed for owner and editors with scope='all' (selected-scope editors can insert; new rows are auto-shared by trigger).
-- `project_collaborators` & `project_shared_items`: owner can manage all; collaborator can read their own row.
-- `project_invites`: owner manages; token lookup handled by a security-definer RPC (`accept_invite(token)`) so pending invites aren't publicly listable.
-
-**Realtime**
-- `ALTER PUBLICATION supabase_realtime ADD TABLE` for `project_tasks`, `notes`, `project_collaborators`, `project_shared_items`, `project_templates`.
-- Client subscribes inside a `useEffect` in the project data hook and refetches on change events. Cleanup on unmount.
-
-**Frontend**
-- New `ShareProjectDialog` (invite link generator + item picker + collaborator list + revoke).
-- New `/join/:token` route → calls `accept_invite` RPC → routes to project.
-- Data hooks (`useProjects`, `useTasks`, `useNotes`) fetch owned + shared rows, add realtime subscription, and expose per-project role so UI can disable write actions for Viewers.
-- Delete/edit controls on tasks & notes gated by role.
-
-### 5. Out of scope for this pass
-
-- Email notifications on invite/revoke.
-- Per-item role overrides (all collaborator items inherit the collaborator's role).
-- Presence indicators / cursors.
-- Transferring ownership.
+Confirm and I'll implement.
