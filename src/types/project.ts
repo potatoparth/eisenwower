@@ -37,6 +37,7 @@ export interface PresetTask {
   category?: string;
   dueDate?: string;
   dueTime?: string;
+  noteTitle?: string;
   attachments?: TaskAttachment[];
 }
 
