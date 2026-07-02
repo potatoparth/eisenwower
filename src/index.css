@@ -469,3 +469,8 @@ body.sprint-immersive header [role="combobox"] {
 body.sprint-immersive header button {
   color: rgba(255, 255, 255, 0.85);
 }
+/* When a sprint media background is active, hide the app-level light/dark
+   toggle — the media dictates contrast and switching theme is jarring. */
+body.sprint-immersive header [data-theme-toggle] {
+  display: none !important;
+}
