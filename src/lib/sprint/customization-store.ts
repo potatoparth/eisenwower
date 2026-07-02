@@ -199,7 +199,11 @@ function metaFromCache(): BgMeta | null {
   const presetId = readPresetId();
   const preset = presetById(presetId);
   if (preset && !prefs.activeUploadId && !prefs.youtubeUrl) {
-    return { type: "image", mime: "image/jpeg", name: preset.name };
+    return {
+      type: preset.type === "video" ? "video" : "image",
+      mime: preset.mime ?? (preset.type === "video" ? "video/mp4" : "image/jpeg"),
+      name: preset.name,
+    };
   }
   if (prefs.activeUploadId) {
     const u = uploads.find((x) => x.id === prefs.activeUploadId);

@@ -326,11 +326,29 @@ export function CustomizeModal({ open, onClose }: Props) {
                       }}
                     >
                       <img
-                        src={p.url}
+                        src={p.poster ?? p.url}
                         alt={p.name}
                         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                         loading="lazy"
                       />
+                      {p.type === "video" && (
+                        <div
+                          className="font-mono uppercase"
+                          style={{
+                            position: "absolute",
+                            bottom: 4,
+                            left: 4,
+                            fontSize: 9,
+                            letterSpacing: "0.1em",
+                            padding: "2px 6px",
+                            borderRadius: 999,
+                            background: "rgba(0,0,0,0.6)",
+                            color: "rgba(255,255,255,0.95)",
+                          }}
+                        >
+                          ▶ Video
+                        </div>
+                      )}
                     </button>
                     <button
                       onClick={async (e) => {

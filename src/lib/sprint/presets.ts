@@ -18,11 +18,19 @@ import duskSea from "@/assets/presets/pexels-wewe-yang-2383099-5116972.jpg.asset
 import autumnRoad from "@/assets/presets/pexels-taakill-5690519.jpg.asset.json";
 import blueRidge from "@/assets/presets/pexels-dreamypixel-552784.jpg.asset.json";
 import autumnCanopy from "@/assets/presets/pexels-markp-1671230.jpg.asset.json";
+import starrySky from "@/assets/presets/pexels-dennisariel-7373530.jpg.asset.json";
+import whiteBeach from "@/assets/presets/pexels-elly-mar-tamayor-939226503-34098196.jpg.asset.json";
+import loneTree from "@/assets/presets/pexels-jplenio-1642770.jpg.asset.json";
+import starfieldVideo from "@/assets/presets/starfield-loop.mp4.asset.json";
+import starfieldPoster from "@/assets/presets/starfield-poster.jpg.asset.json";
 
 export interface Preset {
   id: string;
   name: string;
   url: string;
+  type?: "image" | "video";
+  poster?: string;
+  mime?: string;
 }
 
 export const PRESETS: Preset[] = [
@@ -46,6 +54,17 @@ export const PRESETS: Preset[] = [
   { id: "autumn-road", name: "Autumn Road", url: autumnRoad.url },
   { id: "blue-ridge", name: "Blue Ridge", url: blueRidge.url },
   { id: "autumn-canopy", name: "Autumn Canopy", url: autumnCanopy.url },
+  { id: "starry-sky", name: "Starry Sky", url: starrySky.url },
+  { id: "white-beach", name: "White Beach", url: whiteBeach.url },
+  { id: "lone-tree", name: "Lone Tree", url: loneTree.url },
+  {
+    id: "starfield-loop",
+    name: "Starfield (Video)",
+    url: starfieldVideo.url,
+    type: "video",
+    mime: "video/mp4",
+    poster: starfieldPoster.url,
+  },
 ];
 
 export const presetById = (id: string | null) =>
