@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import {
@@ -26,6 +26,8 @@ interface DateTimePickerProps {
   className?: string;
   defaultTime?: string; // "HH:MM"
   id?: string;
+  leadingIcon?: ReactNode;
+  hideLabelOnMobile?: boolean;
 }
 
 const DOW = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -94,6 +96,8 @@ export function DateTimePicker({
   className,
   defaultTime = "22:00",
   id,
+  leadingIcon,
+  hideLabelOnMobile = false,
 }: DateTimePickerProps) {
   const parsed = useMemo(() => parseValue(value), [value]);
   const [open, setOpen] = useState(false);
@@ -457,12 +461,13 @@ export function DateTimePicker({
       id={id}
       type="button"
       className={cn(
-        "w-full text-left rounded-lg bg-secondary/60 px-3 h-9 text-sm border border-transparent hover:border-border transition-colors",
+        "w-full text-left rounded-lg bg-secondary/60 px-3 h-9 text-sm border border-transparent hover:border-border transition-colors inline-flex items-center gap-1.5",
         !parsed && "text-muted-foreground/70",
         className
       )}
     >
-      {triggerLabel}
+      {leadingIcon}
+      <span className={cn(hideLabelOnMobile && "hidden sm:inline")}>{triggerLabel}</span>
     </button>
   );
 
