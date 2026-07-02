@@ -112,7 +112,7 @@ export function NotesView(props: NotesViewProps) {
               />
             </div>
           ) : (
-            <div className="relative flex h-[50px] w-full max-w-xl items-center rounded-full border border-border/60 bg-secondary/40 px-5">
+            <div className="relative flex h-12 w-full max-w-xl items-center rounded-full border border-border/60 bg-secondary/40 px-5">
               {searchOpen ? (
                 <Input
                   ref={searchInputRef}
