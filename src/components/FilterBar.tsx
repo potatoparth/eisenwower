@@ -145,11 +145,14 @@ export function FilterBar(p: FilterBarProps) {
       className="flex items-center gap-1.5 overflow-x-auto scrollbar-none"
       style={{ scrollbarWidth: "none" }}
     >
-      <Pill active={p.dateFilter === "all"} onClick={() => p.onDateFilterChange("all")}>All</Pill>
-      <Pill active={p.dateFilter === "today"} onClick={() => p.onDateFilterChange("today")}>Today</Pill>
-      <Pill active={p.dateFilter === "week"} onClick={() => p.onDateFilterChange("week")}>This Week</Pill>
-
-      {divider}
+      {!p.notesMode && (
+        <>
+          <Pill active={p.dateFilter === "all"} onClick={() => p.onDateFilterChange("all")}>All</Pill>
+          <Pill active={p.dateFilter === "today"} onClick={() => p.onDateFilterChange("today")}>Today</Pill>
+          <Pill active={p.dateFilter === "week"} onClick={() => p.onDateFilterChange("week")}>This Week</Pill>
+          {divider}
+        </>
+      )}
 
       {p.categories.length > 0 && (
         <Popover>
@@ -276,22 +279,26 @@ export function FilterBar(p: FilterBarProps) {
         );
       })()}
 
-      {divider}
+      {!p.notesMode && (
+        <>
+          {divider}
 
-      <OverdueButton mode={p.overdueMode} onChange={p.onOverdueModeChange} />
+          <OverdueButton mode={p.overdueMode} onChange={p.onOverdueModeChange} />
 
-      <Pill
-        onClick={() =>
-          p.onNoDatePositionChange(p.noDatePosition === "top" ? "bottom" : "top")
-        }
-      >
-        No-date: {p.noDatePosition}
-        <ChevronDown className="w-3 h-3 opacity-70" />
-      </Pill>
+          <Pill
+            onClick={() =>
+              p.onNoDatePositionChange(p.noDatePosition === "top" ? "bottom" : "top")
+            }
+          >
+            No-date: {p.noDatePosition}
+            <ChevronDown className="w-3 h-3 opacity-70" />
+          </Pill>
+        </>
+      )}
 
       <div className="flex-1" />
 
-      {p.onCompactModeChange && (
+      {!p.notesMode && p.onCompactModeChange && (
         <Pill
           active={!!p.compactMode}
           onClick={() => p.onCompactModeChange?.(!p.compactMode)}
