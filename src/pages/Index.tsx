@@ -76,7 +76,7 @@ const Index = () => {
 
   const {
     projects, addProject, updateProject, deleteProject,
-    addTaskToProject, updateProjectTask, deleteProjectTask,
+    addTaskToProject, updateProjectTask, deleteProjectTask, getProjectRole,
   } = useProjects(currentUser?.id);
 
   const { notes, addNote, updateNote, deleteNote } = useNotes(currentUser?.id);
@@ -385,6 +385,7 @@ const Index = () => {
                 onDeleteNote={deleteNote}
                 onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
                 onRescheduleTasks={handleRescheduleTasks}
+                getProjectRole={getProjectRole}
               />
             </motion.div>
           )}
