@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pin, PinOff, Trash2, Palette, FolderKanban, Tag, ListChecks, Search, X } from "lucide-react";
+import { Pin, PinOff, Trash2, Palette, FolderKanban, Tag, ListChecks, Search, X, StickyNote } from "lucide-react";
 import { Note, NOTE_COLORS, noteColorFor } from "@/types/note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +54,7 @@ export function NotesView(props: NotesViewProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [composing, setComposing] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const editingNote = useMemo(
     () => (editingId ? notes.find((n) => n.id === editingId) ?? null : null),
@@ -93,49 +94,60 @@ export function NotesView(props: NotesViewProps) {
     <div className="flex-1 min-h-0 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-1 pb-8">
         <div ref={composerWrapRef} className="pt-4 pb-2 flex justify-center">
-          <div className="grid w-full max-w-xl grid-cols-[minmax(0,1fr)_2.5rem] items-start gap-2">
-            <div className="min-w-0">
-              {searchOpen ? (
-                <div className="relative flex h-[50px] w-full items-center rounded-full border border-border/60 bg-secondary/40 px-5">
-                  <Input
-                    ref={searchInputRef}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); }
-                    }}
-                    placeholder="Search notes..."
-                    className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                  />
-                </div>
-              ) : (
-                <div className="[&>div]:pt-0 [&>div]:pb-0 [&>div]:flex [&>div]:justify-stretch">
-                  <NoteComposer
-                    categories={categories}
-                    projects={projects}
-                    defaultCategory={defaultCategory}
-                    defaultProjectId={defaultProjectId}
-                    onCreateCategory={onCreateCategory}
-                    onCreateProject={onCreateProject}
-                    onAddNote={onAddNote}
-                    onUpdateNote={onUpdateNote}
-                    editingNote={editingNote}
-                    onCancelEdit={() => setEditingId(null)}
-                    dark={dark}
-                  />
-                </div>
-              )}
+          {composing || editingNote ? (
+            <div className="w-full max-w-xl [&>div]:pt-0 [&>div]:pb-0">
+              <NoteComposer
+                categories={categories}
+                projects={projects}
+                defaultCategory={defaultCategory}
+                defaultProjectId={defaultProjectId}
+                onCreateCategory={onCreateCategory}
+                onCreateProject={onCreateProject}
+                onAddNote={(opts) => { const n = onAddNote(opts); setComposing(false); return n; }}
+                onUpdateNote={onUpdateNote}
+                editingNote={editingNote}
+                onCancelEdit={() => { setEditingId(null); setComposing(false); }}
+                dark={dark}
+                autoOpen
+              />
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full mt-0"
-              onClick={() => (searchOpen ? (setSearchOpen(false), setSearchQuery("")) : setSearchOpen(true))}
-              title={searchOpen ? "Close search" : "Search notes"}
-            >
-              {searchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
-            </Button>
-          </div>
+          ) : (
+            <div className="relative flex h-[50px] w-full max-w-xl items-center rounded-full border border-border/60 bg-secondary/40 px-5">
+              {searchOpen ? (
+                <Input
+                  ref={searchInputRef}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); } }}
+                  placeholder="Search notes..."
+                  className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setComposing(true)}
+                  className="flex h-full min-w-0 flex-1 items-center text-left text-sm text-muted-foreground/80"
+                >
+                  <span aria-hidden className="flex h-8 w-8 items-center justify-center text-muted-foreground/60 -ml-2 mr-1">
+                    <StickyNote className="w-4 h-4" strokeWidth={1.75} />
+                  </span>
+                  <span className="flex-1 truncate">Add a new note...</span>
+                </button>
+              )}
+              <div className="ml-2 -mr-2 flex h-full flex-shrink-0 items-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => (searchOpen ? (setSearchOpen(false), setSearchQuery("")) : setSearchOpen(true))}
+                  className="h-8 w-8 rounded-full"
+                  title={searchOpen ? "Close search" : "Search notes"}
+                  aria-pressed={searchOpen}
+                >
+                  {searchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {pinned.length > 0 && (
