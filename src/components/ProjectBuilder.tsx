@@ -391,6 +391,17 @@ export function ProjectBuilder({
           </DialogContent>
         </Dialog>
       )}
+
+      {selectedProject && isOwner && (
+        <ShareProjectDialog
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          project={selectedProject}
+          projectTasks={selectedProject.tasks}
+          matrixTasks={mappedTasks}
+          notes={mappedNotes}
+        />
+      )}
     </div>
   );
 }
