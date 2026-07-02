@@ -407,7 +407,7 @@ function MiniBar({
   onPlayPause: () => void; onExpand: () => void; onIcon: () => void;
 }) {
   const pos: React.CSSProperties = isMobile
-    ? { top: 10, left: 10, right: 10 }
+    ? { top: 72, left: 12, right: 12 }
     : { bottom: 20, right: 20, width: 320 };
   return (
     <div
@@ -465,7 +465,9 @@ function MiniBar({
 }
 
 function IconButton({ isMobile, onClick }: { isMobile: boolean; onClick: () => void }) {
-  const pos: React.CSSProperties = isMobile ? { top: 14, right: 14 } : { bottom: 24, right: 24 };
+  const pos: React.CSSProperties = isMobile
+    ? { bottom: "calc(min(34vh, 300px) + 8px)", left: "50%", transform: "translateX(-50%)" }
+    : { bottom: 24, right: 24 };
   return (
     <div className="fixed" style={{ ...pos, zIndex: 55 }}>
       <button
