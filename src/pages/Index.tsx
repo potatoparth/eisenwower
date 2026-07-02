@@ -424,6 +424,10 @@ const Index = () => {
                 onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
                 onRescheduleTasks={handleRescheduleTasks}
                 getProjectRole={getProjectRole}
+                templatePresets={templatePresets}
+                onAddPreset={addPreset}
+                onUpdatePreset={updatePreset}
+                onDeletePreset={deletePreset}
               />
             </motion.div>
           )}
