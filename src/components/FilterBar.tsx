@@ -29,6 +29,8 @@ interface FilterBarProps {
   compactMode?: boolean;
   onCompactModeChange?: (v: boolean) => void;
   showProjectsFilter?: boolean;
+  /** In notes mode only Project + Category filters are shown. */
+  notesMode?: boolean;
 }
 
 /** Spec-locked pill base. Light/dark-aware via CSS vars; falls back to spec hex. */
