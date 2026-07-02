@@ -460,7 +460,7 @@ function NoteCard(props: CardProps) {
       layout
       initial={false}
       className="mb-3 break-inside-avoid rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow group cursor-pointer"
-      style={{ backgroundColor: bg }}
+      style={{ backgroundColor: bg, ["--note-bg" as any]: bg }}
       onClick={(e) => {
         const el = e.target as HTMLElement;
         if (el.closest("button, a, input, textarea, [role='dialog'], [data-radix-popper-content-wrapper]")) return;
