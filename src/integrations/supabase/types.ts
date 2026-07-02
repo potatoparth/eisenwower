@@ -140,6 +140,132 @@ export type Database = {
         }
         Relationships: []
       }
+      project_collaborators: {
+        Row: {
+          created_at: string
+          id: string
+          invited_by: string
+          project_id: string
+          role: Database["public"]["Enums"]["project_share_role"]
+          scope: Database["public"]["Enums"]["project_share_scope"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_by: string
+          project_id: string
+          role?: Database["public"]["Enums"]["project_share_role"]
+          scope?: Database["public"]["Enums"]["project_share_scope"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_by?: string
+          project_id?: string
+          role?: Database["public"]["Enums"]["project_share_role"]
+          scope?: Database["public"]["Enums"]["project_share_scope"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_collaborators_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          item_ids: Json
+          project_id: string
+          revoked_at: string | null
+          role: Database["public"]["Enums"]["project_share_role"]
+          scope: Database["public"]["Enums"]["project_share_scope"]
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          created_by: string
+          expires_at?: string
+          id?: string
+          item_ids?: Json
+          project_id: string
+          revoked_at?: string | null
+          role: Database["public"]["Enums"]["project_share_role"]
+          scope: Database["public"]["Enums"]["project_share_scope"]
+          token: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          item_ids?: Json
+          project_id?: string
+          revoked_at?: string | null
+          role?: Database["public"]["Enums"]["project_share_role"]
+          scope?: Database["public"]["Enums"]["project_share_scope"]
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_invites_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_shared_items: {
+        Row: {
+          collaborator_user_id: string
+          created_at: string
+          id: string
+          item_id: string
+          item_type: Database["public"]["Enums"]["project_share_item_type"]
+          project_id: string
+        }
+        Insert: {
+          collaborator_user_id: string
+          created_at?: string
+          id?: string
+          item_id: string
+          item_type: Database["public"]["Enums"]["project_share_item_type"]
+          project_id: string
+        }
+        Update: {
+          collaborator_user_id?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_type?: Database["public"]["Enums"]["project_share_item_type"]
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_shared_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_tasks: {
         Row: {
           created_at: string
@@ -446,10 +572,67 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      accept_project_invite: {
+        Args: { _token: string }
+        Returns: {
+          project_id: string
+          role: string
+          scope: string
+        }[]
+      }
+      can_edit_project: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_view_project_item: {
+        Args: {
+          _item_id: string
+          _item_type: Database["public"]["Enums"]["project_share_item_type"]
+          _project_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      get_project_invite_preview: {
+        Args: { _token: string }
+        Returns: {
+          already_member: boolean
+          already_owner: boolean
+          expires_at: string
+          inviter_name: string
+          project_id: string
+          project_name: string
+          revoked: boolean
+          role: string
+          scope: string
+        }[]
+      }
+      is_project_owner: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
+      list_project_collaborators: {
+        Args: { _project_id: string }
+        Returns: {
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          role: string
+          scope: string
+          user_id: string
+        }[]
+      }
+      project_role: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "user"
+      project_share_item_type: "task" | "note"
+      project_share_role: "editor" | "viewer"
+      project_share_scope: "all" | "selected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -578,6 +761,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      project_share_item_type: ["task", "note"],
+      project_share_role: ["editor", "viewer"],
+      project_share_scope: ["all", "selected"],
     },
   },
 } as const
