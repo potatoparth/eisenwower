@@ -186,7 +186,7 @@ interface ComposerProps {
   dark: boolean;
 }
 
-function NoteComposer(props: ComposerProps) {
+export function NoteComposer(props: ComposerProps) {
   const isEditing = !!props.editingNote;
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
