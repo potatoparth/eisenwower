@@ -29,7 +29,7 @@ interface KanbanViewProps {
   boards: KanbanBoard[];
   columnsByBoard: Record<string, KanbanColumn[]>;
   itemsByBoard: Record<string, KanbanBoardItem[]>;
-  onCreateBoard: (name: string, columnTitles: string[]) => Promise<string | undefined>;
+  onCreateBoard: (name: string, columnTitles: string[]) => Promise<{ boardId: string; columnKeys: string[] } | undefined>;
   onRenameBoard: (boardId: string, name: string) => void;
   onDeleteBoard: (boardId: string) => void;
   onAddColumn: (boardId: string, title: string) => void;
@@ -171,8 +171,8 @@ export function KanbanView({
   const handleCreateBoard = async () => {
     const cols = newBoardCols.map(c => c.trim()).filter(Boolean);
     if (!cols.length) return;
-    const id = await onCreateBoard(newBoardName.trim() || "Untitled board", cols);
-    if (id) setActiveBoardId(id);
+    const res = await onCreateBoard(newBoardName.trim() || "Untitled board", cols);
+    if (res) setActiveBoardId(res.boardId);
     setShowNewBoard(false);
     setNewBoardName("");
     setNewBoardCols(["To Do", "Doing", "Done"]);
