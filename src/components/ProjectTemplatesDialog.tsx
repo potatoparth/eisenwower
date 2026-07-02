@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, ArrowUp, ArrowDown, Save, X, LayoutTemplate, Target, Tag, CalendarClock, FileText, Check } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Save, X, LayoutTemplate, Target, Tag, Clock, FileText, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -315,9 +315,9 @@ function PresetTaskRow({ task, index, total, categories, onPatch, onRemove, onMo
         value={task.dueDate}
         onChange={(v) => onPatch({ dueDate: v })}
         placeholder="Deadline"
-        leadingIcon={<CalendarClock className="w-3.5 h-3.5 shrink-0" />}
+        leadingIcon={<Clock className="w-3.5 h-3.5 shrink-0" />}
         hideLabelOnMobile
-        className="!w-auto !h-7 !px-2 !text-xs !bg-transparent hover:!bg-secondary !border !border-transparent hover:!border-border !rounded-md"
+        className="!w-auto !h-7 !px-2 !gap-1 !text-xs !bg-transparent hover:!bg-secondary !border-0 !rounded-md !text-foreground"
       />
 
       {/* Description */}
