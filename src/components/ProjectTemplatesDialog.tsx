@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { ProjectTemplatePreset, PresetTask } from "@/types/project";
 import { QUADRANTS, Quadrant } from "@/types/task";
 import { DateTimePicker } from "@/components/DateTimePicker";
+import { TaskDescription } from "@/components/TaskDescription";
 import { format, parseISO } from "date-fns";
 
 interface Props {
@@ -208,9 +209,6 @@ function PresetTaskRow({ task, index, total, categories, onPatch, onRemove, onMo
   const quadrant = QUADRANTS.find(q => q.id === task.quadrant);
   const [catQuery, setCatQuery] = useState("");
   const filteredCats = categories.filter(c => c.toLowerCase().includes(catQuery.toLowerCase()));
-  const dueLabel = task.dueDate
-    ? (() => { try { return format(parseISO(task.dueDate.length === 10 ? task.dueDate + "T00:00:00" : task.dueDate), "MMM d"); } catch { return "Due"; } })()
-    : null;
 
   return (
     <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5">
@@ -311,26 +309,12 @@ function PresetTaskRow({ task, index, total, categories, onPatch, onRemove, onMo
       </Popover>
 
       {/* Deadline */}
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button size="sm" variant="ghost" className="h-7 px-2 gap-1 text-xs" title="Deadline">
-            <CalendarClock className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{dueLabel || <span className="text-muted-foreground">Deadline</span>}</span>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-3" align="start">
-          <DateTimePicker
-            value={task.dueDate}
-            onChange={(v) => onPatch({ dueDate: v })}
-          />
-          {task.dueDate && (
-            <button
-              onClick={() => onPatch({ dueDate: undefined, dueTime: undefined })}
-              className="w-full text-xs text-muted-foreground hover:text-foreground px-2 py-1.5 text-left mt-2"
-            >Clear</button>
-          )}
-        </PopoverContent>
-      </Popover>
+      <DateTimePicker
+        value={task.dueDate}
+        onChange={(v) => onPatch({ dueDate: v })}
+        placeholder="Deadline"
+        className="!w-auto !h-7 !px-2 !text-xs !bg-transparent hover:!bg-secondary !border !border-transparent hover:!border-border !rounded-md"
+      />
 
       {/* Description */}
       <Popover>
@@ -339,13 +323,12 @@ function PresetTaskRow({ task, index, total, categories, onPatch, onRemove, onMo
             <FileText className="w-3.5 h-3.5" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-72 p-2" align="end">
-          <Textarea
-            placeholder="Notes (optional)"
+        <PopoverContent className="w-96 p-3" align="end">
+          <TaskDescription
             value={task.description || ""}
-            onChange={(e) => onPatch({ description: e.target.value })}
-            rows={4}
-            className="text-xs"
+            onChange={(v) => onPatch({ description: v })}
+            alwaysOpen
+            placeholder="Notes (optional)"
           />
         </PopoverContent>
       </Popover>
