@@ -282,6 +282,7 @@ export async function deleteUpload(id: string): Promise<void> {
 }
 
 export async function setActiveUpload(id: string | null): Promise<void> {
+  if (id) writePresetId(null);
   await upsertPreferences({ activeUploadId: id, youtubeUrl: id ? "" : cache.prefs.youtubeUrl });
   const u = id ? cache.uploads.find((x) => x.id === id) : null;
   cache = { ...cache, activeUrl: u ? await signUrl(u.storagePath) : null };
