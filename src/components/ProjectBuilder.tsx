@@ -266,7 +266,7 @@ export function ProjectBuilder({
               {onAddNote && (
                 <div className="mb-3 grid w-full grid-cols-[minmax(0,1fr)_2.5rem_2.5rem] items-center gap-2">
                   <div className="min-w-0">
-                    <div className="relative flex h-[50px] w-full items-center rounded-full border border-border/60 bg-secondary/40 px-5">
+                    <div className="relative mx-auto flex h-12 w-full max-w-2xl items-center rounded-full border border-border/60 bg-secondary/40 px-5">
                       {noteSearchMode ? (
                         <NoteSearchInput
                           value={noteQuery}
