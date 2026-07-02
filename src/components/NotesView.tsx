@@ -460,7 +460,7 @@ function NoteCard(props: CardProps) {
       layout
       initial={false}
       className="mb-3 break-inside-avoid rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow group cursor-pointer"
-      style={{ backgroundColor: bg }}
+      style={{ backgroundColor: bg, ["--note-bg" as any]: bg }}
       onClick={(e) => {
         const el = e.target as HTMLElement;
         if (el.closest("button, a, input, textarea, [role='dialog'], [data-radix-popper-content-wrapper]")) return;
@@ -472,10 +472,13 @@ function NoteCard(props: CardProps) {
           <div className="flex-1 min-w-0">
             <div>
               {note.title && (
-                <div className="font-semibold text-sm mb-1 break-words">{note.title}</div>
+                <div className="font-semibold text-sm mb-1 break-words line-clamp-2">{note.title}</div>
               )}
               {note.content ? (
-                <NotePreview text={note.content} />
+                <div className="relative max-h-40 overflow-hidden">
+                  <NotePreview text={note.content} />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-[var(--note-bg,transparent)] to-transparent" />
+                </div>
               ) : !note.title && (!note.attachments || note.attachments.length === 0) ? (
                 <div className="text-sm text-muted-foreground italic">Empty note</div>
               ) : null}
