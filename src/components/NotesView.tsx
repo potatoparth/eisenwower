@@ -361,7 +361,7 @@ export function NoteComposer(props: ComposerProps) {
                 onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
                 maxLength={MAX_TITLE}
                 placeholder="Title"
-                className="border-0 bg-transparent focus-visible:ring-0 px-0 text-lg font-semibold h-8 placeholder:text-muted-foreground/60"
+                className="border-0 bg-transparent outline-none shadow-none ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none px-0 text-lg font-semibold h-8 placeholder:text-muted-foreground/60"
               />
               <TaskDescription
                 value={content}
