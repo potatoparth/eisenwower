@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Settings2, Clock } from "lucide-react";
+import { Settings2, Clock, Music2 } from "lucide-react";
 import type { Sprint, SprintTask } from "@/lib/sprint/sprint-store";
 import { ThemeToggle } from "./ThemeToggle";
 import { AmbientBackground } from "./AmbientBackground";
@@ -8,6 +8,8 @@ import { SpotifyPlayer } from "./SpotifyPlayer";
 import { CustomizeModal } from "./CustomizeModal";
 import { useBackground } from "@/lib/sprint/customization-store";
 import { useSpotifyUrl } from "@/lib/sprint/customization-store";
+import { SPOTIFY_OPEN_EVENT } from "./SpotifyPlayer";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Props {
   sprint: Sprint;
@@ -170,6 +172,7 @@ export function FocusMode({ sprint, onUpdate, onExit, onComplete }: Props) {
   const { enabled: bgEnabled } = useBackground();
   const spotifyUrl = useSpotifyUrl();
   const hasCustomMedia = bgEnabled; // custom bg or youtube counts as bgEnabled
+  const isMobile = useIsMobile();
   const muted = bgEnabled ? "rgba(255,255,255,0.72)" : "rgba(255,255,255,0.3)";
   const veryMuted = bgEnabled ? "rgba(255,255,255,0.56)" : "rgba(255,255,255,0.2)";
   // When a custom media background is active, force dark-theme text so it stays
@@ -214,6 +217,25 @@ export function FocusMode({ sprint, onUpdate, onExit, onComplete }: Props) {
             >
               <Settings2 className="h-3.5 w-3.5" />
             </button>
+            {isMobile && spotifyUrl && (
+              <button
+                onClick={() => window.dispatchEvent(new Event(SPOTIFY_OPEN_EVENT))}
+                style={
+                  bgEnabled
+                    ? { color: "rgba(255,255,255,0.85)", borderColor: "rgba(255,255,255,0.35)" }
+                    : undefined
+                }
+                className={`grid h-7 w-7 place-items-center rounded-full border transition ${
+                  bgEnabled
+                    ? ""
+                    : "border-[color:var(--sp-border)] text-[color:var(--sp-muted-foreground)] hover:text-[color:var(--sp-foreground)]"
+                }`}
+                aria-label="Open music player"
+                title="Music"
+              >
+                <Music2 className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
 
           <div className="flex items-center justify-center gap-2">

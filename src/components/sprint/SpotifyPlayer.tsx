@@ -8,6 +8,7 @@ const HEIGHT_KEY = "lockin.spotify.height";
 const THEME_KEY = "lockin.spotify.theme";
 const MODE_KEY = "lockin.spotify.mode";
 const POS_KEY = "lockin.spotify.pos";
+export const SPOTIFY_OPEN_EVENT = "lockin.spotify.open";
 
 type PlayerTheme = "dark" | "light";
 type Mode = "expanded" | "mini" | "icon";
@@ -70,6 +71,13 @@ export function SpotifyPlayer() {
     localStorage.setItem(MODE_KEY, mode);
   }, [mode]);
 
+  // External open trigger (from FocusMode top-bar button on mobile)
+  useEffect(() => {
+    const h = () => setMode(lastOpenMode.current);
+    window.addEventListener(SPOTIFY_OPEN_EVENT, h);
+    return () => window.removeEventListener(SPOTIFY_OPEN_EVENT, h);
+  }, []);
+
   const [width, setWidth] = useState<number>(() => {
     if (typeof window === "undefined") return DEFAULT_WIDTH;
     const stored = Number(localStorage.getItem(WIDTH_KEY));
@@ -103,9 +111,14 @@ export function SpotifyPlayer() {
 
   useEffect(() => {
     if (pos || typeof window === "undefined") return;
-    const x = window.innerWidth - width - 20;
-    const y = window.innerHeight - height - 90;
-    setPos({ x: Math.max(8, x), y: Math.max(8, y) });
+    const isSmall = window.innerWidth < 768;
+    if (isSmall) {
+      setPos({ x: 8, y: 70 });
+    } else {
+      const x = window.innerWidth - width - 20;
+      const y = window.innerHeight - height - 90;
+      setPos({ x: Math.max(8, x), y: Math.max(8, y) });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -392,8 +405,8 @@ export function SpotifyPlayer() {
         />
       )}
 
-      {/* Icon */}
-      {mode === "icon" && (
+      {/* Icon (desktop only — mobile trigger lives in FocusMode top bar) */}
+      {mode === "icon" && !isMobile && (
         <IconButton isMobile={isMobile} onClick={() => setMode(lastOpenMode.current)} />
       )}
     </>
