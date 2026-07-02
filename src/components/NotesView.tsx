@@ -242,11 +242,12 @@ interface ComposerProps {
   editingNote?: Note | null;
   onCancelEdit?: () => void;
   dark: boolean;
+  autoOpen?: boolean;
 }
 
 export function NoteComposer(props: ComposerProps) {
   const isEditing = !!props.editingNote;
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!props.autoOpen);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
