@@ -4,7 +4,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Maximize2, ChevronDown, ChevronUp } from "lucide-react";
+import { Maximize2, ChevronDown, ChevronUp, CheckSquare } from "lucide-react";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import type { TaskAddOptions, TaskInputPickerProps } from "@/components/TaskInput";
@@ -57,10 +57,6 @@ export function QuadrantColumn({
 
   const openTasks = tasks.filter((t) => t.status === "open");
   const doneTasks = tasks.filter((t) => t.status === "done");
-  const allOpenSelected =
-    !!selection &&
-    openTasks.length > 0 &&
-    openTasks.every((t) => selection.has(t.id));
 
   const quadClass =
     quadrant.color === 1
@@ -132,6 +128,24 @@ export function QuadrantColumn({
           >
             {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
+          {selection && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                selection.toggleSelectMode();
+              }}
+              className={cn(
+                "p-1 rounded-lg hover:bg-card/50 transition-colors",
+                selection.selectMode
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              title={selection.selectMode ? "Exit select mode" : "Select tasks"}
+              aria-pressed={selection.selectMode}
+            >
+              <CheckSquare className="w-3.5 h-3.5" />
+            </button>
+          )}
           {onExpand && (
             <button
               onClick={(e) => {
@@ -152,24 +166,6 @@ export function QuadrantColumn({
 
       {/* Task Input */}
       <div className="px-2 sm:px-3 pb-2 flex-shrink-0">
-        {selection?.selectMode && openTasks.length > 0 && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (allOpenSelected) {
-                openTasks.forEach((t) => {
-                  if (selection.has(t.id)) selection.toggle(t.id);
-                });
-              } else {
-                selection.selectMany(openTasks.map((t) => t.id));
-              }
-            }}
-            className="mb-2 w-full text-[11px] font-medium px-2 py-1.5 rounded-lg bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {allOpenSelected ? "Deselect all" : `Select all (${openTasks.length})`}
-          </button>
-        )}
         <TaskInput
           onAddTask={onAddTask}
           defaultQuadrant={quadrant.id}
