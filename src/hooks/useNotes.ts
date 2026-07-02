@@ -29,8 +29,9 @@ export function useNotes(userId?: string) {
 
   const load = useCallback(async () => {
     if (!userId) { setNotes([]); return; }
+    // RLS returns own notes + notes on projects shared with the user.
     const { data } = await supabase
-      .from("notes").select("*").eq("user_id", userId)
+      .from("notes").select("*")
       .order("pinned", { ascending: false })
       .order("sort_order", { ascending: true })
       .order("updated_at", { ascending: false });
@@ -41,9 +42,11 @@ export function useNotes(userId?: string) {
 
   useEffect(() => {
     if (!userId) return;
+    // No user_id filter — collaborators receive events for shared notes too.
+    // RLS restricts what a subsequent load returns.
     const channel = supabase
       .channel(`notes-${userId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "notes", filter: `user_id=eq.${userId}` }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "notes" }, load)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [userId, load]);
@@ -97,12 +100,12 @@ export function useNotes(userId?: string) {
     if (updates.pinned !== undefined) payload.pinned = updates.pinned;
     if (updates.sortOrder !== undefined) payload.sort_order = updates.sortOrder;
     if (updates.attachments !== undefined) payload.attachments = JSON.parse(JSON.stringify(updates.attachments)) as Json;
-    supabase.from("notes").update(payload).eq("id", id).eq("user_id", userId).then(({ error }) => { if (error) load(); });
+    supabase.from("notes").update(payload).eq("id", id).then(({ error }) => { if (error) load(); });
   }, [userId, load]);
 
   const deleteNote = useCallback((id: string) => {
     setNotes((prev) => prev.filter((n) => n.id !== id));
-    if (userId) supabase.from("notes").delete().eq("id", id).eq("user_id", userId).then(({ error }) => { if (error) load(); });
+    if (userId) supabase.from("notes").delete().eq("id", id).then(({ error }) => { if (error) load(); });
   }, [userId, load]);
 
   return { notes, addNote, updateNote, deleteNote };
