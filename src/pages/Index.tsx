@@ -174,6 +174,14 @@ const Index = () => {
     return <LoginPage needsSetup={needsSetup} onLogin={login} onSignup={signup} onGoogleLogin={loginWithGoogle} />;
   }
 
+  // After sign-in, honor any pending join-project redirect saved on the join page.
+  const pendingJoin = typeof window !== "undefined" ? sessionStorage.getItem("post_login_redirect") : null;
+  if (pendingJoin) {
+    sessionStorage.removeItem("post_login_redirect");
+    window.location.replace(pendingJoin);
+    return null;
+  }
+
   const fontSizeClass = settings.fontSize === "small" ? "text-xs" : settings.fontSize === "large" ? "text-base" : "text-sm";
 
   const viewAnimation = { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -10 }, transition: { duration: 0.2 } };
