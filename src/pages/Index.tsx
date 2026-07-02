@@ -291,6 +291,7 @@ const Index = () => {
             compactMode={compactMode}
             onCompactModeChange={viewMode === "matrix" ? setCompactMode : undefined}
             showProjectsFilter={viewMode !== "projects"}
+            notesMode={viewMode === "notes"}
           />
           </div>
         )}
