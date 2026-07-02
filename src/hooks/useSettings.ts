@@ -144,15 +144,49 @@ function applyQuadrantColors(settings: AppSettings) {
   const primary = settings.primaryColor;
   if (primary) {
     const hsl = hexToHSL(primary);
+    // Derived tokens
+    const parts = hsl.split(" "); // "H S% L%"
+    const h = parts[0];
+    const s = parts[1];
+    const l = parseInt((parts[2] || "50%").replace("%", ""), 10);
+    const accentBgLight = `${h} ${s} 95%`;
+    const accentFgLight = `${h} ${s} 35%`;
+    const accentBgDark = `${h} ${s} 20%`;
+    const accentFgDark = `${h} ${s} 80%`;
+    const isDark = document.documentElement.classList.contains("dark");
+    const accentBg = isDark ? accentBgDark : accentBgLight;
+    const accentFg = isDark ? accentFgDark : accentFgLight;
+    const primaryGlow = `${h} ${s} ${Math.min(l + 15, 90)}%`;
+    const primaryForeground = l > 60 ? "0 0% 8%" : "0 0% 100%";
+
     root.style.setProperty("--primary", hsl);
+    root.style.setProperty("--primary-foreground", primaryForeground);
+    root.style.setProperty("--primary-glow", primaryGlow);
     root.style.setProperty("--ring", hsl);
+    root.style.setProperty("--accent", accentBg);
+    root.style.setProperty("--accent-foreground", accentFg);
     root.style.setProperty("--sidebar-primary", hsl);
+    root.style.setProperty("--sidebar-primary-foreground", primaryForeground);
     root.style.setProperty("--sidebar-ring", hsl);
+    root.style.setProperty("--sidebar-accent", accentBg);
+    root.style.setProperty("--sidebar-accent-foreground", accentFg);
+    // Sprint scope
+    root.style.setProperty("--sp-ring", `hsl(${hsl})`);
+    root.style.setProperty("--sp-accent-glow", `hsla(${h}, ${s}, ${l}%, 0.18)`);
   } else {
     root.style.removeProperty("--primary");
+    root.style.removeProperty("--primary-foreground");
+    root.style.removeProperty("--primary-glow");
     root.style.removeProperty("--ring");
+    root.style.removeProperty("--accent");
+    root.style.removeProperty("--accent-foreground");
     root.style.removeProperty("--sidebar-primary");
+    root.style.removeProperty("--sidebar-primary-foreground");
     root.style.removeProperty("--sidebar-ring");
+    root.style.removeProperty("--sidebar-accent");
+    root.style.removeProperty("--sidebar-accent-foreground");
+    root.style.removeProperty("--sp-ring");
+    root.style.removeProperty("--sp-accent-glow");
   }
 
   // Apply per-theme accent overrides
