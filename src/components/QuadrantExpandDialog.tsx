@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { X, CheckSquare } from "lucide-react";
 import { Task, QuadrantInfo, Quadrant } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import type { TaskAddOptions, TaskInputPickerProps } from "@/components/TaskInput";
@@ -6,6 +6,7 @@ import { TaskCard } from "./TaskCard";
 import { TaskInput } from "./TaskInput";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useSelectionOptional } from "@/hooks/useSelection";
 
 interface QuadrantExpandDialogProps {
   quadrant: QuadrantInfo;
@@ -46,6 +47,7 @@ export function QuadrantExpandDialog({
 }: QuadrantExpandDialogProps) {
   const openTasks = tasks.filter(t => t.status === "open");
   const doneTasks = tasks.filter(t => t.status === "done");
+  const selection = useSelectionOptional();
 
   const getDotClass = () => {
     const dots = { 1: "bg-quadrant-1", 2: "bg-quadrant-2", 3: "bg-quadrant-3", 4: "bg-quadrant-4" };
@@ -73,18 +75,32 @@ export function QuadrantExpandDialog({
         style={bottomSheet ? { borderTop: `3px solid ${accentVar}` } : undefined}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between p-4 border-b gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <span className={cn("w-3 h-3 rounded-full", getDotClass())} />
             <h2 className="font-semibold text-lg text-foreground">{quadrant.title}</h2>
             {quadrant.subtitle && (
-              <span className="text-sm text-muted-foreground">— {quadrant.subtitle}</span>
+              <span className="hidden sm:inline text-sm text-muted-foreground truncate">— {quadrant.subtitle}</span>
             )}
-            <span className="text-xs text-muted-foreground ml-2">{openTasks.length} open</span>
+            <span className="text-xs text-muted-foreground ml-2 shrink-0">{openTasks.length} open</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClose} className="rounded-lg">
-            <X className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-1 shrink-0">
+            {selection && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={selection.toggleSelectMode}
+                className={cn("rounded-lg", selection.selectMode && "text-primary")}
+                title={selection.selectMode ? "Exit select mode" : "Select tasks"}
+                aria-pressed={selection.selectMode}
+              >
+                <CheckSquare className="w-4 h-4" />
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" onClick={onClose} className="rounded-lg">
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Input */}
