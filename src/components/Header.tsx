@@ -13,6 +13,7 @@ interface HeaderProps {
   onSettingsClick?: () => void;
   onLogout?: () => void;
   enabledViews?: Partial<Record<ViewMode, boolean>>;
+  username?: string;
 }
 
 const VIEW_OPTIONS: { id: ViewMode; label: string; icon: React.ElementType }[] = [
@@ -26,7 +27,7 @@ const VIEW_OPTIONS: { id: ViewMode; label: string; icon: React.ElementType }[] =
   { id: "sprint", label: "Sprint", icon: Timer },
 ];
 
-export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, enabledViews }: HeaderProps) {
+export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, enabledViews, username }: HeaderProps) {
   const { selectMode, toggleSelectMode, count } = useSelection();
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== "undefined") {
@@ -55,8 +56,22 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, 
     <motion.header
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center justify-end gap-3 py-3 px-4 md:px-6 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40"
+      className="flex items-center justify-between gap-3 py-3 px-4 md:px-6 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40"
     >
+      <div className="flex items-center gap-2 min-w-0">
+        <span
+          className="text-lg md:text-xl font-semibold tracking-tight text-foreground select-none"
+          style={{ fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif', letterSpacing: "-0.02em" }}
+        >
+          Weizen
+        </span>
+        {username && (
+          <>
+            <span className="text-muted-foreground/60 text-lg">|</span>
+            <span className="text-sm text-muted-foreground truncate max-w-[180px]">{username}</span>
+          </>
+        )}
+      </div>
       <div className="flex items-center gap-1">
         <Select value={viewMode} onValueChange={(v) => onViewModeChange(v as ViewMode)}>
           <SelectTrigger className="h-9 rounded-xl w-[140px]">
