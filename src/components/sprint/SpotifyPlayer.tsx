@@ -263,7 +263,8 @@ export function SpotifyPlayer() {
     : expandedMobile
     ? {
         position: "fixed",
-        top: 10, left: 10, right: 10,
+        top: activePos.y, left: activePos.x,
+        width: Math.min(width, (typeof window !== "undefined" ? window.innerWidth - 16 : width)),
         height: Math.min(height, (typeof window !== "undefined" ? window.innerHeight - 40 : height)),
         zIndex: 50,
         borderRadius: 16, overflow: "hidden",
@@ -346,10 +347,35 @@ export function SpotifyPlayer() {
 
       {/* Expanded mobile chrome */}
       {expandedMobile && (
-        <div className="fixed" style={{ top: 18, right: 18, zIndex: 55, display: "flex", gap: 6 }}>
-          <button onClick={() => setPlayerTheme(nextTheme())} style={iconBtn} aria-label="Theme"><Palette size={14} /></button>
-          <button onClick={() => setMode("mini")} style={iconBtn} aria-label="Minimize"><Minimize2 size={14} /></button>
-          <button onClick={() => setMode("icon")} style={iconBtn} aria-label="Hide"><X size={14} /></button>
+        <div
+          className="fixed"
+          style={{
+            top: activePos.y,
+            left: activePos.x,
+            width: Math.min(width, (typeof window !== "undefined" ? window.innerWidth - 16 : width)),
+            height: Math.min(height, (typeof window !== "undefined" ? window.innerHeight - 40 : height)),
+            zIndex: 55,
+            pointerEvents: "none",
+          }}
+        >
+          <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 6, pointerEvents: "auto" }}>
+            <button onClick={() => setPlayerTheme(nextTheme())} style={iconBtn} aria-label="Theme"><Palette size={14} /></button>
+            <button onClick={() => setMode("mini")} style={iconBtn} aria-label="Minimize"><Minimize2 size={14} /></button>
+            <button onClick={() => setMode("icon")} style={iconBtn} aria-label="Hide"><X size={14} /></button>
+          </div>
+          {/* Drag handle across the top strip */}
+          <div
+            onPointerDown={(e) => {
+              (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+              dragRef.current = {
+                startX: e.clientX, startY: e.clientY,
+                startPosX: activePos.x, startPosY: activePos.y,
+              };
+              document.body.style.userSelect = "none";
+            }}
+            style={{ position: "absolute", top: 0, left: 0, right: 120, height: 28, cursor: "grab", pointerEvents: "auto", touchAction: "none" }}
+            title="Drag to move"
+          />
         </div>
       )}
 
