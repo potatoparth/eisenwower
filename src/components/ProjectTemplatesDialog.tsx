@@ -315,6 +315,8 @@ function PresetTaskRow({ task, index, total, categories, onPatch, onRemove, onMo
         value={task.dueDate}
         onChange={(v) => onPatch({ dueDate: v })}
         placeholder="Deadline"
+        leadingIcon={<CalendarClock className="w-3.5 h-3.5 shrink-0" />}
+        hideLabelOnMobile
         className="!w-auto !h-7 !px-2 !text-xs !bg-transparent hover:!bg-secondary !border !border-transparent hover:!border-border !rounded-md"
       />
 
@@ -334,9 +336,12 @@ function PresetTaskRow({ task, index, total, categories, onPatch, onRemove, onMo
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-96 p-3 space-y-3" align="end">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <FileText className="w-3.5 h-3.5" /> Notes
-          </div>
+          <Input
+            placeholder="Note title"
+            value={task.noteTitle || ""}
+            onChange={(e) => onPatch({ noteTitle: e.target.value })}
+            className="h-9 font-semibold"
+          />
           <TaskDescription
             value={task.description || ""}
             onChange={(v) => onPatch({ description: v })}
