@@ -26,6 +26,52 @@ interface Props {
   onClose: () => void;
 }
 
+/* -------- Recommended links (curated) -------- */
+const YT_RECOMMENDED: { url: string; label: string }[] = [
+  { url: "https://www.youtube.com/watch?v=sLCh68VXxIg", label: "Lofi Pokémon" },
+  { url: "https://www.youtube.com/watch?v=-iVACinS6EY", label: "Lofi Pokémon II" },
+  { url: "https://www.youtube.com/watch?v=4VXErA63_eg", label: "Hans Zimmer Focus" },
+];
+const SPOTIFY_RECOMMENDED: { url: string; label: string }[] = [
+  { url: "https://open.spotify.com/playlist/37i9dQZF1DX8NTLI2TtZa6", label: "Deep Focus" },
+  { url: "https://open.spotify.com/playlist/2l9ZVHXeSDabJI5jx6UN6j", label: "Study Mix" },
+  { url: "https://open.spotify.com/album/3SU6xTHJfl7WkFDl1C9eAn", label: "Interstellar OST" },
+];
+
+/* -------- Recent links (per-device localStorage) -------- */
+const YT_RECENT_KEY = "sprint.recent.youtube";
+const SPOTIFY_RECENT_KEY = "sprint.recent.spotify";
+const MAX_RECENT = 5;
+
+function readRecent(key: string): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string").slice(0, MAX_RECENT) : [];
+  } catch {
+    return [];
+  }
+}
+function pushRecent(key: string, value: string) {
+  if (typeof window === "undefined") return;
+  const v = value.trim();
+  if (!v) return;
+  const cur = readRecent(key).filter((u) => u !== v);
+  const next = [v, ...cur].slice(0, MAX_RECENT);
+  window.localStorage.setItem(key, JSON.stringify(next));
+}
+
+function ytThumb(url: string): string | null {
+  const m = url.match(/[?&]v=([A-Za-z0-9_-]{6,})/) ?? url.match(/youtu\.be\/([A-Za-z0-9_-]{6,})/);
+  return m ? `https://img.youtube.com/vi/${m[1]}/mqdefault.jpg` : null;
+}
+function shortSpotify(url: string): string {
+  const m = url.match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(playlist|album|track)\/([A-Za-z0-9]+)/);
+  return m ? `${m[1]}/${m[2].slice(0, 6)}…` : url;
+}
+
 export function CustomizeModal({ open, onClose }: Props) {
   const { theme } = useTheme();
   const isLight = theme === "light";
@@ -39,6 +85,8 @@ export function CustomizeModal({ open, onClose }: Props) {
   const [showPresets, setShowPresets] = useState(false);
   const [presetId, setPresetId] = useState<string | null>(null);
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
+  const [ytRecent, setYtRecent] = useState<string[]>([]);
+  const [spotifyRecent, setSpotifyRecent] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const { uploads, activeUploadId, usedBytes } = useUploads();
 
@@ -53,6 +101,8 @@ export function CustomizeModal({ open, onClose }: Props) {
     setYtErr(null);
     setPresetId(getActivePresetId());
     setHiddenIds(getHiddenPresetIds());
+    setYtRecent(readRecent(YT_RECENT_KEY));
+    setSpotifyRecent(readRecent(SPOTIFY_RECENT_KEY));
   }, [open]);
 
   useEffect(() => {
