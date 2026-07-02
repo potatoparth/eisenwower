@@ -243,33 +243,7 @@ export function FocusMode({ sprint, onUpdate, onExit, onComplete }: Props) {
                 >
                   <Clock className="h-3.5 w-3.5" />
                 </button>
-                {timerHidden ? (
-                  <span
-                    className="font-mono uppercase select-none"
-                    style={{
-                      fontSize: 11,
-                      letterSpacing: "0.15em",
-                      color: mutedText,
-                      opacity: 0.55,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                    title="Sprint still running"
-                  >
-                    <span
-                      aria-hidden
-                      className={paused ? "" : "animate-pulse"}
-                      style={{
-                        width: 5,
-                        height: 5,
-                        borderRadius: 999,
-                        background: "currentColor",
-                      }}
-                    />
-                    {paused ? "Paused" : "Running"}
-                  </span>
-                ) : (
+                {!timerHidden && (
                   <>
                     <button
                       onClick={() => extendTime(-5)}
