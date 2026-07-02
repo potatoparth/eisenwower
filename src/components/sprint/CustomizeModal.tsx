@@ -9,7 +9,6 @@ import {
   setBgEnabled,
   getSpotifyUrl,
   setSpotifyUrl,
-  toSpotifyEmbed,
   useUploads,
   setActiveUpload,
   deleteUpload,
@@ -114,7 +113,25 @@ export function CustomizeModal({ open, onClose }: Props) {
   const border = isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)";
   const inputBg = isLight ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.04)";
 
-  const spotifyValid = spotify.trim() === "" || !!toSpotifyEmbed(spotify);
+  const isYoutubeComUrl = (v: string) => {
+    try {
+      const u = new URL(v.trim());
+      const host = u.hostname.replace(/^www\.|^m\./, "");
+      return host === "youtube.com";
+    } catch {
+      return false;
+    }
+  };
+  const isSpotifyPlaylistUrl = (v: string) => {
+    try {
+      const u = new URL(v.trim());
+      const host = u.hostname.replace(/^www\./, "");
+      return host === "open.spotify.com" && /^\/(intl-[a-z]+\/)?playlist\/[A-Za-z0-9]+/.test(u.pathname);
+    } catch {
+      return false;
+    }
+  };
+  const spotifyPlaylistValid = spotify.trim() === "" || isSpotifyPlaylistUrl(spotify);
 
   return (
     <div
@@ -445,7 +462,7 @@ export function CustomizeModal({ open, onClose }: Props) {
           {/* YouTube link */}
           <div style={{ marginTop: 18, paddingTop: 16, borderTop: `0.5px solid ${border}` }}>
             <div style={{ fontSize: 12, color: sub, marginBottom: 8 }}>
-              …or paste a YouTube link (muted, looped, ad-free not guaranteed):
+              …or paste a youtube.com link (muted, looped, ad-free not guaranteed):
             </div>
             <input
               type="text"
@@ -460,10 +477,16 @@ export function CustomizeModal({ open, onClose }: Props) {
                   setEnabled(false);
                   return;
                 }
+                if (!isYoutubeComUrl(v)) {
+                  setYtErr("Only youtube.com URLs are supported.");
+                  return;
+                }
                 const id = parseYouTubeId(v);
                 if (id) {
                   const m = await saveYouTubeBackground(v);
                   if (m) { setMeta(m); setEnabled(true); }
+                } else {
+                  setYtErr("Couldn't find a video ID in that link.");
                 }
               }}
               placeholder="https://youtube.com/watch?v=..."
@@ -471,7 +494,7 @@ export function CustomizeModal({ open, onClose }: Props) {
                 width: "100%",
                 padding: "10px 14px",
                 borderRadius: 100,
-                border: `0.5px solid ${border}`,
+                border: `0.5px solid ${ytErr ? "rgba(255,80,80,0.4)" : border}`,
                 background: inputBg,
                 color: fg,
                 fontSize: 13,
@@ -489,7 +512,7 @@ export function CustomizeModal({ open, onClose }: Props) {
             Spotify
           </div>
           <p style={{ fontSize: 13, color: sub, marginBottom: 14 }}>
-            Paste a Spotify playlist, album, or track link. It appears in the corner during focus mode.
+            Paste an open.spotify.com playlist link. It appears in the corner during focus mode.
           </p>
           <input
             type="text"
@@ -497,23 +520,23 @@ export function CustomizeModal({ open, onClose }: Props) {
             onChange={(e) => {
               const v = e.target.value;
               setSpotify(v);
-              if (v.trim() === "" || toSpotifyEmbed(v)) setSpotifyUrl(v.trim());
+              if (v.trim() === "" || isSpotifyPlaylistUrl(v)) setSpotifyUrl(v.trim());
             }}
             placeholder="https://open.spotify.com/playlist/..."
             style={{
               width: "100%",
               padding: "10px 14px",
               borderRadius: 100,
-              border: `0.5px solid ${spotifyValid ? border : "rgba(255,80,80,0.4)"}`,
+              border: `0.5px solid ${spotifyPlaylistValid ? border : "rgba(255,80,80,0.4)"}`,
               background: inputBg,
               color: fg,
               fontSize: 13,
               outline: "none",
             }}
           />
-          {!spotifyValid && (
+          {!spotifyPlaylistValid && (
             <div style={{ fontSize: 12, color: "rgb(255,120,120)", marginTop: 6 }}>
-              Not a valid Spotify link.
+              Only open.spotify.com/playlist links are supported.
             </div>
           )}
         </section>
