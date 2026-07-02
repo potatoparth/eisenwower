@@ -91,7 +91,8 @@ export function useTasks(userId?: string) {
 
   const loadTasks = useCallback(async () => {
     if (!userId) { setTasksState([]); return; }
-    const { data } = await supabase.from("tasks").select("*").eq("user_id", userId).order("sort_order", { ascending: true }).order("created_at", { ascending: false });
+    // RLS returns own tasks + tasks on shared projects the user can see.
+    const { data } = await supabase.from("tasks").select("*").order("sort_order", { ascending: true }).order("created_at", { ascending: false });
     setTasksState(((data || []) as TaskRow[]).map(fromRow));
   }, [userId]);
 
@@ -99,7 +100,8 @@ export function useTasks(userId?: string) {
 
   useEffect(() => {
     if (!userId) return;
-    const channel = supabase.channel(`tasks-${userId}`).on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: `user_id=eq.${userId}` }, loadTasks).subscribe();
+    // Broad subscription so shared-task changes reach collaborators too.
+    const channel = supabase.channel(`tasks-${userId}`).on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, loadTasks).subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [userId, loadTasks]);
 
@@ -165,7 +167,7 @@ export function useTasks(userId?: string) {
       });
     });
     if (userId) {
-      supabase.from("tasks").update(toUpdate(updates)).eq("id", id).eq("user_id", userId).then(({ error }) => { if (error) loadTasks(); });
+      supabase.from("tasks").update(toUpdate(updates)).eq("id", id).then(({ error }) => { if (error) loadTasks(); });
       if (propagateIds.length) {
         const propagateUpdates: Partial<Omit<Task, "id" | "createdAt">> = {
           name: updates.name, description: updates.description, category: updates.category,
@@ -179,7 +181,7 @@ export function useTasks(userId?: string) {
         ) as Record<string, unknown>;
         if (Object.keys(payload).length) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          supabase.from("tasks").update(payload as any).in("id", propagateIds).eq("user_id", userId).then(({ error }) => { if (error) loadTasks(); });
+          supabase.from("tasks").update(payload as any).in("id", propagateIds).then(({ error }) => { if (error) loadTasks(); });
         }
       }
     }
@@ -193,12 +195,12 @@ export function useTasks(userId?: string) {
       });
     }
     setTasksState(prev => prev.filter(task => !ids.includes(task.id)));
-    if (userId) supabase.from("tasks").delete().in("id", ids).eq("user_id", userId).then(({ error }) => { if (error) loadTasks(); });
+    if (userId) supabase.from("tasks").delete().in("id", ids).then(({ error }) => { if (error) loadTasks(); });
   }, [userId, tasks, loadTasks]);
 
   const setTasks = useCallback((reordered: Task[]) => {
     setTasksState(reordered);
-    if (userId) reordered.forEach((task, index) => supabase.from("tasks").update({ sort_order: index }).eq("id", task.id).eq("user_id", userId));
+    if (userId) reordered.forEach((task, index) => supabase.from("tasks").update({ sort_order: index }).eq("id", task.id));
   }, [userId]);
 
   const moveTask = useCallback((id: string, quadrant: Quadrant) => updateTask(id, { quadrant }), [updateTask]);
