@@ -10,6 +10,11 @@ import {
   getSpotifyUrl,
   setSpotifyUrl,
   toSpotifyEmbed,
+  useUploads,
+  setActiveUpload,
+  deleteUpload,
+  MAX_UPLOADS,
+  MAX_TOTAL_BYTES,
   type BgMeta,
 } from "@/lib/sprint/customization-store";
 import { useTheme } from "@/lib/sprint/theme-store";
@@ -30,6 +35,7 @@ export function CustomizeModal({ open, onClose }: Props) {
   const [ytInput, setYtInput] = useState("");
   const [ytErr, setYtErr] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const { uploads, activeUploadId, usedBytes } = useUploads();
 
   useEffect(() => {
     if (!open) return;
@@ -52,9 +58,9 @@ export function CustomizeModal({ open, onClose }: Props) {
       setErr("Please choose an image or video file.");
       return;
     }
-    // ~200MB cap for IndexedDB sanity
-    if (f.size > 200 * 1024 * 1024) {
-      setErr("File too large (max 200MB).");
+    // Per-file safety cap (50MB total is enforced server-side).
+    if (f.size > MAX_TOTAL_BYTES) {
+      setErr(`File too large (max ${Math.round(MAX_TOTAL_BYTES / 1024 / 1024)}MB).`);
       return;
     }
     setBusy(true);
@@ -62,10 +68,12 @@ export function CustomizeModal({ open, onClose }: Props) {
       const m = await saveBackground(f);
       setMeta(m);
       setEnabled(true);
-    } catch {
-      setErr("Failed to save file.");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Failed to save file.";
+      setErr(msg);
     } finally {
       setBusy(false);
+      if (fileRef.current) fileRef.current.value = "";
     }
   };
 
@@ -128,65 +136,96 @@ export function CustomizeModal({ open, onClose }: Props) {
             Upload a photo or video as your focus background. Stored on this device only.
           </p>
 
-          {meta ? (
-            <div
-              style={{
-                border: `0.5px solid ${border}`,
-                borderRadius: 12,
-                padding: 12,
-                marginBottom: 12,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: 12,
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13, color: fg }} className="truncate">
-                  {meta.type === "video" ? "🎬" : "🖼"} {meta.name}
-                </div>
-                <div style={{ fontSize: 11, color: sub }}>{enabled ? "Active" : "Disabled"}</div>
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  onClick={handleToggle}
-                  className="font-mono uppercase"
-                  style={{
-                    fontSize: 11,
-                    letterSpacing: "0.1em",
-                    padding: "6px 12px",
-                    borderRadius: 100,
-                    border: `0.5px solid ${border}`,
-                    background: enabled ? (isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.08)") : "transparent",
-                    color: fg,
-                    cursor: "pointer",
-                  }}
-                >
-                  {enabled ? "On" : "Off"}
-                </button>
-                <button
-                  onClick={handleClear}
-                  className="font-mono uppercase"
-                  style={{
-                    fontSize: 11,
-                    letterSpacing: "0.1em",
-                    padding: "6px 12px",
-                    borderRadius: 100,
-                    border: "0.5px solid rgba(255,80,80,0.25)",
-                    background: "transparent",
-                    color: "rgba(255,100,100,0.75)",
-                    cursor: "pointer",
-                  }}
-                >
-                  Remove
-                </button>
-              </div>
+          {/* Uploads list (per-user, max 3 / 50MB) */}
+          {uploads.length > 0 && (
+            <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+              {uploads.map((u) => {
+                const isActive = u.id === activeUploadId;
+                const mb = (u.size / (1024 * 1024)).toFixed(1);
+                return (
+                  <div
+                    key={u.id}
+                    style={{
+                      border: `0.5px solid ${isActive ? (isLight ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.35)") : border}`,
+                      borderRadius: 12,
+                      padding: 10,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 10,
+                      background: isActive ? (isLight ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.03)") : "transparent",
+                    }}
+                  >
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 13, color: fg }} className="truncate">
+                        {u.mime.startsWith("video") ? "🎬" : "🖼"} {u.name}
+                      </div>
+                      <div style={{ fontSize: 11, color: sub }}>
+                        {mb} MB{isActive ? " · Active" : ""}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button
+                        onClick={async () => {
+                          await setActiveUpload(isActive ? null : u.id);
+                          setMeta(getBgMeta());
+                          setEnabled(getBgEnabled());
+                        }}
+                        className="font-mono uppercase"
+                        style={{
+                          fontSize: 10, letterSpacing: "0.1em",
+                          padding: "5px 10px", borderRadius: 100,
+                          border: `0.5px solid ${border}`,
+                          background: "transparent", color: fg, cursor: "pointer",
+                        }}
+                      >
+                        {isActive ? "Deselect" : "Use"}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await deleteUpload(u.id);
+                          setMeta(getBgMeta());
+                          setEnabled(getBgEnabled());
+                        }}
+                        className="font-mono uppercase"
+                        style={{
+                          fontSize: 10, letterSpacing: "0.1em",
+                          padding: "5px 10px", borderRadius: 100,
+                          border: "0.5px solid rgba(255,80,80,0.25)",
+                          background: "transparent", color: "rgba(255,100,100,0.75)", cursor: "pointer",
+                        }}
+                        aria-label="Delete upload"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ) : null}
+          )}
+
+          {meta && (
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+              <button
+                onClick={handleToggle}
+                className="font-mono uppercase"
+                style={{
+                  fontSize: 11, letterSpacing: "0.1em",
+                  padding: "6px 12px", borderRadius: 100,
+                  border: `0.5px solid ${border}`,
+                  background: enabled ? (isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.08)") : "transparent",
+                  color: fg, cursor: "pointer",
+                }}
+              >
+                Background {enabled ? "On" : "Off"}
+              </button>
+            </div>
+          )}
 
           <button
             onClick={() => fileRef.current?.click()}
-            disabled={busy}
+            disabled={busy || uploads.length >= MAX_UPLOADS}
             style={{
               width: "100%",
               padding: "12px",
@@ -195,11 +234,20 @@ export function CustomizeModal({ open, onClose }: Props) {
               background: inputBg,
               color: fg,
               fontSize: 13,
-              cursor: busy ? "wait" : "pointer",
+              cursor: busy ? "wait" : uploads.length >= MAX_UPLOADS ? "not-allowed" : "pointer",
+              opacity: uploads.length >= MAX_UPLOADS ? 0.5 : 1,
             }}
           >
-            {busy ? "Saving…" : meta ? "Replace file" : "Upload photo or video"}
+            {busy
+              ? "Uploading…"
+              : uploads.length >= MAX_UPLOADS
+              ? `Limit reached (${MAX_UPLOADS} files)`
+              : "Upload photo or video"}
           </button>
+          <div style={{ fontSize: 11, color: sub, marginTop: 6, textAlign: "right" }}>
+            {uploads.length} / {MAX_UPLOADS} files · {(usedBytes / (1024 * 1024)).toFixed(1)} /{" "}
+            {Math.round(MAX_TOTAL_BYTES / 1024 / 1024)} MB
+          </div>
           <input
             ref={fileRef}
             type="file"
