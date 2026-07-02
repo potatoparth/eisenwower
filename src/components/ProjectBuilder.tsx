@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { type TaskAddOptions, type TaskInputPickerProps } from "@/components/TaskInput";
 import { TaskActionBar } from "@/components/TaskActionBar";
+import { NoteComposer } from "@/components/NotesView";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -22,7 +24,9 @@ interface ProjectBuilderProps {
   projects: ProjectTemplate[];
   allTasks?: Task[];
   allNotes?: Note[];
-  onSelectNote?: (note: Note) => void;
+  onAddNote?: (options?: Partial<Note>) => Note | null;
+  onUpdateNote?: (id: string, updates: Partial<Note>) => void;
+  onDeleteNote?: (id: string) => void;
   onAddProject: (name: string, description?: string) => ProjectTemplate;
   onUpdateProject: (id: string, updates: Partial<Omit<ProjectTemplate, "id" | "createdAt">>) => void;
   onDeleteProject: (id: string) => void;
@@ -41,19 +45,28 @@ interface ProjectBuilderProps {
 }
 
 export function ProjectBuilder({
-  projects, allTasks = [], allNotes = [], onAddProject, onUpdateProject, onDeleteProject,
+  projects, allTasks = [], allNotes = [], onAddNote, onUpdateNote, onDeleteNote,
+  onAddProject, onUpdateProject, onDeleteProject,
   onAddTask, onUpdateTask, onDeleteTask,
   onAddMatrixTask, quadrants, categories = [], onCreateCategory, onCreateProject,
-  onSelectTask, onSelectNote, onDeleteAllDone, onRescheduleTasks,
+  onSelectTask, onDeleteAllDone, onRescheduleTasks,
 }: ProjectBuilderProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDesc, setNewProjectDesc] = useState("");
   const [showNewProject, setShowNewProject] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [composerMode, setComposerMode] = useState<"create" | "edit">("create");
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const mappedTasks = selectedProject ? allTasks.filter(t => t.projectId === selectedProject.id) : [];
   const mappedNotes = selectedProject ? allNotes.filter(n => n.projectId === selectedProject.id) : [];
+  const editingNote = editingNoteId ? mappedNotes.find(n => n.id === editingNoteId) ?? null : null;
+
+  const openCreateNote = () => { setEditingNoteId(null); setComposerMode("create"); setComposerOpen(true); };
+  const openEditNote = (n: Note) => { setEditingNoteId(n.id); setComposerMode("edit"); setComposerOpen(true); };
+  const closeComposer = () => { setComposerOpen(false); setEditingNoteId(null); };
 
   const handleCreateProject = () => {
     if (!newProjectName.trim()) return;
