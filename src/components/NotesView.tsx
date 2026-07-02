@@ -338,14 +338,14 @@ export function NoteComposer(props: ComposerProps) {
       <div
         ref={containerRef}
         className={cn(
-          "w-full max-w-xl rounded-2xl border border-border shadow-sm transition-shadow overflow-hidden",
+          "w-full max-w-xl rounded-2xl border border-border shadow-sm transition-shadow",
           open && "shadow-lg"
         )}
         style={{ backgroundColor: bg }}
       >
         {!open ? (
           <button
-            className="w-full text-left px-4 py-3 text-sm text-muted-foreground"
+            className="w-full text-left px-4 py-3 text-sm text-muted-foreground rounded-2xl"
             onClick={() => setOpen(true)}
           >
             Take a note…
@@ -353,9 +353,9 @@ export function NoteComposer(props: ComposerProps) {
         ) : (
           <div className="flex flex-col">
             {/* Body */}
-            <div className="px-4 pt-4 pb-3 space-y-3">
+            <div className="px-4 pt-4 pb-3 space-y-3 rounded-t-2xl overflow-hidden">
               <div
-                className="sticky top-0 z-20 -mx-4 px-4 pt-1 pb-1"
+                className="sticky -top-4 z-20 -mx-4 px-4 pt-4 pb-1 rounded-t-2xl"
                 style={{ backgroundColor: bg }}
               >
                 <Input
@@ -386,7 +386,7 @@ export function NoteComposer(props: ComposerProps) {
             </div>
 
             {/* Footer bar */}
-            <div className="px-3 py-2.5 bg-muted/40 border-t border-border/60 flex items-center gap-2">
+            <div className="px-3 py-2.5 bg-muted/40 border-t border-border/60 flex items-center gap-2 rounded-b-2xl">
               <div className="flex items-center gap-1 flex-wrap">
                 <SelectorWithCreate
                   options={catOptions}
