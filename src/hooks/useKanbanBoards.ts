@@ -60,7 +60,7 @@ export function useKanbanBoards(userId?: string) {
     if (error || !data) { toast({ title: "Couldn't create board" }); return; }
     const boardId = data.id;
     const cols = titles.map((t, idx) => ({
-      board_id: boardId, column_key: crypto.randomUUID(), title: t, sort_order: idx,
+      user_id: userId, board_id: boardId, column_key: crypto.randomUUID(), title: t, sort_order: idx,
     }));
     await supabase.from("kanban_columns").insert(cols);
     await load();
@@ -83,12 +83,13 @@ export function useKanbanBoards(userId?: string) {
       toast({ title: `Max ${MAX_KANBAN_COLUMNS_PER_BOARD} columns per board` });
       return;
     }
+    if (!userId) return;
     await supabase.from("kanban_columns").insert({
-      board_id: boardId, column_key: crypto.randomUUID(), title: title.trim() || "Untitled",
-      sort_order: cols.length,
+      user_id: userId, board_id: boardId, column_key: crypto.randomUUID(),
+      title: title.trim() || "Untitled", sort_order: cols.length,
     });
     await load();
-  }, [columnsByBoard, load]);
+  }, [columnsByBoard, load, userId]);
 
   const renameColumn = useCallback(async (boardId: string, columnKey: string, title: string) => {
     setColumnsByBoard(prev => ({
