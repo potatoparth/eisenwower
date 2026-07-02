@@ -55,7 +55,7 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, 
     <motion.header
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center justify-between gap-3 py-3 px-4 md:px-6 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40"
+      className="relative flex items-center justify-between gap-3 py-3 px-4 md:px-6 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40"
     >
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <span
@@ -70,6 +70,29 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, 
             <span className="hidden sm:inline text-sm text-muted-foreground truncate min-w-0">{username}</span>
           </>
         )}
+      </div>
+      {/* Desktop: horizontal segmented toggle, absolutely centered */}
+      <div className="hidden md:inline-flex absolute left-1/2 -translate-x-1/2 items-center gap-0.5 p-1 rounded-xl bg-secondary">
+        {visibleViews.map((v) => {
+          const Icon = v.icon;
+          const active = v.id === viewMode;
+          return (
+            <button
+              key={v.id}
+              onClick={() => onViewModeChange(v.id)}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 flex items-center gap-1.5",
+                active
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              aria-pressed={active}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{v.label}</span>
+            </button>
+          );
+        })}
       </div>
       <div className="flex items-center gap-1 shrink-0">
         {/* Mobile: dropdown */}
@@ -96,30 +119,6 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, 
             </SelectContent>
           </Select>
         </div>
-        {/* Desktop: horizontal segmented toggle */}
-        <div className="hidden md:inline-flex items-center gap-0.5 p-1 rounded-xl bg-secondary">
-          {visibleViews.map((v) => {
-            const Icon = v.icon;
-            const active = v.id === viewMode;
-            return (
-              <button
-                key={v.id}
-                onClick={() => onViewModeChange(v.id)}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 flex items-center gap-1.5",
-                  active
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                aria-pressed={active}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{v.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
         <Button variant="ghost" size="icon" onClick={() => setIsDark(!isDark)} className="rounded-xl w-9 h-9 sm:w-10 sm:h-10">
           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </Button>
