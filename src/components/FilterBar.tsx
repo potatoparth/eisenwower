@@ -119,6 +119,8 @@ function OverdueButton({
 export function FilterBar(p: FilterBarProps) {
   const [catSearch, setCatSearch] = useState("");
   const [projSearch, setProjSearch] = useState("");
+  const isMobile = useIsMobile();
+  const asButton = isMobile || p.displayMode === "button";
   const toggleCat = (c: string) => {
     if (p.selectedCategories.includes(c)) {
       p.onSelectedCategoriesChange(p.selectedCategories.filter((x) => x !== c));
@@ -143,7 +145,13 @@ export function FilterBar(p: FilterBarProps) {
     <span className="w-px h-5 bg-border shrink-0" aria-hidden />
   );
 
-  return (
+  const activeCount =
+    (!p.notesMode && p.dateFilter !== "all" ? 1 : 0) +
+    (p.selectedCategories.length > 0 ? 1 : 0) +
+    (activeIds.length > 0 ? 1 : 0) +
+    (!p.notesMode && p.overdueMode !== "all" ? 1 : 0);
+
+  const pillsRow = (
     <div
       className="flex items-center gap-1.5 overflow-x-auto scrollbar-none"
       style={{ scrollbarWidth: "none" }}
@@ -311,6 +319,138 @@ export function FilterBar(p: FilterBarProps) {
           <LayoutGrid className="w-3.5 h-3.5" />
         </Pill>
       )}
+    </div>
+  );
+
+  if (!asButton) return pillsRow;
+
+  // Button (collapsed) mode: single Filters trigger opens a popover with all controls stacked.
+  return (
+    <div className="flex items-center gap-2">
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className={cn(pillBase, activeCount > 0 ? pillActive : pillIdle)}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            Filters{activeCount > 0 ? ` · ${activeCount}` : ""}
+            <ChevronDown className="w-3 h-3 opacity-70" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-[min(92vw,20rem)] p-3 space-y-3 max-h-[70vh] overflow-y-auto">
+          {!p.notesMode && (
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-medium text-muted-foreground">Timeframe</p>
+              <div className="flex flex-wrap gap-1.5">
+                <Pill active={p.dateFilter === "all"} onClick={() => p.onDateFilterChange("all")}>All</Pill>
+                <Pill active={p.dateFilter === "today"} onClick={() => p.onDateFilterChange("today")}>Today</Pill>
+                <Pill active={p.dateFilter === "week"} onClick={() => p.onDateFilterChange("week")}>This Week</Pill>
+              </div>
+            </div>
+          )}
+
+          {p.categories.length > 0 && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-medium text-muted-foreground">
+                  Category{p.selectedCategories.length > 0 ? ` · ${p.selectedCategories.length}` : ""}
+                </p>
+                {p.selectedCategories.length > 0 && (
+                  <button
+                    className="text-[11px] text-muted-foreground hover:text-foreground"
+                    onClick={() => p.onSelectedCategoriesChange([])}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div className="max-h-40 overflow-y-auto space-y-1 border border-border rounded-md p-1">
+                {p.categories.map((c) => {
+                  const color = p.getCategoryColor?.(c);
+                  const checked = p.selectedCategories.includes(c);
+                  return (
+                    <label key={c} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary cursor-pointer text-sm">
+                      <Checkbox checked={checked} onCheckedChange={() => toggleCat(c)} />
+                      {color && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />}
+                      <span className="flex-1 truncate">{c}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {p.projects && p.onActiveProjectIdsChange && p.showProjectsFilter !== false && (() => {
+            const available = p.availableProjectIds;
+            const visibleProjects = available ? p.projects.filter((pr) => available.includes(pr.id)) : p.projects;
+            const showNone = p.hasNoProjectOption !== false;
+            return (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-medium text-muted-foreground">{projectLabel}</p>
+                  {activeIds.length > 0 && (
+                    <button
+                      className="text-[11px] text-muted-foreground hover:text-foreground"
+                      onClick={() => p.onActiveProjectIdsChange?.([])}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-40 overflow-y-auto space-y-1 border border-border rounded-md p-1">
+                  {showNone && (
+                    <label className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary cursor-pointer text-sm">
+                      <Checkbox checked={activeIds.includes("__none__")} onCheckedChange={() => toggleProj("__none__")} />
+                      <span className="flex-1 truncate italic text-muted-foreground">No project</span>
+                    </label>
+                  )}
+                  {visibleProjects.map((pr) => {
+                    const checked = activeIds.includes(pr.id);
+                    return (
+                      <label key={pr.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary cursor-pointer text-sm">
+                        <Checkbox checked={checked} onCheckedChange={() => toggleProj(pr.id)} />
+                        <span className="flex-1 truncate">{pr.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
+          {!p.notesMode && (
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-medium text-muted-foreground">Overdue</p>
+              <OverdueButton mode={p.overdueMode} onChange={p.onOverdueModeChange} />
+            </div>
+          )}
+
+          {!p.notesMode && (
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-medium text-muted-foreground">No-date position</p>
+              <Pill onClick={() => p.onNoDatePositionChange(p.noDatePosition === "top" ? "bottom" : "top")}>
+                {p.noDatePosition}
+                <ChevronDown className="w-3 h-3 opacity-70" />
+              </Pill>
+            </div>
+          )}
+
+          {!p.notesMode && p.onCompactModeChange && (
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-medium text-muted-foreground">Layout</p>
+              <Pill
+                active={!!p.compactMode}
+                onClick={() => p.onCompactModeChange?.(!p.compactMode)}
+                title="Toggle compact grid"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                Compact
+              </Pill>
+            </div>
+          )}
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
