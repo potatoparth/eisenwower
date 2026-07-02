@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye } from "lucide-react";
-import { ProjectTemplate, ProjectTask } from "@/types/project";
+import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate } from "lucide-react";
+import { ProjectTemplate, ProjectTask, ProjectTemplatePreset, PresetTask } from "@/types/project";
 import { ShareProjectDialog } from "@/components/ShareProjectDialog";
+import { ProjectTemplatesDialog } from "@/components/ProjectTemplatesDialog";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { Note, noteColorFor } from "@/types/note";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,10 @@ interface ProjectBuilderProps {
   onSelectTask?: (task: Task) => void;
   onDeleteAllDone?: () => void;
   onRescheduleTasks?: (ids: string[], newDueDate: string) => void;
+  templatePresets?: ProjectTemplatePreset[];
+  onAddPreset?: (name: string, description?: string, tasks?: PresetTask[]) => Promise<ProjectTemplatePreset | null> | ProjectTemplatePreset | null;
+  onUpdatePreset?: (id: string, updates: Partial<Omit<ProjectTemplatePreset, "id" | "createdAt">>) => void;
+  onDeletePreset?: (id: string) => void;
 }
 
 export function ProjectBuilder({
@@ -54,11 +59,14 @@ export function ProjectBuilder({
   onAddMatrixTask, quadrants, categories = [], onCreateCategory, onCreateProject,
   onSelectTask, onDeleteAllDone, onRescheduleTasks,
   getProjectRole,
+  templatePresets = [], onAddPreset, onUpdatePreset, onDeletePreset,
 }: ProjectBuilderProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDesc, setNewProjectDesc] = useState("");
+  const [newProjectPresetId, setNewProjectPresetId] = useState<string>("__none__");
   const [showNewProject, setShowNewProject] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerMode, setComposerMode] = useState<"create" | "edit">("create");
@@ -91,9 +99,26 @@ export function ProjectBuilder({
   const handleCreateProject = () => {
     if (!newProjectName.trim()) return;
     const p = onAddProject(newProjectName.trim(), newProjectDesc.trim() || undefined);
+    // If a template was selected, prefill tasks (preserving dependsOn wiring via id remap).
+    const preset = templatePresets.find(tp => tp.id === newProjectPresetId);
+    if (preset && preset.tasks.length > 0) {
+      const idMap = new Map<string, string>();
+      preset.tasks.forEach(t => idMap.set(t.id, crypto.randomUUID()));
+      preset.tasks.forEach(t => {
+        onAddTask(p.id, {
+          name: t.name,
+          description: t.description,
+          dependencyType: t.dependencyType,
+          dependsOn: t.dependsOn.map(id => idMap.get(id)).filter(Boolean) as string[],
+          durationDays: t.durationDays,
+          status: "pending",
+        });
+      });
+    }
     setSelectedProjectId(p.id);
     setNewProjectName("");
     setNewProjectDesc("");
+    setNewProjectPresetId("__none__");
     setShowNewProject(false);
   };
 
