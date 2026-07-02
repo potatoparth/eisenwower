@@ -141,25 +141,6 @@ export function ProjectBuilder({
             </Button>
           </div>
 
-          {/* Matrix-style action bar: add task + search + clear-done. */}
-          {onAddMatrixTask && (
-            <div className="max-w-2xl w-full mx-auto flex-shrink-0">
-              <TaskActionBar
-                tasks={mappedTasks}
-                onSelectTask={(t) => onSelectTask?.(t)}
-                onDeleteAllDone={() => onDeleteAllDone?.()}
-                onRescheduleTasks={onRescheduleTasks}
-                onAddTask={handleAddMatrixTask}
-                quadrants={quadrants ?? []}
-                categories={categories}
-                projects={projects}
-                defaultProjectId={selectedProject.id}
-                onCreateCategory={onCreateCategory}
-                onCreateProject={onCreateProject}
-              />
-            </div>
-          )}
-
           {/* Tasks + Notes side-by-side */}
           <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-hidden">
             {/* Tasks column */}
@@ -167,6 +148,23 @@ export function ProjectBuilder({
               <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">
                 Tasks · {selectedProject.tasks.length + mappedTasks.length}
               </h4>
+              {onAddMatrixTask && (
+                <div className="mb-3">
+                  <TaskActionBar
+                    tasks={mappedTasks}
+                    onSelectTask={(t) => onSelectTask?.(t)}
+                    onDeleteAllDone={() => onDeleteAllDone?.()}
+                    onRescheduleTasks={onRescheduleTasks}
+                    onAddTask={handleAddMatrixTask}
+                    quadrants={quadrants ?? []}
+                    categories={categories}
+                    projects={projects}
+                    defaultProjectId={selectedProject.id}
+                    onCreateCategory={onCreateCategory}
+                    onCreateProject={onCreateProject}
+                  />
+                </div>
+              )}
               <div className="flex-1 overflow-y-auto space-y-2 pr-1">
                 {selectedProject.tasks.sort((a, b) => a.order - b.order).map((task, idx) => {
               const dependsOnTask = task.dependsOn.length > 0 ? selectedProject.tasks.find(t => t.id === task.dependsOn[0]) : null;
