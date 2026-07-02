@@ -1,17 +1,21 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, ArrowUp, ArrowDown, Save, X, LayoutTemplate, Link as LinkIcon, Unlink } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Save, X, LayoutTemplate, Target, Tag, CalendarClock, FileText, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { ProjectTemplatePreset, PresetTask, TaskDependencyType } from "@/types/project";
+import { ProjectTemplatePreset, PresetTask } from "@/types/project";
+import { QUADRANTS, Quadrant } from "@/types/task";
+import { DateTimePicker } from "@/components/DateTimePicker";
+import { format, parseISO } from "date-fns";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   presets: ProjectTemplatePreset[];
+  categories?: string[];
   onAdd: (name: string, description?: string, tasks?: PresetTask[]) => Promise<ProjectTemplatePreset | null> | ProjectTemplatePreset | null;
   onUpdate: (id: string, updates: Partial<Omit<ProjectTemplatePreset, "id" | "createdAt">>) => void;
   onDelete: (id: string) => void;
@@ -25,7 +29,7 @@ const emptyTask = (): PresetTask => ({
   durationDays: 1,
 });
 
-export function ProjectTemplatesDialog({ open, onOpenChange, presets, onAdd, onUpdate, onDelete }: Props) {
+export function ProjectTemplatesDialog({ open, onOpenChange, presets, categories = [], onAdd, onUpdate, onDelete }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [draftDesc, setDraftDesc] = useState("");
@@ -148,59 +152,16 @@ export function ProjectTemplatesDialog({ open, onOpenChange, presets, onAdd, onU
                 </p>
               )}
               {draftTasks.map((t, idx) => (
-                <div key={t.id} className="rounded-xl border border-border bg-card p-3 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground font-mono w-5">{idx + 1}</span>
-                    <Input
-                      className="flex-1"
-                      placeholder="Task name"
-                      value={t.name}
-                      onChange={(e) => patchTask(t.id, { name: e.target.value })}
-                    />
-                    <div className="flex items-center gap-0.5">
-                      <Button size="icon" variant="ghost" className="w-7 h-7" disabled={idx === 0} onClick={() => move(t.id, -1)}>
-                        <ArrowUp className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="w-7 h-7" disabled={idx === draftTasks.length - 1} onClick={() => move(t.id, 1)}>
-                        <ArrowDown className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="w-7 h-7 text-muted-foreground hover:text-destructive" onClick={() => removeTask(t.id)}>
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 pl-7">
-                    <Select value={t.dependencyType} onValueChange={(v) => patchTask(t.id, { dependencyType: v as TaskDependencyType })}>
-                      <SelectTrigger className="h-8 w-[130px] text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="async"><span className="inline-flex items-center gap-1"><Unlink className="w-3 h-3" /> Async</span></SelectItem>
-                        <SelectItem value="sync"><span className="inline-flex items-center gap-1"><LinkIcon className="w-3 h-3" /> Sync</span></SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-muted-foreground">Duration</span>
-                      <Input
-                        type="number"
-                        min={1}
-                        className="h-8 w-16"
-                        value={t.durationDays}
-                        onChange={(e) => patchTask(t.id, { durationDays: Math.max(1, Number(e.target.value) || 1) })}
-                      />
-                      <span className="text-muted-foreground">d</span>
-                    </div>
-                  </div>
-                  <div className="pl-7">
-                    <Textarea
-                      placeholder="Notes (optional)"
-                      value={t.description || ""}
-                      onChange={(e) => patchTask(t.id, { description: e.target.value })}
-                      rows={1}
-                      className="text-xs"
-                    />
-                  </div>
-                </div>
+                <PresetTaskRow
+                  key={t.id}
+                  task={t}
+                  index={idx}
+                  total={draftTasks.length}
+                  categories={categories}
+                  onPatch={(u) => patchTask(t.id, u)}
+                  onRemove={() => removeTask(t.id)}
+                  onMove={(d) => move(t.id, d)}
+                />
               ))}
             </div>
 
