@@ -57,7 +57,7 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, 
       animate={{ opacity: 1, y: 0 }}
       className="flex items-center justify-between gap-3 py-3 px-4 md:px-6 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40"
     >
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
         <span
           className="text-lg md:text-xl font-semibold tracking-tight text-foreground select-none"
           style={{ fontFamily: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif', letterSpacing: "-0.02em" }}
@@ -66,15 +66,18 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, 
         </span>
         {username && (
           <>
-            <span className="text-muted-foreground/60 text-lg">|</span>
-            <span className="text-sm text-muted-foreground truncate max-w-[180px]">{username}</span>
+            <span className="text-muted-foreground/60 text-lg hidden xs:inline sm:inline">|</span>
+            <span className="text-sm text-muted-foreground truncate min-w-0">{username}</span>
           </>
         )}
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 shrink-0">
         <Select value={viewMode} onValueChange={(v) => onViewModeChange(v as ViewMode)}>
-          <SelectTrigger className="h-9 rounded-xl w-[140px]">
-            <SelectValue />
+          <SelectTrigger className="h-9 rounded-xl w-11 px-2 sm:w-[140px] sm:px-3" aria-label="Change view">
+            <span className="flex items-center gap-2">
+              <CurrentIcon className="w-4 h-4" />
+              <span className="hidden sm:inline truncate">{currentView.label}</span>
+            </span>
           </SelectTrigger>
           <SelectContent align="end">
             {visibleViews.map((v) => {
@@ -91,7 +94,7 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, 
           </SelectContent>
         </Select>
 
-        <Button variant="ghost" size="icon" onClick={() => setIsDark(!isDark)} className="rounded-xl w-10 h-10 min-w-[40px] min-h-[40px]">
+        <Button variant="ghost" size="icon" onClick={() => setIsDark(!isDark)} className="rounded-xl w-9 h-9 sm:w-10 sm:h-10">
           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </Button>
         <Button
@@ -99,7 +102,7 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, 
           size="icon"
           onClick={toggleSelectMode}
           className={cn(
-            "rounded-xl w-10 h-10 min-w-[40px] min-h-[40px] relative",
+            "rounded-xl w-9 h-9 sm:w-10 sm:h-10 relative",
           )}
           title={selectMode ? "Exit select mode" : "Select tasks"}
           aria-pressed={selectMode}
@@ -112,12 +115,12 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, 
           )}
         </Button>
         {onSettingsClick && (
-          <Button variant="ghost" size="icon" onClick={onSettingsClick} className="rounded-xl w-10 h-10 min-w-[40px] min-h-[40px]">
+          <Button variant="ghost" size="icon" onClick={onSettingsClick} className="rounded-xl w-9 h-9 sm:w-10 sm:h-10">
             <Settings className="w-4 h-4" />
           </Button>
         )}
         {onLogout && (
-          <Button variant="ghost" size="icon" onClick={onLogout} className="rounded-xl w-10 h-10 min-w-[40px] min-h-[40px]" title="Sign Out">
+          <Button variant="ghost" size="icon" onClick={onLogout} className="rounded-xl w-9 h-9 sm:w-10 sm:h-10" title="Sign Out">
             <LogOut className="w-4 h-4" />
           </Button>
         )}
