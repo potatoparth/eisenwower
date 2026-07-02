@@ -469,16 +469,11 @@ const Index = () => {
         boards={kanban.boards}
         columnsByBoard={kanban.columnsByBoard}
         onAddToNewKanban={async (ids, name, columnTitles) => {
-          const boardId = await kanban.createBoard(name, columnTitles);
-          if (!boardId) return;
-          // Assign selected tasks to the first column of the new board.
-          const firstCol = (columnTitles.map(t => t.trim()).filter(Boolean))[0] || "To Do";
-          // We need the actual column_key — refetch happens inside createBoard; wait a tick then read.
-          setTimeout(async () => {
-            const cols = kanban.columnsByBoard[boardId];
-            const key = cols?.[0]?.id;
-            if (key) await kanban.assignTasks(boardId, key, ids);
-          }, 200);
+          const res = await kanban.createBoard(name, columnTitles);
+          if (!res) return;
+          if (res.columnKeys[0]) {
+            await kanban.assignTasks(res.boardId, res.columnKeys[0], ids);
+          }
           setViewMode("kanban");
         }}
         onAddToExistingKanban={async (ids, boardId, columnKey) => {
