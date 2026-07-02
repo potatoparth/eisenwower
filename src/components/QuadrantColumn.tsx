@@ -55,7 +55,6 @@ export function QuadrantColumn({
 
   const openTasks = tasks.filter((t) => t.status === "open");
   const doneTasks = tasks.filter((t) => t.status === "done");
-  const taskListScrollable = expanded || openTasks.length > 6;
 
   const quadClass =
     quadrant.color === 1
@@ -164,8 +163,7 @@ export function QuadrantColumn({
       {/* Tasks */}
       <div
         className={cn(
-          "flex-1 px-2 sm:px-3 pb-3 space-y-1 min-h-0",
-          taskListScrollable ? "overflow-y-auto scrollbar-none" : "overflow-hidden"
+          "flex-1 px-2 sm:px-3 pb-3 space-y-1 min-h-0 overflow-y-auto scrollbar-none"
         )}
         onClick={(e) => {
           // Click on empty body area toggles expand
