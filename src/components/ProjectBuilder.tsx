@@ -264,20 +264,58 @@ export function ProjectBuilder({
                 Notes · {mappedNotes.length}
               </h4>
               {onAddNote && (
-                <button
-                  onClick={openCreateNote}
-                  className="mb-3 flex h-[50px] w-full items-center rounded-full border border-border/60 bg-secondary/40 px-5 text-left text-sm text-muted-foreground/80 hover:bg-secondary/60 transition-colors"
-                >
-                  <span aria-hidden className="flex h-8 w-8 items-center justify-center text-muted-foreground/60 -ml-2 mr-1">
-                    <StickyNote className="w-4 h-4" strokeWidth={1.75} />
-                  </span>
-                  Add a new note...
-                </button>
+                <div className="mb-3 grid w-full grid-cols-[minmax(0,1fr)_2.5rem_2.5rem] items-center gap-2">
+                  <div className="min-w-0">
+                    {noteSearchMode ? (
+                      <div className="relative flex h-[50px] w-full items-center rounded-full border border-border/60 bg-secondary/40 px-5">
+                        <NoteSearchInput
+                          value={noteQuery}
+                          onChange={setNoteQuery}
+                          onEscape={() => { setNoteSearchMode(false); setNoteQuery(""); }}
+                        />
+                        <div className="ml-2 -mr-2 flex h-full flex-shrink-0 items-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => { setNoteSearchMode(false); setNoteQuery(""); }}
+                            className="h-8 w-8 rounded-full"
+                            title="Close search"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={openCreateNote}
+                        className="flex h-[50px] w-full items-center rounded-full border border-border/60 bg-secondary/40 px-5 text-left text-sm text-muted-foreground/80 hover:bg-secondary/60 transition-colors"
+                      >
+                        <span aria-hidden className="flex h-8 w-8 items-center justify-center text-muted-foreground/60 -ml-2 mr-1">
+                          <StickyNote className="w-4 h-4" strokeWidth={1.75} />
+                        </span>
+                        <span className="flex-1 truncate">Add a new note...</span>
+                        <span aria-hidden className="flex h-8 w-8 items-center justify-center text-muted-foreground/60 -mr-2">
+                          <Search className="w-4 h-4 opacity-0" />
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 rounded-full"
+                    onClick={() => (noteSearchMode ? (setNoteSearchMode(false), setNoteQuery("")) : setNoteSearchMode(true))}
+                    title={noteSearchMode ? "Close search" : "Search notes"}
+                  >
+                    {noteSearchMode ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+                  </Button>
+                  <div aria-hidden />
+                </div>
               )}
               <div className="flex-1 overflow-y-auto pr-1">
-                {mappedNotes.length > 0 ? (
+                {filteredMappedNotes.length > 0 ? (
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
-                    {mappedNotes.map(n => (
+                    {filteredMappedNotes.map(n => (
                     <button
                       key={n.id}
                       onClick={() => openEditNote(n)}
@@ -299,7 +337,7 @@ export function ProjectBuilder({
                   </div>
                 ) : (
                   <div className="text-center py-10 text-muted-foreground">
-                    <p className="text-xs">No notes for this project.</p>
+                    <p className="text-xs">{noteQuery ? "No notes match your search." : "No notes for this project."}</p>
                   </div>
                 )}
               </div>
