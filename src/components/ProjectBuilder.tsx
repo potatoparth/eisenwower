@@ -182,7 +182,7 @@ export function ProjectBuilder({
               <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">
                 Tasks · {selectedProject.tasks.length + mappedTasks.length}
               </h4>
-              {onAddMatrixTask && (
+              {onAddMatrixTask && canEdit && (
                 <div className="mb-3">
                   <TaskActionBar
                     tasks={mappedTasks}
@@ -245,9 +245,11 @@ export function ProjectBuilder({
                       <SelectItem value="done">Done</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button size="icon" variant="ghost" className="w-6 h-6 text-muted-foreground hover:text-destructive" onClick={() => onDeleteTask(selectedProject.id, task.id)}>
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
+                  {canEdit && (
+                    <Button size="icon" variant="ghost" className="w-6 h-6 text-muted-foreground hover:text-destructive" onClick={() => onDeleteTask(selectedProject.id, task.id)}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  )}
                 </motion.div>
               );
                 })}
@@ -284,7 +286,7 @@ export function ProjectBuilder({
               <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">
                 Notes · {mappedNotes.length}
               </h4>
-              {onAddNote && (
+              {onAddNote && canEdit && (
                 <div className="mb-3 grid w-full grid-cols-[minmax(0,1fr)_2.5rem_2.5rem] items-center gap-2">
                   <div className="min-w-0">
                     <div className="relative mx-auto flex h-12 w-full max-w-2xl items-center rounded-full border border-border/60 bg-secondary/40 px-5">
