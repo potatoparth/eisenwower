@@ -114,8 +114,6 @@ export function CustomizeModal({ open, onClose }: Props) {
   const border = isLight ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)";
   const inputBg = isLight ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.04)";
 
-  const spotifyValid = spotify.trim() === "" || !!toSpotifyEmbed(spotify);
-
   const isYoutubeComUrl = (v: string) => {
     try {
       const u = new URL(v.trim());
