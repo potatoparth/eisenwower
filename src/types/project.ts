@@ -31,6 +31,10 @@ export interface PresetTask {
   dependencyType: TaskDependencyType;
   dependsOn: string[];
   durationDays: number;
+  quadrant?: string;
+  category?: string;
+  dueDate?: string;
+  dueTime?: string;
 }
 
 export interface ProjectTemplatePreset {
