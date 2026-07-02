@@ -68,8 +68,12 @@ export function CustomizeModal({ open, onClose }: Props) {
     const f = e.target.files?.[0];
     if (!f) return;
     setErr(null);
-    if (!f.type.startsWith("image") && !f.type.startsWith("video")) {
-      setErr("Please choose an image or video file.");
+    const nameLower = f.name.toLowerCase();
+    const isJpeg =
+      f.type === "image/jpeg" || nameLower.endsWith(".jpg") || nameLower.endsWith(".jpeg");
+    const isMp4 = f.type === "video/mp4" || nameLower.endsWith(".mp4");
+    if (!isJpeg && !isMp4) {
+      setErr("Only JPEG images and MP4 videos are supported.");
       return;
     }
     // Per-file safety cap (50MB total is enforced server-side).
