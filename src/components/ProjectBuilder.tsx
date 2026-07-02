@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote } from "lucide-react";
+import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search } from "lucide-react";
 import { ProjectTemplate, ProjectTask } from "@/types/project";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { Note, noteColorFor } from "@/types/note";
@@ -12,6 +12,7 @@ import { type TaskAddOptions, type TaskInputPickerProps } from "@/components/Tas
 import { TaskActionBar } from "@/components/TaskActionBar";
 import { NoteComposer } from "@/components/NotesView";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -58,10 +59,22 @@ export function ProjectBuilder({
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerMode, setComposerMode] = useState<"create" | "edit">("create");
+  const [noteSearchMode, setNoteSearchMode] = useState(false);
+  const [noteQuery, setNoteQuery] = useState("");
+  const [notePopoverOpen, setNotePopoverOpen] = useState(false);
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const mappedTasks = selectedProject ? allTasks.filter(t => t.projectId === selectedProject.id) : [];
   const mappedNotes = selectedProject ? allNotes.filter(n => n.projectId === selectedProject.id) : [];
+  const filteredMappedNotes = useMemo(() => {
+    const q = noteQuery.trim().toLowerCase();
+    if (!q) return mappedNotes;
+    return mappedNotes.filter(n =>
+      n.title.toLowerCase().includes(q) ||
+      n.content.toLowerCase().includes(q) ||
+      (n.category || "").toLowerCase().includes(q)
+    );
+  }, [mappedNotes, noteQuery]);
   const editingNote = editingNoteId ? mappedNotes.find(n => n.id === editingNoteId) ?? null : null;
 
   const openCreateNote = () => { setEditingNoteId(null); setComposerMode("create"); setComposerOpen(true); };
