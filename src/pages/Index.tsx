@@ -19,6 +19,7 @@ import { toast } from "@/hooks/use-toast";
 import { TaskDetailPanel } from "@/components/TaskDetailPanel";
 import { TaskDetailDialog } from "@/components/TaskDetailDialog";
 import { FilterBar, DateFilter, OverdueMode } from "@/components/FilterBar";
+import { LayoutGrid } from "lucide-react";
 import { applyTaskFilters } from "@/lib/filters";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { LoginPage } from "@/components/LoginPage";
