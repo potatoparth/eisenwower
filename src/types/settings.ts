@@ -86,6 +86,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   taskDetailView: "popup",
   showOverdue: true,
   noDateTasksPosition: "bottom",
+  filterBarDisplay: "pills",
   quadrantLabels: DEFAULT_QUADRANT_LABELS,
 };
 
