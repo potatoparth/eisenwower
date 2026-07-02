@@ -154,6 +154,11 @@ export function ProjectBuilder({
             <Plus className="w-3 h-3" /> New Project
           </Button>
         )}
+        {onAddPreset && onUpdatePreset && onDeletePreset && (
+          <Button variant="ghost" size="sm" className="rounded-xl gap-1 ml-auto" onClick={() => setTemplatesOpen(true)}>
+            <LayoutTemplate className="w-3.5 h-3.5" /> Templates
+          </Button>
+        )}
       </div>
 
       {/* New project form */}
@@ -165,6 +170,24 @@ export function ProjectBuilder({
           >
             <Input placeholder="Project name" value={newProjectName} onChange={e => setNewProjectName(e.target.value)} />
             <Textarea placeholder="Description (optional)" value={newProjectDesc} onChange={e => setNewProjectDesc(e.target.value)} rows={2} />
+            {templatePresets.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Start from template:</span>
+                <Select value={newProjectPresetId} onValueChange={setNewProjectPresetId}>
+                  <SelectTrigger className="h-9 w-[240px]">
+                    <SelectValue placeholder="None (blank)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">None (blank)</SelectItem>
+                    {templatePresets.map(tp => (
+                      <SelectItem key={tp.id} value={tp.id}>
+                        {tp.name} · {tp.tasks.length} task{tp.tasks.length === 1 ? "" : "s"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="flex gap-2">
               <Button size="sm" onClick={handleCreateProject}>Create Project</Button>
               <Button size="sm" variant="ghost" onClick={() => setShowNewProject(false)}>Cancel</Button>
