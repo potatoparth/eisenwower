@@ -116,6 +116,26 @@ export function CustomizeModal({ open, onClose }: Props) {
 
   const spotifyValid = spotify.trim() === "" || !!toSpotifyEmbed(spotify);
 
+  const isYoutubeComUrl = (v: string) => {
+    try {
+      const u = new URL(v.trim());
+      const host = u.hostname.replace(/^www\.|^m\./, "");
+      return host === "youtube.com";
+    } catch {
+      return false;
+    }
+  };
+  const isSpotifyPlaylistUrl = (v: string) => {
+    try {
+      const u = new URL(v.trim());
+      const host = u.hostname.replace(/^www\./, "");
+      return host === "open.spotify.com" && /^\/(intl-[a-z]+\/)?playlist\/[A-Za-z0-9]+/.test(u.pathname);
+    } catch {
+      return false;
+    }
+  };
+  const spotifyPlaylistValid = spotify.trim() === "" || isSpotifyPlaylistUrl(spotify);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center animate-fade-in"
