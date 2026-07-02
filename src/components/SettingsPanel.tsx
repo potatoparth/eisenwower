@@ -235,6 +235,26 @@ export function SettingsPanel({
                 ))}
               </div>
             </div>
+            <div className="pt-2 border-t space-y-2">
+              <p className="text-xs font-medium text-foreground">Filter bar (desktop)</p>
+              <div className="flex gap-2">
+                {(["pills", "button"] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => onUpdateSettings({ filterBarDisplay: v })}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+                      (settings.filterBarDisplay ?? "pills") === v
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+                    )}
+                  >
+                    {v === "pills" ? "Pills expanded" : "Filters button"}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground">Mobile always uses the Filters button.</p>
+            </div>
           </Section>
 
           {/* Matrix view */}

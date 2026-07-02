@@ -38,6 +38,8 @@ export interface AppSettings {
   taskDetailView: "popup" | "sidebar";
   showOverdue: boolean;
   noDateTasksPosition: "top" | "bottom";
+  /** How filters render on desktop. Mobile is always "button". Default: "pills". */
+  filterBarDisplay?: "pills" | "button";
   localUsername?: string;
   quadrantLabels: QuadrantLabels;
 }
@@ -84,6 +86,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   taskDetailView: "popup",
   showOverdue: true,
   noDateTasksPosition: "bottom",
+  filterBarDisplay: "pills",
   quadrantLabels: DEFAULT_QUADRANT_LABELS,
 };
 
