@@ -35,7 +35,6 @@ export function CompactQuadrantTile({ quadrant, tasks, onClick }: CompactQuadran
     >
       {/* SECTION 1 — HEADER */}
       <div
-        className="flex-shrink-0"
         className="flex-shrink-0 p-3 sm:p-4 sm:pb-2.5"
         style={{ borderBottom: `1px solid ${accentDivider}` }}
       >
