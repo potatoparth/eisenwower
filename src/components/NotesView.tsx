@@ -417,8 +417,8 @@ export function NoteComposer(props: ComposerProps) {
 /* Compact attach trigger — renders TaskAttachments UI inside a popover so the
  * footer stays a single tidy row. */
 function InlineAttachTrigger({
-  taskId, value, onChange,
-}: { taskId: string; value: TaskAttachment[]; onChange: (n: TaskAttachment[]) => void }) {
+  taskId, value, onChange, maxTotalBytes,
+}: { taskId: string; value: TaskAttachment[]; onChange: (n: TaskAttachment[]) => void; maxTotalBytes?: number }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -427,7 +427,7 @@ function InlineAttachTrigger({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-2" align="start">
-        <TaskAttachments taskId={taskId} value={value} onChange={onChange} />
+        <TaskAttachments taskId={taskId} value={value} onChange={onChange} maxTotalBytes={maxTotalBytes} />
       </PopoverContent>
     </Popover>
   );
