@@ -108,7 +108,7 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
         {/* Task name */}
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 sticky top-0 z-20 bg-card -mx-4 px-4 pt-1 pb-3 -mt-4">
           <label className="text-xs font-medium text-muted-foreground text-center block">Task Name</label>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="sm" onClick={() => prevTask && onNavigate?.(prevTask)} disabled={!prevTask} className="h-8 w-8 p-0 rounded-lg flex-shrink-0" title="Previous task">
@@ -153,6 +153,7 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
             onChange={setDescription}
             onCommit={handleBlur}
             placeholder="Add a description…"
+            stickyToolbar={{ top: 78, background: "hsl(var(--card))" }}
           />
         </div>
 
