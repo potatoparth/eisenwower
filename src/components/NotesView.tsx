@@ -354,20 +354,26 @@ export function NoteComposer(props: ComposerProps) {
           <div className="flex flex-col">
             {/* Body */}
             <div className="px-4 pt-4 pb-3 space-y-3">
-              <Input
-                autoFocus
-                value={title}
-                onChange={(e) => setTitle(e.target.value.replace(/[\r\n]+/g, " ").slice(0, MAX_TITLE))}
-                onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
-                maxLength={MAX_TITLE}
-                placeholder="Title"
-                className="border-0 bg-transparent outline-none shadow-none ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none px-0 text-lg font-semibold h-8 placeholder:text-muted-foreground/60"
-              />
+              <div
+                className="sticky top-0 z-20 -mx-4 px-4 pt-1 pb-1"
+                style={{ backgroundColor: bg }}
+              >
+                <Input
+                  autoFocus
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value.replace(/[\r\n]+/g, " ").slice(0, MAX_TITLE))}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+                  maxLength={MAX_TITLE}
+                  placeholder="Title"
+                  className="border-0 bg-transparent outline-none shadow-none ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none px-0 text-lg font-semibold h-8 placeholder:text-muted-foreground/60"
+                />
+              </div>
               <TaskDescription
                 value={content}
                 onChange={(v) => setContent(v.length > MAX_CONTENT ? v.slice(0, MAX_CONTENT) : v)}
                 placeholder="Take a note…"
                 alwaysOpen
+                stickyToolbar={{ top: 44, background: bg }}
               />
               {attachments.length > 0 && (
                 <TaskAttachments
