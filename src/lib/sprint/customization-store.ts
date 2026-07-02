@@ -28,7 +28,7 @@ interface Preferences {
 }
 
 const BUCKET = "sprint-backgrounds";
-export const MAX_UPLOADS = 3;
+export const MAX_UPLOADS = 10;
 export const MAX_TOTAL_BYTES = 50 * 1024 * 1024;
 
 const CHANGE = "sprint.customization.change";
