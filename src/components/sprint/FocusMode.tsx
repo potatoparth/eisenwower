@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Settings2, Clock } from "lucide-react";
+import { Settings2, Clock, Music2 } from "lucide-react";
 import type { Sprint, SprintTask } from "@/lib/sprint/sprint-store";
 import { ThemeToggle } from "./ThemeToggle";
 import { AmbientBackground } from "./AmbientBackground";
