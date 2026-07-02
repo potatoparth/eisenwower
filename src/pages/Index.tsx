@@ -300,6 +300,7 @@ const Index = () => {
             onCompactModeChange={viewMode === "matrix" ? setCompactMode : undefined}
             showProjectsFilter={viewMode !== "projects"}
             notesMode={viewMode === "notes"}
+            displayMode={settings.filterBarDisplay ?? "pills"}
           />
           </div>
         )}
