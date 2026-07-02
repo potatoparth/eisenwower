@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { type TaskAddOptions, type TaskInputPickerProps } from "@/components/TaskInput";
 import { TaskActionBar } from "@/components/TaskActionBar";
+import { NoteComposer } from "@/components/NotesView";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -22,7 +24,9 @@ interface ProjectBuilderProps {
   projects: ProjectTemplate[];
   allTasks?: Task[];
   allNotes?: Note[];
-  onSelectNote?: (note: Note) => void;
+  onAddNote?: (options?: Partial<Note>) => Note | null;
+  onUpdateNote?: (id: string, updates: Partial<Note>) => void;
+  onDeleteNote?: (id: string) => void;
   onAddProject: (name: string, description?: string) => ProjectTemplate;
   onUpdateProject: (id: string, updates: Partial<Omit<ProjectTemplate, "id" | "createdAt">>) => void;
   onDeleteProject: (id: string) => void;
@@ -41,19 +45,28 @@ interface ProjectBuilderProps {
 }
 
 export function ProjectBuilder({
-  projects, allTasks = [], allNotes = [], onAddProject, onUpdateProject, onDeleteProject,
+  projects, allTasks = [], allNotes = [], onAddNote, onUpdateNote, onDeleteNote,
+  onAddProject, onUpdateProject, onDeleteProject,
   onAddTask, onUpdateTask, onDeleteTask,
   onAddMatrixTask, quadrants, categories = [], onCreateCategory, onCreateProject,
-  onSelectTask, onSelectNote, onDeleteAllDone, onRescheduleTasks,
+  onSelectTask, onDeleteAllDone, onRescheduleTasks,
 }: ProjectBuilderProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDesc, setNewProjectDesc] = useState("");
   const [showNewProject, setShowNewProject] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [composerMode, setComposerMode] = useState<"create" | "edit">("create");
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const mappedTasks = selectedProject ? allTasks.filter(t => t.projectId === selectedProject.id) : [];
   const mappedNotes = selectedProject ? allNotes.filter(n => n.projectId === selectedProject.id) : [];
+  const editingNote = editingNoteId ? mappedNotes.find(n => n.id === editingNoteId) ?? null : null;
+
+  const openCreateNote = () => { setEditingNoteId(null); setComposerMode("create"); setComposerOpen(true); };
+  const openEditNote = (n: Note) => { setEditingNoteId(n.id); setComposerMode("edit"); setComposerOpen(true); };
+  const closeComposer = () => { setComposerOpen(false); setEditingNoteId(null); };
 
   const handleCreateProject = () => {
     if (!newProjectName.trim()) return;
@@ -147,9 +160,15 @@ export function ProjectBuilder({
             </div>
           )}
 
-          {/* Task list with dependency visualization */}
-          <div className="flex-1 overflow-y-auto space-y-2">
-            {selectedProject.tasks.sort((a, b) => a.order - b.order).map((task, idx) => {
+          {/* Tasks + Notes side-by-side */}
+          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-hidden">
+            {/* Tasks column */}
+            <div className="min-h-0 flex flex-col">
+              <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">
+                Tasks · {selectedProject.tasks.length + mappedTasks.length}
+              </h4>
+              <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                {selectedProject.tasks.sort((a, b) => a.order - b.order).map((task, idx) => {
               const dependsOnTask = task.dependsOn.length > 0 ? selectedProject.tasks.find(t => t.id === task.dependsOn[0]) : null;
               return (
                 <motion.div
@@ -199,17 +218,8 @@ export function ProjectBuilder({
                   </Button>
                 </motion.div>
               );
-            })}
+                })}
 
-            {selectedProject.tasks.length === 0 && mappedTasks.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground">
-                <FolderOpen className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No project tasks yet. Add your first task below.</p>
-              </div>
-            )}
-
-            {mappedTasks.length > 0 && (
-              <div className="space-y-2">
                 {mappedTasks.map(t => (
                   <button
                     key={t.id}
@@ -227,19 +237,35 @@ export function ProjectBuilder({
                     </div>
                   </button>
                 ))}
-              </div>
-            )}
 
-            {mappedNotes.length > 0 && (
-              <div className="pt-2">
-                <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">
+                {selectedProject.tasks.length === 0 && mappedTasks.length === 0 && (
+                  <div className="text-center py-10 text-muted-foreground">
+                    <FolderOpen className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                    <p className="text-xs">No tasks yet.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Notes column */}
+            <div className="min-h-0 flex flex-col">
+              <div className="flex items-center justify-between mb-2 px-1">
+                <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                   Notes · {mappedNotes.length}
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {mappedNotes.map(n => (
+                {onAddNote && (
+                  <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={openCreateNote}>
+                    <Plus className="w-3 h-3" /> New note
+                  </Button>
+                )}
+              </div>
+              <div className="flex-1 overflow-y-auto pr-1">
+                {mappedNotes.length > 0 ? (
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
+                    {mappedNotes.map(n => (
                     <button
                       key={n.id}
-                      onClick={() => onSelectNote?.(n)}
+                      onClick={() => openEditNote(n)}
                       className="text-left rounded-xl border border-border p-3 hover:border-primary/50 transition-colors"
                       style={{ backgroundColor: noteColorFor(n.color, "dark") }}
                     >
@@ -254,10 +280,15 @@ export function ProjectBuilder({
                         {n.pinned && <span>• pinned</span>}
                       </div>
                     </button>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-10 text-muted-foreground">
+                    <p className="text-xs">No notes for this project.</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
         </div>
@@ -265,6 +296,32 @@ export function ProjectBuilder({
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
           <p className="text-sm">{projects.length === 0 ? "Create your first project to get started" : "Select a project to manage tasks"}</p>
         </div>
+      )}
+
+      {/* Note create/edit dialog */}
+      {onAddNote && onUpdateNote && (
+        <Dialog open={composerOpen} onOpenChange={(o) => { if (!o) closeComposer(); }}>
+          <DialogContent className="max-w-2xl p-0 bg-transparent border-0 shadow-none">
+            <DialogTitle className="sr-only">{composerMode === "edit" ? "Edit note" : "New note"}</DialogTitle>
+            <NoteComposer
+              categories={categories}
+              projects={projects}
+              defaultCategory={categories[0]}
+              defaultProjectId={selectedProjectId ?? undefined}
+              onCreateCategory={onCreateCategory}
+              onCreateProject={onCreateProject}
+              onAddNote={(opts) => {
+                const n = onAddNote({ ...opts, projectId: opts?.projectId ?? selectedProjectId ?? undefined });
+                closeComposer();
+                return n;
+              }}
+              onUpdateNote={(id, updates) => { onUpdateNote(id, updates); closeComposer(); }}
+              editingNote={composerMode === "edit" ? editingNote : null}
+              onCancelEdit={closeComposer}
+              dark
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
