@@ -7,6 +7,7 @@ import { MediaBackground } from "./MediaBackground";
 import { SpotifyPlayer } from "./SpotifyPlayer";
 import { CustomizeModal } from "./CustomizeModal";
 import { useBackground } from "@/lib/sprint/customization-store";
+import { useSpotifyUrl } from "@/lib/sprint/customization-store";
 
 interface Props {
   sprint: Sprint;
@@ -167,6 +168,8 @@ export function FocusMode({ sprint, onUpdate, onExit, onComplete }: Props) {
   };
 
   const { enabled: bgEnabled } = useBackground();
+  const spotifyUrl = useSpotifyUrl();
+  const hasCustomMedia = bgEnabled; // custom bg or youtube counts as bgEnabled
   const muted = bgEnabled ? "rgba(255,255,255,0.72)" : "rgba(255,255,255,0.3)";
   const veryMuted = bgEnabled ? "rgba(255,255,255,0.56)" : "rgba(255,255,255,0.2)";
   // When a custom media background is active, force dark-theme text so it stays
@@ -193,10 +196,7 @@ export function FocusMode({ sprint, onUpdate, onExit, onComplete }: Props) {
       <div className="px-4 sm:px-8" style={{ paddingTop: 28, position: "relative", zIndex: 2, flexShrink: 0 }}>
         <div className="grid items-center gap-2" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
           <div className="flex items-center gap-3">
-            <ThemeToggle
-              color={bgEnabled ? "rgba(255,255,255,0.85)" : undefined}
-              borderColor={bgEnabled ? "rgba(255,255,255,0.35)" : undefined}
-            />
+            {!hasCustomMedia && <ThemeToggle />}
             <button
               onClick={() => setCustomizeOpen(true)}
               style={
