@@ -8,6 +8,16 @@ import nebulaBlue from "@/assets/presets/pexels-marek-pavlik-1929759405-37269528
 import cosmicMist from "@/assets/presets/pexels-enginakyurt-6138036.jpg.asset.json";
 import galaxyCore from "@/assets/presets/pexels-incrediblerafa-4737522.jpg.asset.json";
 import auroraGreen from "@/assets/presets/pexels-aedrian-28920480.jpg.asset.json";
+import snowForest from "@/assets/presets/pexels-efrem-efre-2786187-34888244.jpg.asset.json";
+import goldenPeak from "@/assets/presets/pexels-gsn-travel-28539583.jpg.asset.json";
+import mistValley from "@/assets/presets/pexels-triemli-29034983.jpg.asset.json";
+import starTrails from "@/assets/presets/pexels-instawally-169789.jpg.asset.json";
+import crimsonShore from "@/assets/presets/pexels-tu-n-vu-2153773491-38214264.jpg.asset.json";
+import pastelAlps from "@/assets/presets/pexels-marek-piwnicki-3907296-16339069.jpg.asset.json";
+import duskSea from "@/assets/presets/pexels-wewe-yang-2383099-5116972.jpg.asset.json";
+import autumnRoad from "@/assets/presets/pexels-taakill-5690519.jpg.asset.json";
+import blueRidge from "@/assets/presets/pexels-dreamypixel-552784.jpg.asset.json";
+import autumnCanopy from "@/assets/presets/pexels-markp-1671230.jpg.asset.json";
 
 export interface Preset {
   id: string;
@@ -26,7 +36,48 @@ export const PRESETS: Preset[] = [
   { id: "cosmic-mist", name: "Cosmic Mist", url: cosmicMist.url },
   { id: "galaxy-core", name: "Galactic Core", url: galaxyCore.url },
   { id: "aurora-green", name: "Northern Lights", url: auroraGreen.url },
+  { id: "snow-forest", name: "Snow Forest", url: snowForest.url },
+  { id: "golden-peak", name: "Golden Peak", url: goldenPeak.url },
+  { id: "mist-valley", name: "Mist Valley", url: mistValley.url },
+  { id: "star-trails", name: "Star Trails", url: starTrails.url },
+  { id: "crimson-shore", name: "Crimson Shore", url: crimsonShore.url },
+  { id: "pastel-alps", name: "Pastel Alps", url: pastelAlps.url },
+  { id: "dusk-sea", name: "Dusk Sea", url: duskSea.url },
+  { id: "autumn-road", name: "Autumn Road", url: autumnRoad.url },
+  { id: "blue-ridge", name: "Blue Ridge", url: blueRidge.url },
+  { id: "autumn-canopy", name: "Autumn Canopy", url: autumnCanopy.url },
 ];
 
 export const presetById = (id: string | null) =>
   id ? PRESETS.find((p) => p.id === id) ?? null : null;
+
+/* ---------------- Hidden presets (per user, localStorage) ---------------- */
+
+const HIDDEN_KEY = "sprint.preset.hidden";
+const HIDDEN_CHANGE = "sprint.preset.hidden.change";
+
+export function getHiddenPresetIds(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(HIDDEN_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function hidePreset(id: string) {
+  if (typeof window === "undefined") return;
+  const set = new Set(getHiddenPresetIds());
+  set.add(id);
+  window.localStorage.setItem(HIDDEN_KEY, JSON.stringify([...set]));
+  window.dispatchEvent(new Event(HIDDEN_CHANGE));
+}
+
+export function restoreHiddenPresets() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(HIDDEN_KEY);
+  window.dispatchEvent(new Event(HIDDEN_CHANGE));
+}
+
+export const HIDDEN_PRESETS_CHANGE_EVENT = HIDDEN_CHANGE;
