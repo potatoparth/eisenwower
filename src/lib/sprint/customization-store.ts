@@ -38,6 +38,32 @@ const emit = () => {
 };
 
 const PRESET_KEY = "sprint.preset.activeId";
+const MUTED_KEY = "sprint.bg.muted";
+const MUTED_CHANGE = "sprint.bg.muted.change";
+
+function readMuted(): boolean {
+  if (typeof window === "undefined") return true;
+  const v = window.localStorage.getItem(MUTED_KEY);
+  return v === null ? true : v === "1";
+}
+export function getBgMuted(): boolean {
+  return readMuted();
+}
+export function setBgMuted(v: boolean) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(MUTED_KEY, v ? "1" : "0");
+  window.dispatchEvent(new Event(MUTED_CHANGE));
+}
+export function useBgMuted(): boolean {
+  const [v, setV] = useState<boolean>(() => readMuted());
+  useEffect(() => {
+    const h = () => setV(readMuted());
+    window.addEventListener(MUTED_CHANGE, h);
+    return () => window.removeEventListener(MUTED_CHANGE, h);
+  }, []);
+  return v;
+}
+
 function readPresetId(): string | null {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem(PRESET_KEY);
