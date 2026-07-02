@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { LayoutGrid, List, Columns3, FolderKanban, CalendarDays, StickyNote, Timer } from "lucide-react";
+import { LayoutGrid, List, Columns3, FolderKanban, CalendarDays, StickyNote, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type ViewMode = "matrix" | "list" | "kanban" | "projects" | "calendar" | "notes" | "sprint";
@@ -16,7 +16,7 @@ const views: { id: ViewMode; label: string; icon: React.ElementType }[] = [
   { id: "calendar", label: "Calendar", icon: CalendarDays },
   { id: "projects", label: "Projects", icon: FolderKanban },
   { id: "notes", label: "Notes", icon: StickyNote },
-  { id: "sprint", label: "Sprint", icon: Timer },
+  { id: "sprint", label: "Sprint", icon: Zap },
 ];
 
 export function ViewToggle({ value, onChange }: ViewToggleProps) {

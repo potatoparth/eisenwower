@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, CalendarClock, Timer, Trash2, LayoutGrid, Plus, ArrowRight } from "lucide-react";
+import { X, CalendarClock, Zap, Trash2, LayoutGrid, Plus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -89,7 +89,7 @@ export function BulkActionBar({
             setSelectMode(false);
           }}
         >
-          <Timer className="w-3.5 h-3.5" />
+          <Zap className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Add to sprint</span>
         </Button>
       )}
