@@ -73,10 +73,10 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, 
       </div>
       <div className="flex items-center gap-1 shrink-0">
         <Select value={viewMode} onValueChange={(v) => onViewModeChange(v as ViewMode)}>
-          <SelectTrigger className="h-9 rounded-xl w-11 px-2 sm:w-[140px] sm:px-3" aria-label="Change view">
+          <SelectTrigger className="h-9 rounded-xl w-[120px] sm:w-[140px] px-3" aria-label="Change view">
             <div className="flex items-center gap-2 min-w-0">
-              <CurrentIcon className="w-4 h-4" />
-              <span className="hidden sm:inline truncate">{currentView.label}</span>
+              <CurrentIcon className="w-4 h-4 shrink-0" />
+              <span className="truncate">{currentView.label}</span>
             </div>
           </SelectTrigger>
           <SelectContent align="end">

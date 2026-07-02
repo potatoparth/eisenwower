@@ -308,17 +308,6 @@ export function FilterBar(p: FilterBarProps) {
       )}
 
       <div className="flex-1" />
-
-      {!p.notesMode && p.onCompactModeChange && (
-        <Pill
-          active={!!p.compactMode}
-          onClick={() => p.onCompactModeChange?.(!p.compactMode)}
-          title="Toggle compact grid"
-          className="!px-2"
-        >
-          <LayoutGrid className="w-3.5 h-3.5" />
-        </Pill>
-      )}
     </div>
   );
 
@@ -436,19 +425,6 @@ export function FilterBar(p: FilterBarProps) {
             </div>
           )}
 
-          {!p.notesMode && p.onCompactModeChange && (
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium text-muted-foreground">Layout</p>
-              <Pill
-                active={!!p.compactMode}
-                onClick={() => p.onCompactModeChange?.(!p.compactMode)}
-                title="Toggle compact grid"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                Compact
-              </Pill>
-            </div>
-          )}
         </PopoverContent>
       </Popover>
     </div>
