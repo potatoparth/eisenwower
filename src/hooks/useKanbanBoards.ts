@@ -46,7 +46,9 @@ export function useKanbanBoards(userId?: string) {
     return () => { supabase.removeChannel(ch); };
   }, [userId, load]);
 
-  const createBoard = useCallback(async (name: string, columnTitles: string[]): Promise<string | undefined> => {
+  const createBoard = useCallback(async (
+    name: string, columnTitles: string[]
+  ): Promise<{ boardId: string; columnKeys: string[] } | undefined> => {
     if (!userId) return;
     if (boards.length >= MAX_KANBAN_BOARDS) {
       toast({ title: `Max ${MAX_KANBAN_BOARDS} kanban boards reached` });
@@ -59,12 +61,13 @@ export function useKanbanBoards(userId?: string) {
       .select("id").single();
     if (error || !data) { toast({ title: "Couldn't create board" }); return; }
     const boardId = data.id;
+    const columnKeys = titles.map(() => crypto.randomUUID());
     const cols = titles.map((t, idx) => ({
-      user_id: userId, board_id: boardId, column_key: crypto.randomUUID(), title: t, sort_order: idx,
+      user_id: userId, board_id: boardId, column_key: columnKeys[idx], title: t, sort_order: idx,
     }));
     await supabase.from("kanban_columns").insert(cols);
     await load();
-    return boardId;
+    return { boardId, columnKeys };
   }, [boards.length, userId, load]);
 
   const renameBoard = useCallback(async (boardId: string, name: string) => {
