@@ -190,8 +190,8 @@ export function FocusMode({ sprint, onUpdate, onExit, onComplete }: Props) {
       {bgEnabled ? <MediaBackground /> : <AmbientBackground atmosphere={sprint.atmosphere} intense />}
       <SpotifyPlayer />
       {/* Top bar */}
-      <div style={{ padding: "28px 32px 0", position: "relative", zIndex: 2, flexShrink: 0 }}>
-        <div className="grid items-center" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
+      <div className="px-4 sm:px-8" style={{ paddingTop: 28, position: "relative", zIndex: 2, flexShrink: 0 }}>
+        <div className="grid items-center gap-2" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
           <div className="flex items-center gap-3">
             <ThemeToggle
               color={bgEnabled ? "rgba(255,255,255,0.85)" : undefined}
@@ -216,7 +216,7 @@ export function FocusMode({ sprint, onUpdate, onExit, onComplete }: Props) {
             </button>
           </div>
 
-          <div className="relative flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             {sprint.noTimer ? (
               <span />
             ) : (
@@ -225,10 +225,6 @@ export function FocusMode({ sprint, onUpdate, onExit, onComplete }: Props) {
                   onClick={toggleTimer}
                   className="grid place-items-center transition"
                   style={{
-                    position: "absolute",
-                    right: "calc(100% + 10px)",
-                    top: "50%",
-                    transform: "translateY(-50%)",
                     width: 22,
                     height: 22,
                     background: "transparent",

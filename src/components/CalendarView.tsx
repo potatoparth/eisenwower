@@ -214,10 +214,16 @@ export function CalendarView({
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDayOffset((n) => n + 1)} aria-label="Next day">
             <ChevronRight className="w-4 h-4" />
           </Button>
-          <span className="text-muted-foreground/40">·</span>
-          <Button variant="ghost" size="sm" onClick={expandAll}>Expand all</Button>
-          <span className="text-muted-foreground/40">·</span>
-          <Button variant="ghost" size="sm" onClick={collapseAll}>Collapse all</Button>
+          <span className="text-muted-foreground/40 hidden sm:inline">·</span>
+          <Button variant="ghost" size="sm" onClick={expandAll} className="px-2">
+            <span className="hidden sm:inline">Expand all</span>
+            <span className="sm:hidden">Expand</span>
+          </Button>
+          <span className="text-muted-foreground/40 hidden sm:inline">·</span>
+          <Button variant="ghost" size="sm" onClick={collapseAll} className="px-2">
+            <span className="hidden sm:inline">Collapse all</span>
+            <span className="sm:hidden">Collapse</span>
+          </Button>
         </div>
         <div className="flex items-center gap-2">
           <Button

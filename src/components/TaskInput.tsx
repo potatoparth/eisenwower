@@ -282,9 +282,16 @@ export function TaskInput({
             placeholder={placeholder}
             className={cn(
               "min-w-0 flex-1 border-0 bg-transparent shadow-none p-0 h-full placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
-              (trailingElement
-                ? (compact ? "pr-16" : "pr-20")
-                : (compact ? "pr-9" : "pr-10")),
+              // When the Enter chip is visible (name has content), reserve
+              // wide padding for it; when hidden, only reserve room for the
+              // trailing icon so the placeholder isn't truncated on mobile.
+              name.trim()
+                ? (trailingElement
+                    ? (compact ? "pr-16" : "pr-20")
+                    : (compact ? "pr-9" : "pr-10"))
+                : (trailingElement
+                    ? (compact ? "pr-9" : "pr-10")
+                    : "pr-1"),
               compact ? "text-sm" : "text-base"
             )}
           />
