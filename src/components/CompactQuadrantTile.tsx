@@ -35,8 +35,8 @@ export function CompactQuadrantTile({ quadrant, tasks, onClick }: CompactQuadran
     >
       {/* SECTION 1 — HEADER */}
       <div
-        className="flex-shrink-0"
-        style={{ padding: "14px 14px 10px", borderBottom: `1px solid ${accentDivider}` }}
+        className="flex-shrink-0 p-3 sm:p-4 sm:pb-2.5"
+        style={{ borderBottom: `1px solid ${accentDivider}` }}
       >
         <div className="flex items-center gap-2">
           <span
@@ -45,7 +45,7 @@ export function CompactQuadrantTile({ quadrant, tasks, onClick }: CompactQuadran
           />
           <span
             className="flex-1 truncate"
-            style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.02em", color: accent }}
+            style={{ fontSize: 14, fontWeight: 700, letterSpacing: "-0.02em", color: accent }}
           >
             {quadrant.title}
           </span>
@@ -54,10 +54,10 @@ export function CompactQuadrantTile({ quadrant, tasks, onClick }: CompactQuadran
             style={{
               backgroundColor: badgeBg,
               color: accent,
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: 600,
               borderRadius: 20,
-              padding: "2px 8px",
+              padding: "2px 7px",
             }}
           >
             {open.length}
@@ -65,7 +65,7 @@ export function CompactQuadrantTile({ quadrant, tasks, onClick }: CompactQuadran
         </div>
         {quadrant.subtitle && (
           <p
-            className="mt-1 max-w-full overflow-hidden whitespace-nowrap text-ellipsis"
+            className="mt-1 max-w-full overflow-hidden whitespace-nowrap text-ellipsis hidden sm:block"
             style={{ fontSize: 11, color: subtitleColor }}
           >
             {quadrant.subtitle}
@@ -74,76 +74,53 @@ export function CompactQuadrantTile({ quadrant, tasks, onClick }: CompactQuadran
       </div>
 
       {/* SECTION 2 — STATS */}
-      <div
-        className="flex flex-1 flex-col justify-center"
-        style={{ padding: "10px 15px", gap: 8 }}
-      >
-        <SentenceStat
-          value={today}
-          singular="task for today"
-          plural="tasks for today"
-          activeColor="#D97706"
-        />
-        <SentenceStat
-          value={overdue}
-          singular="task to reschedule"
-          plural="tasks to reschedule"
-          activeColor="#DC2626"
-        />
-        <SentenceStat
-          value={open.length}
-          singular="task open"
-          plural="tasks open"
-          activeColor={accent}
-          alwaysActive
-        />
+      <div className="flex flex-1 flex-col justify-center gap-1.5 p-3 sm:gap-2 sm:p-4">
+        <StatRow value={today} label="today" activeColor="#D97706" />
+        <StatRow value={overdue} label="overdue" activeColor="#DC2626" />
+        <StatRow value={open.length} label="open" activeColor={accent} alwaysActive />
       </div>
 
     </button>
   );
 }
 
-function SentenceStat({
+function StatRow({
   value,
-  singular,
-  plural,
+  label,
   activeColor,
   alwaysActive = false,
 }: {
   value: number;
-  singular: string;
-  plural: string;
+  label: string;
   activeColor: string;
   alwaysActive?: boolean;
 }) {
   const active = alwaysActive || value > 0;
-  const text = value === 1 ? singular : plural;
   const mutedClass = "text-[#9CA3AF] dark:text-[#4B5563]";
   return (
-    <div className="flex items-baseline" style={{ gap: 0 }}>
+    <div className="flex items-baseline gap-1.5 min-w-0">
       <span
-        className={`tabular-nums ${active ? "" : mutedClass}`}
+        className={`tabular-nums flex-shrink-0 ${active ? "" : mutedClass}`}
         style={{
-          fontSize: 22,
+          fontSize: 20,
           fontWeight: 800,
           letterSpacing: "-0.04em",
           lineHeight: 1,
-          marginRight: 6,
           ...(active ? { color: activeColor } : {}),
         }}
       >
         {value}
       </span>
       <span
-        className={active ? "" : mutedClass}
+        className={`truncate ${active ? "" : mutedClass}`}
         style={{
-          fontSize: 14,
+          fontSize: 12,
           fontWeight: 500,
           letterSpacing: "-0.01em",
           ...(active ? { color: activeColor } : {}),
         }}
       >
-        {text}
+        {label}
       </span>
     </div>
   );

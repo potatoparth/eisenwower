@@ -66,8 +66,8 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, 
         </span>
         {username && (
           <>
-            <span className="text-muted-foreground/60 text-lg hidden xs:inline sm:inline">|</span>
-            <span className="text-sm text-muted-foreground truncate min-w-0">{username}</span>
+            <span className="text-muted-foreground/60 text-lg hidden sm:inline">|</span>
+            <span className="hidden sm:inline text-sm text-muted-foreground truncate min-w-0">{username}</span>
           </>
         )}
       </div>
