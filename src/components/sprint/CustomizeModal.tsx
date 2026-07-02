@@ -17,6 +17,8 @@ import {
   type BgMeta,
   setActivePreset,
   getActivePresetId,
+  getBgMuted,
+  setBgMuted,
 } from "@/lib/sprint/customization-store";
 import { PRESETS, getHiddenPresetIds, hidePreset, restoreHiddenPresets, HIDDEN_PRESETS_CHANGE_EVENT } from "@/lib/sprint/presets";
 import { useTheme } from "@/lib/sprint/theme-store";
@@ -87,6 +89,7 @@ export function CustomizeModal({ open, onClose }: Props) {
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const [ytRecent, setYtRecent] = useState<string[]>([]);
   const [spotifyRecent, setSpotifyRecent] = useState<string[]>([]);
+  const [bgMuted, setBgMutedState] = useState<boolean>(true);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const { uploads, activeUploadId, usedBytes } = useUploads();
 
@@ -103,6 +106,7 @@ export function CustomizeModal({ open, onClose }: Props) {
     setHiddenIds(getHiddenPresetIds());
     setYtRecent(readRecent(YT_RECENT_KEY));
     setSpotifyRecent(readRecent(SPOTIFY_RECENT_KEY));
+    setBgMutedState(getBgMuted());
   }, [open]);
 
   useEffect(() => {
@@ -511,8 +515,28 @@ export function CustomizeModal({ open, onClose }: Props) {
 
           {/* YouTube link */}
           <div style={{ marginTop: 18, paddingTop: 16, borderTop: `0.5px solid ${border}` }}>
-            <div style={{ fontSize: 12, color: sub, marginBottom: 8 }}>
-              …or paste a youtube.com link (muted, looped, ad-free not guaranteed):
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+              <div style={{ fontSize: 12, color: sub }}>
+                …or paste a youtube.com link (looped, ad-free not guaranteed):
+              </div>
+              <button
+                onClick={() => {
+                  const next = !bgMuted;
+                  setBgMuted(next);
+                  setBgMutedState(next);
+                }}
+                className="font-mono uppercase"
+                title={bgMuted ? "Unmute background" : "Mute background"}
+                style={{
+                  fontSize: 10, letterSpacing: "0.1em",
+                  padding: "5px 10px", borderRadius: 100,
+                  border: `0.5px solid ${border}`,
+                  background: bgMuted ? "transparent" : (isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.08)"),
+                  color: fg, cursor: "pointer", whiteSpace: "nowrap",
+                }}
+              >
+                {bgMuted ? "🔇 Muted" : "🔊 Sound On"}
+              </button>
             </div>
             <input
               type="text"
