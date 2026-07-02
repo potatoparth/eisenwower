@@ -237,6 +237,9 @@ interface ComposerProps {
 
 export function NoteComposer(props: ComposerProps) {
   const isEditing = !!props.editingNote;
+  const MAX_TITLE = 120;
+  const MAX_CONTENT = 10000;
+  const MAX_NOTE_BYTES = 20 * 1024 * 1024; // 20 MB per note
   const [open, setOpen] = useState(!!props.autoOpen);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -342,13 +345,15 @@ export function NoteComposer(props: ComposerProps) {
               <Input
                 autoFocus
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => setTitle(e.target.value.replace(/[\r\n]+/g, " ").slice(0, MAX_TITLE))}
+                onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+                maxLength={MAX_TITLE}
                 placeholder="Title"
                 className="border-0 bg-transparent focus-visible:ring-0 px-0 text-lg font-semibold h-8 placeholder:text-muted-foreground/60"
               />
               <TaskDescription
                 value={content}
-                onChange={setContent}
+                onChange={(v) => setContent(v.length > MAX_CONTENT ? v.slice(0, MAX_CONTENT) : v)}
                 placeholder="Take a note…"
                 alwaysOpen
               />
@@ -357,6 +362,7 @@ export function NoteComposer(props: ComposerProps) {
                   taskId={draftId}
                   value={attachments}
                   onChange={setAttachments}
+                  maxTotalBytes={MAX_NOTE_BYTES}
                 />
               )}
             </div>
@@ -388,9 +394,15 @@ export function NoteComposer(props: ComposerProps) {
                   taskId={draftId}
                   value={attachments}
                   onChange={setAttachments}
+                  maxTotalBytes={MAX_NOTE_BYTES}
                 />
               </div>
               <div className="ml-auto flex items-center gap-1">
+                {content.length > MAX_CONTENT * 0.9 && (
+                  <span className="text-[11px] text-muted-foreground mr-2">
+                    {content.length}/{MAX_CONTENT}
+                  </span>
+                )}
                 <Button size="sm" variant="ghost" onClick={reset} className="h-8">Cancel</Button>
                 <Button size="sm" onClick={commit} className="h-8 px-4">{isEditing ? "Save" : "Done"}</Button>
               </div>
