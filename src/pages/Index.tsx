@@ -4,6 +4,7 @@ import { useTasks } from "@/hooks/useTasks";
 import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
+import { useProjectTemplatePresets } from "@/hooks/useProjectTemplatePresets";
 import { useKanbanBoards } from "@/hooks/useKanbanBoards";
 import { Header } from "@/components/Header";
 import { MatrixView } from "@/components/MatrixView";
@@ -78,6 +79,10 @@ const Index = () => {
     projects, addProject, updateProject, deleteProject,
     addTaskToProject, updateProjectTask, deleteProjectTask, getProjectRole,
   } = useProjects(currentUser?.id);
+
+  const {
+    presets: templatePresets, addPreset, updatePreset, deletePreset,
+  } = useProjectTemplatePresets(currentUser?.id);
 
   const { notes, addNote, updateNote, deleteNote } = useNotes(currentUser?.id);
 
@@ -419,6 +424,10 @@ const Index = () => {
                 onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
                 onRescheduleTasks={handleRescheduleTasks}
                 getProjectRole={getProjectRole}
+                templatePresets={templatePresets}
+                onAddPreset={addPreset}
+                onUpdatePreset={updatePreset}
+                onDeletePreset={deletePreset}
               />
             </motion.div>
           )}

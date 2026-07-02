@@ -23,6 +23,25 @@ export interface ProjectTemplate {
   userId?: string;
 }
 
+/** A reusable, prefilled set of tasks that can seed a new project. */
+export interface PresetTask {
+  id: string;
+  name: string;
+  description?: string;
+  dependencyType: TaskDependencyType;
+  dependsOn: string[];
+  durationDays: number;
+}
+
+export interface ProjectTemplatePreset {
+  id: string;
+  name: string;
+  description?: string;
+  tasks: PresetTask[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface KanbanColumn {
   id: string;
   title: string;
