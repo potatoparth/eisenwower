@@ -130,18 +130,21 @@ export function NotesView(props: NotesViewProps) {
             editingNote={editingNote}
             onCancelEdit={() => setEditingId(null)}
             dark={dark}
-            trailingElement={
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSearchOpen(true)}
-                className="h-8 w-8 rounded-full"
-                title="Search notes"
-              >
-                <Search className="w-4 h-4" />
-              </Button>
-            }
           />
+          )}
+          {!searchOpen && (
+            <div className="flex justify-center -mt-1 pb-1">
+              <div className="w-full max-w-xl flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1.5 text-xs text-muted-foreground rounded-full"
+                  onClick={() => setSearchOpen(true)}
+                >
+                  <Search className="w-3.5 h-3.5" /> Search notes
+                </Button>
+              </div>
+            </div>
           )}
         </div>
 
