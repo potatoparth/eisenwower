@@ -193,12 +193,6 @@ export function FocusMode({ sprint, onUpdate, onExit, onComplete }: Props) {
       <div style={{ padding: "28px 32px 0", position: "relative", zIndex: 2, flexShrink: 0 }}>
         <div className="grid items-center" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
           <div className="flex items-center gap-3">
-            <span
-              className="font-mono uppercase"
-              style={{ fontSize: 13, letterSpacing: "0.15em", color: mutedText }}
-            >
-              Focus Mode
-            </span>
             <ThemeToggle
               color={bgEnabled ? "rgba(255,255,255,0.85)" : undefined}
               borderColor={bgEnabled ? "rgba(255,255,255,0.35)" : undefined}

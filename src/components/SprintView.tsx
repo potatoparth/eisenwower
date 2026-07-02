@@ -210,14 +210,7 @@ export function SprintView({ seedTasks, onSeedConsumed }: Props) {
               className="relative flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-8"
               style={{ zIndex: 2 }}
             >
-              <div className="flex items-center gap-3">
-                <span
-                  className="font-mono uppercase"
-                  style={{ fontSize: 13, letterSpacing: "0.15em", color: fgNav }}
-                >
-                  Focus Mode
-                </span>
-              </div>
+              <div className="flex items-center gap-3" />
               <div className="flex items-center gap-5">
                 <button
                   onClick={() => setPhase("history")}
