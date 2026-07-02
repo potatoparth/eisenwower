@@ -349,6 +349,26 @@ export function CustomizeModal({ open, onClose }: Props) {
                           ▶ Video
                         </div>
                       )}
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          padding: "10px 6px 4px",
+                          fontSize: 10,
+                          color: "rgba(255,255,255,0.95)",
+                          background:
+                            "linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0))",
+                          textAlign: p.type === "video" ? "right" : "left",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          pointerEvents: "none",
+                        }}
+                      >
+                        {p.name}
+                      </div>
                     </button>
                     <button
                       onClick={async (e) => {
