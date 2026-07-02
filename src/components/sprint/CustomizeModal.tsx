@@ -19,7 +19,7 @@ import {
   setActivePreset,
   getActivePresetId,
 } from "@/lib/sprint/customization-store";
-import { PRESETS } from "@/lib/sprint/presets";
+import { PRESETS, getHiddenPresetIds, hidePreset, restoreHiddenPresets, HIDDEN_PRESETS_CHANGE_EVENT } from "@/lib/sprint/presets";
 import { useTheme } from "@/lib/sprint/theme-store";
 
 interface Props {
@@ -39,6 +39,7 @@ export function CustomizeModal({ open, onClose }: Props) {
   const [ytErr, setYtErr] = useState<string | null>(null);
   const [showPresets, setShowPresets] = useState(false);
   const [presetId, setPresetId] = useState<string | null>(null);
+  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const { uploads, activeUploadId, usedBytes } = useUploads();
 
@@ -52,7 +53,14 @@ export function CustomizeModal({ open, onClose }: Props) {
     setErr(null);
     setYtErr(null);
     setPresetId(getActivePresetId());
+    setHiddenIds(getHiddenPresetIds());
   }, [open]);
+
+  useEffect(() => {
+    const h = () => setHiddenIds(getHiddenPresetIds());
+    window.addEventListener(HIDDEN_PRESETS_CHANGE_EVENT, h);
+    return () => window.removeEventListener(HIDDEN_PRESETS_CHANGE_EVENT, h);
+  }, []);
 
   if (!open) return null;
 
@@ -281,20 +289,12 @@ export function CustomizeModal({ open, onClose }: Props) {
                 gap: 8,
               }}
             >
-              {PRESETS.map((p) => {
+              {PRESETS.filter((p) => !hiddenIds.includes(p.id)).map((p) => {
                 const active = presetId === p.id;
                 return (
-                  <button
+                  <div
                     key={p.id}
-                    onClick={async () => {
-                      const next = active ? null : p.id;
-                      await setActivePreset(next);
-                      setPresetId(next);
-                      setMeta(getBgMeta());
-                      setEnabled(getBgEnabled());
-                      if (next) setYtInput("");
-                    }}
-                    title={p.name}
+                    className="group"
                     style={{
                       position: "relative",
                       aspectRatio: "16 / 10",
@@ -303,21 +303,92 @@ export function CustomizeModal({ open, onClose }: Props) {
                       border: active
                         ? `2px solid ${isLight ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.85)"}`
                         : `0.5px solid ${border}`,
-                      padding: 0,
-                      cursor: "pointer",
-                      background: "transparent",
                     }}
                   >
-                    <img
-                      src={p.url}
-                      alt={p.name}
-                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                      loading="lazy"
-                    />
-                  </button>
+                    <button
+                      onClick={async () => {
+                        const next = active ? null : p.id;
+                        await setActivePreset(next);
+                        setPresetId(next);
+                        setMeta(getBgMeta());
+                        setEnabled(getBgEnabled());
+                        if (next) setYtInput("");
+                      }}
+                      title={p.name}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        padding: 0,
+                        cursor: "pointer",
+                        background: "transparent",
+                        border: "none",
+                        display: "block",
+                      }}
+                    >
+                      <img
+                        src={p.url}
+                        alt={p.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        loading="lazy"
+                      />
+                    </button>
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (active) {
+                          await setActivePreset(null);
+                          setPresetId(null);
+                          setMeta(getBgMeta());
+                          setEnabled(getBgEnabled());
+                        }
+                        hidePreset(p.id);
+                      }}
+                      title="Remove preset"
+                      aria-label={`Remove ${p.name}`}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{
+                        position: "absolute",
+                        top: 4,
+                        right: 4,
+                        width: 20,
+                        height: 20,
+                        borderRadius: 999,
+                        border: "none",
+                        background: "rgba(0,0,0,0.65)",
+                        color: "rgba(255,255,255,0.95)",
+                        fontSize: 12,
+                        lineHeight: 1,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
                 );
               })}
             </div>
+          )}
+          {showPresets && hiddenIds.length > 0 && (
+            <button
+              onClick={() => restoreHiddenPresets()}
+              className="font-mono uppercase"
+              style={{
+                marginTop: 10,
+                fontSize: 10,
+                letterSpacing: "0.1em",
+                padding: "6px 12px",
+                borderRadius: 100,
+                border: `0.5px solid ${border}`,
+                background: "transparent",
+                color: sub,
+                cursor: "pointer",
+              }}
+            >
+              Restore {hiddenIds.length} hidden
+            </button>
           )}
 
           <input
