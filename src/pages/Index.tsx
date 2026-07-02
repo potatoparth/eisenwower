@@ -370,7 +370,7 @@ const Index = () => {
           {viewMode === "projects" && (
             <motion.div key="projects" {...viewAnimation} className="flex-1 min-h-0 w-full max-w-5xl mx-auto overflow-y-auto">
               <ProjectBuilder
-                projects={projects} allTasks={filteredTasks} onAddProject={addProject} onUpdateProject={updateProject}
+                projects={projects} allTasks={filteredTasks} allNotes={filteredNotes} onAddProject={addProject} onUpdateProject={updateProject}
                 onDeleteProject={deleteProject} onAddTask={addTaskToProject}
                 onUpdateTask={updateProjectTask} onDeleteTask={deleteProjectTask}
                 onAddMatrixTask={handleAddTask}
@@ -379,6 +379,7 @@ const Index = () => {
                 onCreateCategory={handleCreateCategory}
                 onCreateProject={handleCreateProject}
                 onSelectTask={setSelectedTask}
+                onSelectNote={() => setViewMode("notes")}
                 onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
                 onRescheduleTasks={handleRescheduleTasks}
               />
