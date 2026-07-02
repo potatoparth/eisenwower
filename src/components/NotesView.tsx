@@ -353,9 +353,9 @@ export function NoteComposer(props: ComposerProps) {
         ) : (
           <div className="flex flex-col">
             {/* Body */}
-            <div className="px-4 pt-4 pb-3 space-y-3 rounded-t-2xl overflow-hidden">
+            <div className="px-4 pt-4 pb-3 space-y-3">
               <div
-                className="sticky -top-4 z-20 -mx-4 px-4 pt-4 pb-1 rounded-t-2xl"
+                className="sticky top-0 z-20 -mx-4 px-4 pt-2 pb-1 rounded-t-2xl"
                 style={{ backgroundColor: bg }}
               >
                 <Input
