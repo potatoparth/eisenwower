@@ -4,14 +4,13 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Maximize2, ChevronDown, ChevronUp, CheckSquare } from "lucide-react";
+import { Maximize2, ChevronDown, ChevronUp } from "lucide-react";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import type { TaskAddOptions, TaskInputPickerProps } from "@/components/TaskInput";
 import { TaskCard } from "./TaskCard";
 import { TaskInput } from "./TaskInput";
 import { cn } from "@/lib/utils";
-import { useSelectionOptional } from "@/hooks/useSelection";
 
 interface QuadrantColumnProps {
   quadrant: QuadrantInfo;
@@ -53,7 +52,6 @@ export function QuadrantColumn({
   });
   const [expanded, setExpanded] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
-  const selection = useSelectionOptional();
 
   const openTasks = tasks.filter((t) => t.status === "open");
   const doneTasks = tasks.filter((t) => t.status === "done");
@@ -128,24 +126,6 @@ export function QuadrantColumn({
           >
             {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
-          {selection && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                selection.toggleSelectMode();
-              }}
-              className={cn(
-                "p-1 rounded-lg hover:bg-card/50 transition-colors",
-                selection.selectMode
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-              title={selection.selectMode ? "Exit select mode" : "Select tasks"}
-              aria-pressed={selection.selectMode}
-            >
-              <CheckSquare className="w-3.5 h-3.5" />
-            </button>
-          )}
           {onExpand && (
             <button
               onClick={(e) => {
