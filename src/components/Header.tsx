@@ -74,10 +74,10 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, 
       <div className="flex items-center gap-1 shrink-0">
         <Select value={viewMode} onValueChange={(v) => onViewModeChange(v as ViewMode)}>
           <SelectTrigger className="h-9 rounded-xl w-11 px-2 sm:w-[140px] sm:px-3" aria-label="Change view">
-            <span className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <CurrentIcon className="w-4 h-4" />
               <span className="hidden sm:inline truncate">{currentView.label}</span>
-            </span>
+            </div>
           </SelectTrigger>
           <SelectContent align="end">
             {visibleViews.map((v) => {
