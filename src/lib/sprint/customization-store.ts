@@ -18,6 +18,7 @@ export interface SprintUpload {
   mime: string;
   size: number;
   createdAt: string;
+  previewUrl?: string | null;
 }
 
 interface Preferences {
@@ -28,7 +29,7 @@ interface Preferences {
 }
 
 const BUCKET = "sprint-backgrounds";
-export const MAX_UPLOADS = 3;
+export const MAX_UPLOADS = 10;
 export const MAX_TOTAL_BYTES = 50 * 1024 * 1024;
 
 const CHANGE = "sprint.customization.change";
@@ -117,6 +118,12 @@ async function hydrate(force = false): Promise<void> {
       size: Number(r.size),
       createdAt: r.created_at,
     }));
+    // Sign preview URLs for all uploads so we can render thumbnails.
+    await Promise.all(
+      list.map(async (u) => {
+        u.previewUrl = await signUrl(u.storagePath);
+      })
+    );
     const prefs: Preferences = prefsRow
       ? {
           activeUploadId: (prefsRow as { active_upload_id: string | null }).active_upload_id,

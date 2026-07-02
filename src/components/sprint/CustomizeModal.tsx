@@ -68,8 +68,12 @@ export function CustomizeModal({ open, onClose }: Props) {
     const f = e.target.files?.[0];
     if (!f) return;
     setErr(null);
-    if (!f.type.startsWith("image") && !f.type.startsWith("video")) {
-      setErr("Please choose an image or video file.");
+    const nameLower = f.name.toLowerCase();
+    const isJpeg =
+      f.type === "image/jpeg" || nameLower.endsWith(".jpg") || nameLower.endsWith(".jpeg");
+    const isMp4 = f.type === "video/mp4" || nameLower.endsWith(".mp4");
+    if (!isJpeg && !isMp4) {
+      setErr("Only JPEG images and MP4 videos are supported.");
       return;
     }
     // Per-file safety cap (50MB total is enforced server-side).
@@ -256,7 +260,7 @@ export function CustomizeModal({ open, onClose }: Props) {
               ? "Uploading…"
               : uploads.length >= MAX_UPLOADS
               ? `Limit reached (${MAX_UPLOADS} files)`
-              : "Upload photo or video"}
+              : "Upload JPEG or MP4"}
           </button>
           <div style={{ fontSize: 11, color: sub, marginTop: 6, textAlign: "right" }}>
             {uploads.length} / {MAX_UPLOADS} files · {(usedBytes / (1024 * 1024)).toFixed(1)} /{" "}
@@ -432,7 +436,7 @@ export function CustomizeModal({ open, onClose }: Props) {
           <input
             ref={fileRef}
             type="file"
-            accept="image/*,video/*"
+            accept="image/jpeg,.jpg,.jpeg,video/mp4,.mp4"
             style={{ display: "none" }}
             onChange={onPick}
           />
