@@ -18,6 +18,7 @@ export interface SprintUpload {
   mime: string;
   size: number;
   createdAt: string;
+  previewUrl?: string | null;
 }
 
 interface Preferences {
@@ -117,6 +118,12 @@ async function hydrate(force = false): Promise<void> {
       size: Number(r.size),
       createdAt: r.created_at,
     }));
+    // Sign preview URLs for all uploads so we can render thumbnails.
+    await Promise.all(
+      list.map(async (u) => {
+        u.previewUrl = await signUrl(u.storagePath);
+      })
+    );
     const prefs: Preferences = prefsRow
       ? {
           activeUploadId: (prefsRow as { active_upload_id: string | null }).active_upload_id,
