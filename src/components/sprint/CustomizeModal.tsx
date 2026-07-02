@@ -535,6 +535,8 @@ export function CustomizeModal({ open, onClose }: Props) {
                 if (id) {
                   const m = await saveYouTubeBackground(v);
                   if (m) { setMeta(m); setEnabled(true); }
+                  pushRecent(YT_RECENT_KEY, v);
+                  setYtRecent(readRecent(YT_RECENT_KEY));
                 } else {
                   setYtErr("Couldn't find a video ID in that link.");
                 }
@@ -552,6 +554,104 @@ export function CustomizeModal({ open, onClose }: Props) {
               }}
             />
             {ytErr && <div style={{ fontSize: 12, color: "rgb(255,120,120)", marginTop: 6 }}>{ytErr}</div>}
+
+            {/* Recommended YouTube */}
+            <div className="font-mono uppercase" style={{ fontSize: 10, letterSpacing: "0.15em", color: sub, marginTop: 14, marginBottom: 8 }}>
+              Recommended
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+              {YT_RECOMMENDED.map((r) => {
+                const thumb = ytThumb(r.url);
+                const active = ytInput.trim() === r.url;
+                return (
+                  <button
+                    key={r.url}
+                    onClick={async () => {
+                      setYtInput(r.url);
+                      setYtErr(null);
+                      const m = await saveYouTubeBackground(r.url);
+                      if (m) { setMeta(m); setEnabled(true); }
+                      pushRecent(YT_RECENT_KEY, r.url);
+                      setYtRecent(readRecent(YT_RECENT_KEY));
+                    }}
+                    title={r.label}
+                    style={{
+                      position: "relative",
+                      aspectRatio: "16 / 10",
+                      borderRadius: 10,
+                      overflow: "hidden",
+                      padding: 0,
+                      cursor: "pointer",
+                      border: active
+                        ? `2px solid ${isLight ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.85)"}`
+                        : `0.5px solid ${border}`,
+                      background: "transparent",
+                    }}
+                  >
+                    {thumb && (
+                      <img src={thumb} alt={r.label} loading="lazy"
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    )}
+                    <div style={{
+                      position: "absolute", left: 0, right: 0, bottom: 0,
+                      padding: "10px 6px 4px", fontSize: 10, color: "rgba(255,255,255,0.95)",
+                      background: "linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0))",
+                      whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                      pointerEvents: "none",
+                    }}>{r.label}</div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Recent YouTube */}
+            {ytRecent.length > 0 && (
+              <>
+                <div className="font-mono uppercase" style={{ fontSize: 10, letterSpacing: "0.15em", color: sub, marginTop: 14, marginBottom: 8 }}>
+                  Recent
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {ytRecent.map((u) => {
+                    const active = ytInput.trim() === u;
+                    const id = parseYouTubeId(u);
+                    return (
+                      <div key={u} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <button
+                          onClick={async () => {
+                            setYtInput(u);
+                            setYtErr(null);
+                            const m = await saveYouTubeBackground(u);
+                            if (m) { setMeta(m); setEnabled(true); }
+                          }}
+                          title={u}
+                          style={{
+                            maxWidth: 200, fontSize: 11, padding: "5px 10px", borderRadius: 100,
+                            border: `0.5px solid ${active ? (isLight ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.35)") : border}`,
+                            background: active ? (isLight ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.05)") : "transparent",
+                            color: fg, cursor: "pointer",
+                            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                          }}
+                        >
+                          ▶ {id ?? u}
+                        </button>
+                        <button
+                          onClick={() => {
+                            const next = ytRecent.filter((x) => x !== u);
+                            window.localStorage.setItem(YT_RECENT_KEY, JSON.stringify(next));
+                            setYtRecent(next);
+                          }}
+                          aria-label="Forget"
+                          style={{
+                            fontSize: 11, lineHeight: 1, width: 18, height: 18, borderRadius: 999,
+                            border: "none", background: "transparent", color: sub, cursor: "pointer",
+                          }}
+                        >×</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
         </section>
 
@@ -570,7 +670,13 @@ export function CustomizeModal({ open, onClose }: Props) {
             onChange={(e) => {
               const v = e.target.value;
               setSpotify(v);
-              if (v.trim() === "" || isSpotifyPlaylistUrl(v)) setSpotifyUrl(v.trim());
+              if (v.trim() === "" || isSpotifyPlaylistUrl(v)) {
+                setSpotifyUrl(v.trim());
+                if (v.trim()) {
+                  pushRecent(SPOTIFY_RECENT_KEY, v.trim());
+                  setSpotifyRecent(readRecent(SPOTIFY_RECENT_KEY));
+                }
+              }
             }}
             placeholder="https://open.spotify.com/playlist/..."
             style={{
@@ -588,6 +694,83 @@ export function CustomizeModal({ open, onClose }: Props) {
             <div style={{ fontSize: 12, color: "rgb(255,120,120)", marginTop: 6 }}>
               Only open.spotify.com/playlist links are supported.
             </div>
+          )}
+
+          {/* Recommended Spotify */}
+          <div className="font-mono uppercase" style={{ fontSize: 10, letterSpacing: "0.15em", color: sub, marginTop: 14, marginBottom: 8 }}>
+            Recommended
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {SPOTIFY_RECOMMENDED.map((r) => {
+              const active = spotify.trim() === r.url;
+              return (
+                <button
+                  key={r.url}
+                  onClick={() => {
+                    setSpotify(r.url);
+                    setSpotifyUrl(r.url);
+                    pushRecent(SPOTIFY_RECENT_KEY, r.url);
+                    setSpotifyRecent(readRecent(SPOTIFY_RECENT_KEY));
+                  }}
+                  title={r.url}
+                  style={{
+                    maxWidth: 220, fontSize: 11, padding: "5px 10px", borderRadius: 100,
+                    border: `0.5px solid ${active ? (isLight ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.35)") : border}`,
+                    background: active ? (isLight ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.05)") : "transparent",
+                    color: fg, cursor: "pointer",
+                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                  }}
+                >
+                  ♫ {r.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Recent Spotify */}
+          {spotifyRecent.length > 0 && (
+            <>
+              <div className="font-mono uppercase" style={{ fontSize: 10, letterSpacing: "0.15em", color: sub, marginTop: 14, marginBottom: 8 }}>
+                Recent
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {spotifyRecent.map((u) => {
+                  const active = spotify.trim() === u;
+                  return (
+                    <div key={u} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <button
+                        onClick={() => {
+                          setSpotify(u);
+                          setSpotifyUrl(u);
+                        }}
+                        title={u}
+                        style={{
+                          maxWidth: 200, fontSize: 11, padding: "5px 10px", borderRadius: 100,
+                          border: `0.5px solid ${active ? (isLight ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.35)") : border}`,
+                          background: active ? (isLight ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.05)") : "transparent",
+                          color: fg, cursor: "pointer",
+                          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                        }}
+                      >
+                        ♫ {shortSpotify(u)}
+                      </button>
+                      <button
+                        onClick={() => {
+                          const next = spotifyRecent.filter((x) => x !== u);
+                          window.localStorage.setItem(SPOTIFY_RECENT_KEY, JSON.stringify(next));
+                          setSpotifyRecent(next);
+                        }}
+                        aria-label="Forget"
+                        style={{
+                          fontSize: 11, lineHeight: 1, width: 18, height: 18, borderRadius: 999,
+                          border: "none", background: "transparent", color: sub, cursor: "pointer",
+                        }}
+                      >×</button>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </section>
       </div>
