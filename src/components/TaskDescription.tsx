@@ -131,6 +131,10 @@ interface TaskDescriptionProps {
   /** When true, always show the editor (no collapsed "Add description" button). */
   alwaysOpen?: boolean;
   addLabel?: string;
+  /** When set, the formatting toolbar sticks to the top of the nearest scroll
+   *  container. `top` is a CSS length (px or CSS string) and `background` is
+   *  used to fill behind the sticky bar so content doesn't bleed through. */
+  stickyToolbar?: { top?: number | string; background?: string };
 }
 
 export function TaskDescription({
@@ -141,6 +145,7 @@ export function TaskDescription({
   className,
   alwaysOpen = false,
   addLabel = "Add description",
+  stickyToolbar,
 }: TaskDescriptionProps) {
   const [open, setOpen] = useState<boolean>(alwaysOpen || !!value);
 
@@ -172,6 +177,7 @@ export function TaskDescription({
       onCommit={onCommit}
       placeholder={placeholder}
       className={className}
+      stickyToolbar={stickyToolbar}
       onCollapse={
         alwaysOpen
           ? undefined
@@ -190,6 +196,7 @@ interface EditorProps {
   placeholder?: string;
   className?: string;
   onCollapse?: () => void;
+  stickyToolbar?: { top?: number | string; background?: string };
 }
 
 function DescriptionEditor({
@@ -199,6 +206,7 @@ function DescriptionEditor({
   placeholder,
   className,
   onCollapse,
+  stickyToolbar,
 }: EditorProps) {
   const lines = useMemo<Line[]>(() => {
     const parsed = parse(value);
@@ -363,7 +371,23 @@ function DescriptionEditor({
   return (
     <div className={cn("space-y-1.5", className)}>
       {/* Toolbar */}
-      <div className="flex items-center gap-0.5">
+      <div
+        className={cn(
+          "flex items-center gap-0.5",
+          stickyToolbar && "sticky z-10 -mx-1 px-1 py-1 rounded-md backdrop-blur-sm"
+        )}
+        style={
+          stickyToolbar
+            ? {
+                top:
+                  typeof stickyToolbar.top === "number"
+                    ? `${stickyToolbar.top}px`
+                    : stickyToolbar.top ?? 0,
+                background: stickyToolbar.background,
+              }
+            : undefined
+        }
+      >
         <ToolbarBtn
           onClick={() => convertActive("ordered")}
           title="Numbered list"
