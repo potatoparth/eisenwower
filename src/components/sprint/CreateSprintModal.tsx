@@ -51,6 +51,7 @@ export function CreateSprintModal({ open, onClose, onLockIn, seedTasks }: Props)
   const [title, setTitle] = useState("");
   const [duration, setDuration] = useState<number>(45);
   const [customMode, setCustomMode] = useState(false);
+  const [customText, setCustomText] = useState<string>("45");
   const [noTimer, setNoTimer] = useState(false);
   const [tasks, setTasks] = useState<DraftTask[]>([]);
   const [taskInput, setTaskInput] = useState("");
@@ -227,7 +228,7 @@ export function CreateSprintModal({ open, onClose, onLockIn, seedTasks }: Props)
           {!noTimer && (
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <div
-                className="inline-flex rounded-full p-1"
+                className="inline-flex flex-wrap rounded-full p-1"
                 style={{ border: `0.5px solid ${borderColor}` }}
               >
                 {durations.map((d) => {
@@ -238,8 +239,8 @@ export function CreateSprintModal({ open, onClose, onLockIn, seedTasks }: Props)
                       onClick={() => { setCustomMode(false); setDuration(d); }}
                       className="rounded-full transition-colors"
                       style={{
-                        padding: "8px 18px",
-                        fontSize: 15,
+                        padding: "7px 14px",
+                        fontSize: 14,
                         fontFamily: "var(--sp-font-mono)",
                         background: active ? pillSelBg : "transparent",
                         color: active ? pillSelText : pillText,
@@ -250,11 +251,11 @@ export function CreateSprintModal({ open, onClose, onLockIn, seedTasks }: Props)
                   );
                 })}
                 <button
-                  onClick={() => setCustomMode(true)}
+                  onClick={() => { setCustomMode(true); setCustomText(String(duration)); }}
                   className="rounded-full transition-colors"
                   style={{
-                    padding: "8px 18px",
-                    fontSize: 15,
+                    padding: "7px 14px",
+                    fontSize: 14,
                     fontFamily: "var(--sp-font-mono)",
                     background: customMode ? pillSelBg : "transparent",
                     color: customMode ? pillSelText : pillText,
@@ -265,20 +266,28 @@ export function CreateSprintModal({ open, onClose, onLockIn, seedTasks }: Props)
               </div>
               {customMode && (
                 <div
-                  className="inline-flex items-center gap-2 rounded-full px-4 py-2"
+                  className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 shrink-0"
                   style={{ border: `0.5px solid ${borderColor}` }}
                 >
                   <input
                     type="number"
                     min={1}
                     max={240}
-                    value={duration}
+                    value={customText}
                     onChange={(e) => {
-                      const v = parseInt(e.target.value, 10);
-                      setDuration(Number.isFinite(v) ? Math.max(1, Math.min(240, v)) : 1);
+                      const raw = e.target.value;
+                      setCustomText(raw);
+                      const v = parseInt(raw, 10);
+                      if (Number.isFinite(v) && v >= 1 && v <= 240) setDuration(v);
                     }}
-                    className="w-16 bg-transparent outline-none font-mono"
-                    style={{ fontSize: 15, color: bodyColor }}
+                    onBlur={() => {
+                      const v = parseInt(customText, 10);
+                      const clamped = Number.isFinite(v) ? Math.max(1, Math.min(240, v)) : 1;
+                      setDuration(clamped);
+                      setCustomText(String(clamped));
+                    }}
+                    className="w-12 bg-transparent outline-none font-mono"
+                    style={{ fontSize: 14, color: bodyColor }}
                   />
                   <span className="font-mono" style={{ fontSize: 12, color: labelColor }}>min</span>
                 </div>
