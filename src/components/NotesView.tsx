@@ -288,7 +288,7 @@ export function NoteComposer(props: ComposerProps) {
     setProjectId(props.defaultProjectId || "");
     setOpen(false);
     setDraftId(crypto.randomUUID());
-    if (isEditing) props.onCancelEdit?.();
+    props.onCancelEdit?.();
   };
 
   const commit = () => {
