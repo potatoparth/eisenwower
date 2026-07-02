@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pin, PinOff, Trash2, Palette, FolderKanban, Tag, ListChecks } from "lucide-react";
+import { Pin, PinOff, Trash2, Palette, FolderKanban, Tag, ListChecks, Search, X } from "lucide-react";
 import { Note, NOTE_COLORS, noteColorFor } from "@/types/note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,11 +52,29 @@ export function NotesView(props: NotesViewProps) {
 
   const dark = useIsDark();
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const editingNote = useMemo(
     () => (editingId ? notes.find((n) => n.id === editingId) ?? null : null),
     [editingId, notes]
   );
   const composerWrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  const filteredNotes = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return notes;
+    return notes.filter(
+      (n) =>
+        n.title.toLowerCase().includes(q) ||
+        n.content.toLowerCase().includes(q) ||
+        (n.category || "").toLowerCase().includes(q)
+    );
+  }, [notes, searchQuery]);
 
   const startEdit = (id: string) => {
     setEditingId(id);
@@ -66,8 +84,8 @@ export function NotesView(props: NotesViewProps) {
     });
   };
 
-  const pinned = useMemo(() => notes.filter((n) => n.pinned), [notes]);
-  const others = useMemo(() => notes.filter((n) => !n.pinned), [notes]);
+  const pinned = useMemo(() => filteredNotes.filter((n) => n.pinned), [filteredNotes]);
+  const others = useMemo(() => filteredNotes.filter((n) => !n.pinned), [filteredNotes]);
 
   const projectName = (id?: string) => projects.find((p) => p.id === id)?.name;
 
@@ -75,7 +93,32 @@ export function NotesView(props: NotesViewProps) {
     <div className="flex-1 min-h-0 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-1 pb-8">
         <div ref={composerWrapRef}>
-          <NoteComposer
+          {searchOpen ? (
+            <div className="pt-4 pb-2 flex justify-center">
+              <div className="relative flex h-[50px] w-full max-w-xl items-center rounded-full border border-border/60 bg-secondary/40 px-5">
+                <Input
+                  ref={searchInputRef}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); }
+                  }}
+                  placeholder="Search notes..."
+                  className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full -mr-2 flex-shrink-0"
+                  onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
+                  title="Close search"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <NoteComposer
             categories={categories}
             projects={projects}
             defaultCategory={defaultCategory}
@@ -88,6 +131,21 @@ export function NotesView(props: NotesViewProps) {
             onCancelEdit={() => setEditingId(null)}
             dark={dark}
           />
+          )}
+          {!searchOpen && (
+            <div className="flex justify-center -mt-1 pb-1">
+              <div className="w-full max-w-xl flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1.5 text-xs text-muted-foreground rounded-full"
+                  onClick={() => setSearchOpen(true)}
+                >
+                  <Search className="w-3.5 h-3.5" /> Search notes
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {pinned.length > 0 && (

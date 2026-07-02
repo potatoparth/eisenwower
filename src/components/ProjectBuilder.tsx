@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink } from "lucide-react";
+import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote } from "lucide-react";
 import { ProjectTemplate, ProjectTask } from "@/types/project";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { Note, noteColorFor } from "@/types/note";
@@ -141,25 +141,6 @@ export function ProjectBuilder({
             </Button>
           </div>
 
-          {/* Matrix-style action bar: add task + search + clear-done. */}
-          {onAddMatrixTask && (
-            <div className="max-w-2xl w-full mx-auto flex-shrink-0">
-              <TaskActionBar
-                tasks={mappedTasks}
-                onSelectTask={(t) => onSelectTask?.(t)}
-                onDeleteAllDone={() => onDeleteAllDone?.()}
-                onRescheduleTasks={onRescheduleTasks}
-                onAddTask={handleAddMatrixTask}
-                quadrants={quadrants ?? []}
-                categories={categories}
-                projects={projects}
-                defaultProjectId={selectedProject.id}
-                onCreateCategory={onCreateCategory}
-                onCreateProject={onCreateProject}
-              />
-            </div>
-          )}
-
           {/* Tasks + Notes side-by-side */}
           <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-hidden">
             {/* Tasks column */}
@@ -167,6 +148,23 @@ export function ProjectBuilder({
               <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">
                 Tasks · {selectedProject.tasks.length + mappedTasks.length}
               </h4>
+              {onAddMatrixTask && (
+                <div className="mb-3">
+                  <TaskActionBar
+                    tasks={mappedTasks}
+                    onSelectTask={(t) => onSelectTask?.(t)}
+                    onDeleteAllDone={() => onDeleteAllDone?.()}
+                    onRescheduleTasks={onRescheduleTasks}
+                    onAddTask={handleAddMatrixTask}
+                    quadrants={quadrants ?? []}
+                    categories={categories}
+                    projects={projects}
+                    defaultProjectId={selectedProject.id}
+                    onCreateCategory={onCreateCategory}
+                    onCreateProject={onCreateProject}
+                  />
+                </div>
+              )}
               <div className="flex-1 overflow-y-auto space-y-2 pr-1">
                 {selectedProject.tasks.sort((a, b) => a.order - b.order).map((task, idx) => {
               const dependsOnTask = task.dependsOn.length > 0 ? selectedProject.tasks.find(t => t.id === task.dependsOn[0]) : null;
@@ -249,16 +247,20 @@ export function ProjectBuilder({
 
             {/* Notes column */}
             <div className="min-h-0 flex flex-col">
-              <div className="flex items-center justify-between mb-2 px-1">
-                <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                  Notes · {mappedNotes.length}
-                </h4>
-                {onAddNote && (
-                  <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={openCreateNote}>
-                    <Plus className="w-3 h-3" /> New note
-                  </Button>
-                )}
-              </div>
+              <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">
+                Notes · {mappedNotes.length}
+              </h4>
+              {onAddNote && (
+                <button
+                  onClick={openCreateNote}
+                  className="mb-3 flex h-[50px] w-full items-center rounded-full border border-border/60 bg-secondary/40 px-5 text-left text-sm text-muted-foreground/80 hover:bg-secondary/60 transition-colors"
+                >
+                  <span aria-hidden className="flex h-8 w-8 items-center justify-center text-muted-foreground/60 -ml-2 mr-1">
+                    <StickyNote className="w-4 h-4" strokeWidth={1.75} />
+                  </span>
+                  Add a new note...
+                </button>
+              )}
               <div className="flex-1 overflow-y-auto pr-1">
                 {mappedNotes.length > 0 ? (
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
