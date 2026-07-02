@@ -119,7 +119,7 @@ export function Header({ viewMode, onViewModeChange, onSettingsClick, onLogout, 
             </SelectContent>
           </Select>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setIsDark(!isDark)} className="rounded-xl w-9 h-9 sm:w-10 sm:h-10">
+        <Button data-theme-toggle variant="ghost" size="icon" onClick={() => setIsDark(!isDark)} className="rounded-xl w-9 h-9 sm:w-10 sm:h-10">
           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </Button>
         <Button
