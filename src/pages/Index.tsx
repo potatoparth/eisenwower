@@ -275,6 +275,7 @@ const Index = () => {
         onSettingsClick={() => setShowSettings(true)}
         onLogout={logout}
         enabledViews={settings.enabledViews}
+        username={currentUser?.username}
       />
 
       <main className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col overflow-hidden">
