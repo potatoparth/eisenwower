@@ -1,9 +1,13 @@
 import { useState } from "react";
-import { X, CalendarClock, Timer } from "lucide-react";
+import { X, CalendarClock, Timer, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { useSelection } from "@/hooks/useSelection";
 import { Task } from "@/types/task";
@@ -12,13 +16,15 @@ interface Props {
   onBulkReschedule: (ids: string[], iso: string) => void;
   /** Send the current selection to the Sprint view (opens the composer prefilled). */
   onAddToSprint?: (ids: string[]) => void;
+  /** Permanently delete the selected tasks. */
+  onBulkDelete?: (ids: string[]) => void;
 }
 
 /**
  * Floating bar shown when the user has tasks selected via the global Select
  * mode. Currently exposes a single bulk action: Reschedule.
  */
-export function BulkActionBar({ onBulkReschedule, onAddToSprint }: Props) {
+export function BulkActionBar({ onBulkReschedule, onAddToSprint, onBulkDelete }: Props) {
   const { selectMode, selectedIds, count, clear, setSelectMode } = useSelection();
   const [date, setDate] = useState<string | undefined>(undefined);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -67,6 +73,42 @@ export function BulkActionBar({ onBulkReschedule, onAddToSprint }: Props) {
           <DateTimePicker value={date} onChange={(v) => { setDate(v); apply(v); }} placeholder="Pick deadline…" />
         </PopoverContent>
       </Popover>
+      {onBulkDelete && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="rounded-full gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Delete
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Delete {count} task{count === 1 ? "" : "s"}?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently remove the selected {count === 1 ? "task" : "tasks"}. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>No</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  onBulkDelete(Array.from(selectedIds));
+                  clear();
+                  setSelectMode(false);
+                }}
+              >
+                Yes, delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
       <Button
         variant="ghost"
         size="icon"

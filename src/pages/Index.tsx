@@ -444,6 +444,7 @@ const Index = () => {
 
       <BulkActionBar
         onBulkReschedule={handleBulkReschedule}
+        onBulkDelete={(ids) => ids.forEach((id) => deleteTask(id))}
         onAddToSprint={(ids) => {
           const map = new Map(tasks.map((t) => [t.id, t] as const));
           const seeds: SprintSeedTask[] = ids
