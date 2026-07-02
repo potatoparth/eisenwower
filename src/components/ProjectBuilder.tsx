@@ -456,6 +456,7 @@ export function ProjectBuilder({
           open={templatesOpen}
           onOpenChange={setTemplatesOpen}
           presets={templatePresets}
+          categories={categories}
           onAdd={onAddPreset}
           onUpdate={onUpdatePreset}
           onDelete={onDeletePreset}

@@ -1,17 +1,21 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, ArrowUp, ArrowDown, Save, X, LayoutTemplate, Link as LinkIcon, Unlink } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Save, X, LayoutTemplate, Target, Tag, CalendarClock, FileText, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { ProjectTemplatePreset, PresetTask, TaskDependencyType } from "@/types/project";
+import { ProjectTemplatePreset, PresetTask } from "@/types/project";
+import { QUADRANTS, Quadrant } from "@/types/task";
+import { DateTimePicker } from "@/components/DateTimePicker";
+import { format, parseISO } from "date-fns";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   presets: ProjectTemplatePreset[];
+  categories?: string[];
   onAdd: (name: string, description?: string, tasks?: PresetTask[]) => Promise<ProjectTemplatePreset | null> | ProjectTemplatePreset | null;
   onUpdate: (id: string, updates: Partial<Omit<ProjectTemplatePreset, "id" | "createdAt">>) => void;
   onDelete: (id: string) => void;
@@ -25,7 +29,7 @@ const emptyTask = (): PresetTask => ({
   durationDays: 1,
 });
 
-export function ProjectTemplatesDialog({ open, onOpenChange, presets, onAdd, onUpdate, onDelete }: Props) {
+export function ProjectTemplatesDialog({ open, onOpenChange, presets, categories = [], onAdd, onUpdate, onDelete }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [draftDesc, setDraftDesc] = useState("");
@@ -148,59 +152,16 @@ export function ProjectTemplatesDialog({ open, onOpenChange, presets, onAdd, onU
                 </p>
               )}
               {draftTasks.map((t, idx) => (
-                <div key={t.id} className="rounded-xl border border-border bg-card p-3 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground font-mono w-5">{idx + 1}</span>
-                    <Input
-                      className="flex-1"
-                      placeholder="Task name"
-                      value={t.name}
-                      onChange={(e) => patchTask(t.id, { name: e.target.value })}
-                    />
-                    <div className="flex items-center gap-0.5">
-                      <Button size="icon" variant="ghost" className="w-7 h-7" disabled={idx === 0} onClick={() => move(t.id, -1)}>
-                        <ArrowUp className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="w-7 h-7" disabled={idx === draftTasks.length - 1} onClick={() => move(t.id, 1)}>
-                        <ArrowDown className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="w-7 h-7 text-muted-foreground hover:text-destructive" onClick={() => removeTask(t.id)}>
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 pl-7">
-                    <Select value={t.dependencyType} onValueChange={(v) => patchTask(t.id, { dependencyType: v as TaskDependencyType })}>
-                      <SelectTrigger className="h-8 w-[130px] text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="async"><span className="inline-flex items-center gap-1"><Unlink className="w-3 h-3" /> Async</span></SelectItem>
-                        <SelectItem value="sync"><span className="inline-flex items-center gap-1"><LinkIcon className="w-3 h-3" /> Sync</span></SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-muted-foreground">Duration</span>
-                      <Input
-                        type="number"
-                        min={1}
-                        className="h-8 w-16"
-                        value={t.durationDays}
-                        onChange={(e) => patchTask(t.id, { durationDays: Math.max(1, Number(e.target.value) || 1) })}
-                      />
-                      <span className="text-muted-foreground">d</span>
-                    </div>
-                  </div>
-                  <div className="pl-7">
-                    <Textarea
-                      placeholder="Notes (optional)"
-                      value={t.description || ""}
-                      onChange={(e) => patchTask(t.id, { description: e.target.value })}
-                      rows={1}
-                      className="text-xs"
-                    />
-                  </div>
-                </div>
+                <PresetTaskRow
+                  key={t.id}
+                  task={t}
+                  index={idx}
+                  total={draftTasks.length}
+                  categories={categories}
+                  onPatch={(u) => patchTask(t.id, u)}
+                  onRemove={() => removeTask(t.id)}
+                  onMove={(d) => move(t.id, d)}
+                />
               ))}
             </div>
 
@@ -230,5 +191,176 @@ export function ProjectTemplatesDialog({ open, onOpenChange, presets, onAdd, onU
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+interface RowProps {
+  task: PresetTask;
+  index: number;
+  total: number;
+  categories: string[];
+  onPatch: (updates: Partial<PresetTask>) => void;
+  onRemove: () => void;
+  onMove: (dir: -1 | 1) => void;
+}
+
+function PresetTaskRow({ task, index, total, categories, onPatch, onRemove, onMove }: RowProps) {
+  const quadrant = QUADRANTS.find(q => q.id === task.quadrant);
+  const [catQuery, setCatQuery] = useState("");
+  const filteredCats = categories.filter(c => c.toLowerCase().includes(catQuery.toLowerCase()));
+  const dueLabel = task.dueDate
+    ? (() => { try { return format(parseISO(task.dueDate.length === 10 ? task.dueDate + "T00:00:00" : task.dueDate), "MMM d"); } catch { return "Due"; } })()
+    : null;
+
+  return (
+    <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5">
+      <span className="text-[11px] text-muted-foreground font-mono w-5 shrink-0 text-center">{index + 1}</span>
+      <Input
+        className="flex-1 h-8 border-0 bg-transparent shadow-none focus-visible:ring-1 px-2"
+        placeholder="Task name"
+        value={task.name}
+        onChange={(e) => onPatch({ name: e.target.value })}
+      />
+
+      {/* Quadrant */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button size="sm" variant="ghost" className="h-7 px-2 gap-1 text-xs" title="Quadrant">
+            {quadrant ? (
+              <>
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(var(--quadrant-${quadrant.color}))` }} />
+                <span className="hidden sm:inline">{quadrant.title}</span>
+              </>
+            ) : (
+              <><Target className="w-3.5 h-3.5" /><span className="hidden sm:inline text-muted-foreground">Quadrant</span></>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-56 p-1" align="start">
+          {QUADRANTS.map(q => (
+            <button
+              key={q.id}
+              onClick={() => onPatch({ quadrant: q.id })}
+              className={cn(
+                "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-left hover:bg-secondary",
+                task.quadrant === q.id && "bg-secondary"
+              )}
+            >
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(var(--quadrant-${q.color}))` }} />
+              <span className="flex-1">{q.title}</span>
+              {task.quadrant === q.id && <Check className="w-3.5 h-3.5" />}
+            </button>
+          ))}
+          {task.quadrant && (
+            <button
+              onClick={() => onPatch({ quadrant: undefined })}
+              className="w-full text-xs text-muted-foreground hover:text-foreground px-2 py-1.5 text-left"
+            >Clear</button>
+          )}
+        </PopoverContent>
+      </Popover>
+
+      {/* Category */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button size="sm" variant="ghost" className="h-7 px-2 gap-1 text-xs" title="Category">
+            <Tag className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{task.category || <span className="text-muted-foreground">Category</span>}</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-56 p-2" align="start">
+          <Input
+            autoFocus
+            placeholder="Type or pick..."
+            className="h-8 mb-2"
+            value={catQuery}
+            onChange={(e) => setCatQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && catQuery.trim()) {
+                onPatch({ category: catQuery.trim() });
+                setCatQuery("");
+                (e.target as HTMLElement).blur();
+              }
+            }}
+          />
+          <div className="max-h-48 overflow-y-auto space-y-0.5">
+            {filteredCats.map(c => (
+              <button
+                key={c}
+                onClick={() => onPatch({ category: c })}
+                className={cn(
+                  "w-full flex items-center gap-2 px-2 py-1 rounded-md text-sm text-left hover:bg-secondary",
+                  task.category === c && "bg-secondary"
+                )}
+              >
+                <span className="flex-1 truncate">{c}</span>
+                {task.category === c && <Check className="w-3.5 h-3.5" />}
+              </button>
+            ))}
+            {filteredCats.length === 0 && catQuery.trim() === "" && (
+              <p className="text-xs text-muted-foreground px-2 py-1">No categories yet</p>
+            )}
+          </div>
+          {task.category && (
+            <button
+              onClick={() => onPatch({ category: undefined })}
+              className="w-full text-xs text-muted-foreground hover:text-foreground px-2 py-1.5 text-left mt-1"
+            >Clear</button>
+          )}
+        </PopoverContent>
+      </Popover>
+
+      {/* Deadline */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button size="sm" variant="ghost" className="h-7 px-2 gap-1 text-xs" title="Deadline">
+            <CalendarClock className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{dueLabel || <span className="text-muted-foreground">Deadline</span>}</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-3" align="start">
+          <DateTimePicker
+            value={task.dueDate}
+            onChange={(v) => onPatch({ dueDate: v })}
+          />
+          {task.dueDate && (
+            <button
+              onClick={() => onPatch({ dueDate: undefined, dueTime: undefined })}
+              className="w-full text-xs text-muted-foreground hover:text-foreground px-2 py-1.5 text-left mt-2"
+            >Clear</button>
+          )}
+        </PopoverContent>
+      </Popover>
+
+      {/* Description */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button size="sm" variant="ghost" className={cn("h-7 px-2 gap-1 text-xs", task.description && "text-primary")} title="Description">
+            <FileText className="w-3.5 h-3.5" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72 p-2" align="end">
+          <Textarea
+            placeholder="Notes (optional)"
+            value={task.description || ""}
+            onChange={(e) => onPatch({ description: e.target.value })}
+            rows={4}
+            className="text-xs"
+          />
+        </PopoverContent>
+      </Popover>
+
+      <div className="flex items-center border-l border-border pl-1 ml-1">
+        <Button size="icon" variant="ghost" className="w-6 h-6" disabled={index === 0} onClick={() => onMove(-1)}>
+          <ArrowUp className="w-3 h-3" />
+        </Button>
+        <Button size="icon" variant="ghost" className="w-6 h-6" disabled={index === total - 1} onClick={() => onMove(1)}>
+          <ArrowDown className="w-3 h-3" />
+        </Button>
+        <Button size="icon" variant="ghost" className="w-6 h-6 text-muted-foreground hover:text-destructive" onClick={onRemove}>
+          <Trash2 className="w-3 h-3" />
+        </Button>
+      </div>
+    </div>
   );
 }
