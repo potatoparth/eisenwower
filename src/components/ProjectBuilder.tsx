@@ -1,7 +1,8 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search } from "lucide-react";
+import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye } from "lucide-react";
 import { ProjectTemplate, ProjectTask } from "@/types/project";
+import { ShareProjectDialog } from "@/components/ShareProjectDialog";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { Note, noteColorFor } from "@/types/note";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ interface ProjectBuilderProps {
   projects: ProjectTemplate[];
   allTasks?: Task[];
   allNotes?: Note[];
+  getProjectRole?: (projectId: string) => "owner" | "editor" | "viewer" | undefined;
   onAddNote?: (options?: Partial<Note>) => Note | null;
   onUpdateNote?: (id: string, updates: Partial<Note>) => void;
   onDeleteNote?: (id: string) => void;
@@ -51,6 +53,7 @@ export function ProjectBuilder({
   onAddTask, onUpdateTask, onDeleteTask,
   onAddMatrixTask, quadrants, categories = [], onCreateCategory, onCreateProject,
   onSelectTask, onDeleteAllDone, onRescheduleTasks,
+  getProjectRole,
 }: ProjectBuilderProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
@@ -62,8 +65,12 @@ export function ProjectBuilder({
   const [noteSearchMode, setNoteSearchMode] = useState(false);
   const [noteQuery, setNoteQuery] = useState("");
   const [notePopoverOpen, setNotePopoverOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
+  const selectedRole = selectedProject ? (getProjectRole?.(selectedProject.id) ?? "owner") : undefined;
+  const isOwner = selectedRole === "owner";
+  const canEdit = selectedRole === "owner" || selectedRole === "editor";
   const mappedTasks = selectedProject ? allTasks.filter(t => t.projectId === selectedProject.id) : [];
   const mappedNotes = selectedProject ? allNotes.filter(n => n.projectId === selectedProject.id) : [];
   const filteredMappedNotes = useMemo(() => {
@@ -146,12 +153,26 @@ export function ProjectBuilder({
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-bold text-base">{selectedProject.name}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-base">{selectedProject.name}</h3>
+                {!isOwner && (
+                  <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-secondary text-muted-foreground flex items-center gap-1">
+                    {selectedRole === "viewer" ? <><Eye className="w-2.5 h-2.5" /> viewer</> : <>shared · editor</>}
+                  </span>
+                )}
+              </div>
               {selectedProject.description && <p className="text-sm text-muted-foreground">{selectedProject.description}</p>}
             </div>
-            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => { onDeleteProject(selectedProject.id); setSelectedProjectId(null); }}>
-              <Trash2 className="w-4 h-4 mr-1" /> Delete
-            </Button>
+            {isOwner && (
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" onClick={() => setShareOpen(true)}>
+                  <Share2 className="w-4 h-4 mr-1" /> Share
+                </Button>
+                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => { onDeleteProject(selectedProject.id); setSelectedProjectId(null); }}>
+                  <Trash2 className="w-4 h-4 mr-1" /> Delete
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Tasks + Notes side-by-side */}
@@ -161,7 +182,7 @@ export function ProjectBuilder({
               <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">
                 Tasks · {selectedProject.tasks.length + mappedTasks.length}
               </h4>
-              {onAddMatrixTask && (
+              {onAddMatrixTask && canEdit && (
                 <div className="mb-3">
                   <TaskActionBar
                     tasks={mappedTasks}
@@ -224,9 +245,11 @@ export function ProjectBuilder({
                       <SelectItem value="done">Done</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button size="icon" variant="ghost" className="w-6 h-6 text-muted-foreground hover:text-destructive" onClick={() => onDeleteTask(selectedProject.id, task.id)}>
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
+                  {canEdit && (
+                    <Button size="icon" variant="ghost" className="w-6 h-6 text-muted-foreground hover:text-destructive" onClick={() => onDeleteTask(selectedProject.id, task.id)}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  )}
                 </motion.div>
               );
                 })}
@@ -263,7 +286,7 @@ export function ProjectBuilder({
               <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">
                 Notes · {mappedNotes.length}
               </h4>
-              {onAddNote && (
+              {onAddNote && canEdit && (
                 <div className="mb-3 grid w-full grid-cols-[minmax(0,1fr)_2.5rem_2.5rem] items-center gap-2">
                   <div className="min-w-0">
                     <div className="relative mx-auto flex h-12 w-full max-w-2xl items-center rounded-full border border-border/60 bg-secondary/40 px-5">
@@ -367,6 +390,17 @@ export function ProjectBuilder({
             />
           </DialogContent>
         </Dialog>
+      )}
+
+      {selectedProject && isOwner && (
+        <ShareProjectDialog
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          project={selectedProject}
+          projectTasks={selectedProject.tasks}
+          matrixTasks={mappedTasks}
+          notes={mappedNotes}
+        />
       )}
     </div>
   );

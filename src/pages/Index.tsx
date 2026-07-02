@@ -76,7 +76,7 @@ const Index = () => {
 
   const {
     projects, addProject, updateProject, deleteProject,
-    addTaskToProject, updateProjectTask, deleteProjectTask,
+    addTaskToProject, updateProjectTask, deleteProjectTask, getProjectRole,
   } = useProjects(currentUser?.id);
 
   const { notes, addNote, updateNote, deleteNote } = useNotes(currentUser?.id);
@@ -172,6 +172,14 @@ const Index = () => {
 
   if (needsSetup || !currentUser) {
     return <LoginPage needsSetup={needsSetup} onLogin={login} onSignup={signup} onGoogleLogin={loginWithGoogle} />;
+  }
+
+  // After sign-in, honor any pending join-project redirect saved on the join page.
+  const pendingJoin = typeof window !== "undefined" ? sessionStorage.getItem("post_login_redirect") : null;
+  if (pendingJoin) {
+    sessionStorage.removeItem("post_login_redirect");
+    window.location.replace(pendingJoin);
+    return null;
   }
 
   const fontSizeClass = settings.fontSize === "small" ? "text-xs" : settings.fontSize === "large" ? "text-base" : "text-sm";
@@ -385,6 +393,7 @@ const Index = () => {
                 onDeleteNote={deleteNote}
                 onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
                 onRescheduleTasks={handleRescheduleTasks}
+                getProjectRole={getProjectRole}
               />
             </motion.div>
           )}
