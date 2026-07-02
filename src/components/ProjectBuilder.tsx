@@ -294,21 +294,11 @@ export function ProjectBuilder({
                           <StickyNote className="w-4 h-4" strokeWidth={1.75} />
                         </span>
                         <span className="flex-1 truncate">Add a new note...</span>
-                        <span aria-hidden className="flex h-8 w-8 items-center justify-center text-muted-foreground/60 -mr-2">
-                          <Search className="w-4 h-4 opacity-0" />
-                        </span>
                       </button>
                     )}
+                    {/* Overlay the search toggle inside the pill's right edge */}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 rounded-full"
-                    onClick={() => (noteSearchMode ? (setNoteSearchMode(false), setNoteQuery("")) : setNoteSearchMode(true))}
-                    title={noteSearchMode ? "Close search" : "Search notes"}
-                  >
-                    {noteSearchMode ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
-                  </Button>
+                  <div aria-hidden />
                   <div aria-hidden />
                 </div>
               )}
