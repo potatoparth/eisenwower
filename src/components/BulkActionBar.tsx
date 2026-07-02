@@ -74,15 +74,15 @@ export function BulkActionBar({
 
   return (
     <>
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full border border-border bg-card/95 backdrop-blur px-3 py-2 shadow-lg">
-      <span className="text-xs font-medium px-2 tabular-nums">
-        {count} selected
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 sm:gap-2 rounded-full border border-border bg-card/95 backdrop-blur px-2 sm:px-3 py-2 shadow-lg max-w-[calc(100vw-1rem)]">
+      <span className="text-xs font-medium px-1 sm:px-2 tabular-nums whitespace-nowrap">
+        {count}<span className="hidden sm:inline"> selected</span>
       </span>
       {onAddToSprint && (
         <Button
           size="sm"
           variant="secondary"
-          className="rounded-full gap-1.5"
+          className="rounded-full gap-1.5 px-2 sm:px-3"
           onClick={() => {
             onAddToSprint(Array.from(selectedIds));
             clear();
@@ -90,14 +90,14 @@ export function BulkActionBar({
           }}
         >
           <Timer className="w-3.5 h-3.5" />
-          Add to sprint
+          <span className="hidden sm:inline">Add to sprint</span>
         </Button>
       )}
       <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
         <PopoverTrigger asChild>
-          <Button size="sm" className="rounded-full gap-1.5">
+          <Button size="sm" className="rounded-full gap-1.5 px-2 sm:px-3">
             <CalendarClock className="w-3.5 h-3.5" />
-            Reschedule
+            <span className="hidden sm:inline">Reschedule</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent align="center" className="w-[min(22rem,92vw)] p-3">
@@ -110,9 +110,9 @@ export function BulkActionBar({
       {showKanban && (
         <Popover open={kanbanMenuOpen} onOpenChange={setKanbanMenuOpen}>
           <PopoverTrigger asChild>
-            <Button size="sm" variant="secondary" className="rounded-full gap-1.5">
+            <Button size="sm" variant="secondary" className="rounded-full gap-1.5 px-2 sm:px-3">
               <LayoutGrid className="w-3.5 h-3.5" />
-              Add to Kanban
+              <span className="hidden sm:inline">Add to Kanban</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent align="center" className="w-56 p-2">
@@ -145,10 +145,10 @@ export function BulkActionBar({
             <Button
               size="sm"
               variant="destructive"
-              className="rounded-full gap-1.5"
+              className="rounded-full gap-1.5 px-2 sm:px-3"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              Delete
+              <span className="hidden sm:inline">Delete</span>
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
