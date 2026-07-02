@@ -11,6 +11,7 @@ import type { TaskAddOptions, TaskInputPickerProps } from "@/components/TaskInpu
 import { TaskCard } from "./TaskCard";
 import { TaskInput } from "./TaskInput";
 import { cn } from "@/lib/utils";
+import { useSelectionOptional } from "@/hooks/useSelection";
 
 interface QuadrantColumnProps {
   quadrant: QuadrantInfo;
@@ -52,9 +53,14 @@ export function QuadrantColumn({
   });
   const [expanded, setExpanded] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
+  const selection = useSelectionOptional();
 
   const openTasks = tasks.filter((t) => t.status === "open");
   const doneTasks = tasks.filter((t) => t.status === "done");
+  const allOpenSelected =
+    !!selection &&
+    openTasks.length > 0 &&
+    openTasks.every((t) => selection.has(t.id));
 
   const quadClass =
     quadrant.color === 1
@@ -140,12 +146,30 @@ export function QuadrantColumn({
           )}
         </div>
         {quadrant.subtitle && (
-          <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 ml-[16px]">{quadrant.subtitle}</p>
+          <p className="hidden sm:block text-[11px] sm:text-xs text-muted-foreground mt-0.5 ml-[16px]">{quadrant.subtitle}</p>
         )}
       </div>
 
       {/* Task Input */}
       <div className="px-2 sm:px-3 pb-2 flex-shrink-0">
+        {selection?.selectMode && openTasks.length > 0 && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (allOpenSelected) {
+                openTasks.forEach((t) => {
+                  if (selection.has(t.id)) selection.toggle(t.id);
+                });
+              } else {
+                selection.selectMany(openTasks.map((t) => t.id));
+              }
+            }}
+            className="mb-2 w-full text-[11px] font-medium px-2 py-1.5 rounded-lg bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {allOpenSelected ? "Deselect all" : `Select all (${openTasks.length})`}
+          </button>
+        )}
         <TaskInput
           onAddTask={onAddTask}
           defaultQuadrant={quadrant.id}
