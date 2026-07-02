@@ -316,7 +316,7 @@ const Index = () => {
               onClick={() => setCompactMode(!compactMode)}
               title="Toggle compact grid"
               aria-pressed={compactMode}
-              className={`h-[30px] shrink-0 inline-flex items-center gap-1.5 px-2.5 rounded-[20px] text-[12px] font-medium border transition-colors ${
+              className={`h-[30px] shrink-0 hidden md:inline-flex items-center gap-1.5 px-2.5 rounded-[20px] text-[12px] font-medium border transition-colors ${
                 compactMode
                   ? "bg-[#1A1A1A] text-white border-[#1A1A1A] dark:bg-white dark:text-[#0a0a0a] dark:border-white"
                   : "bg-white dark:bg-[#1F1F1F] text-[#374151] dark:text-[#D1D5DB] border-[#E5E7EB] dark:border-white/10 hover:border-[#D1D5DB]"
