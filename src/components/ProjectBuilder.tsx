@@ -450,6 +450,17 @@ export function ProjectBuilder({
           notes={mappedNotes}
         />
       )}
+
+      {onAddPreset && onUpdatePreset && onDeletePreset && (
+        <ProjectTemplatesDialog
+          open={templatesOpen}
+          onOpenChange={setTemplatesOpen}
+          presets={templatePresets}
+          onAdd={onAddPreset}
+          onUpdate={onUpdatePreset}
+          onDelete={onDeletePreset}
+        />
+      )}
     </div>
   );
 }
