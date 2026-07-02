@@ -245,17 +245,16 @@ export function FocusMode({ sprint, onUpdate, onExit, onComplete }: Props) {
               <>
                 <button
                   onClick={toggleTimer}
-                  className="grid place-items-center transition"
-                  style={{
-                    width: 22,
-                    height: 22,
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    color: mutedText,
-                    opacity: timerHidden ? 0.55 : 1,
-                  }}
+                  style={
+                    bgEnabled
+                      ? { color: "rgba(255,255,255,0.85)", borderColor: "rgba(255,255,255,0.35)", opacity: timerHidden ? 0.55 : 1 }
+                      : { opacity: timerHidden ? 0.55 : 1 }
+                  }
+                  className={`grid h-7 w-7 place-items-center rounded-full border transition ${
+                    bgEnabled
+                      ? ""
+                      : "border-[color:var(--sp-border)] text-[color:var(--sp-muted-foreground)] hover:text-[color:var(--sp-foreground)]"
+                  }`}
                   aria-label={timerHidden ? "Show timer" : "Hide timer"}
                   title={timerHidden ? "Show timer (still running)" : "Hide timer (keeps running)"}
                 >

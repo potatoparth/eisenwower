@@ -110,15 +110,18 @@ export function SpotifyPlayer() {
   useEffect(() => { if (pos) localStorage.setItem(POS_KEY, JSON.stringify(pos)); }, [pos]);
 
   useEffect(() => {
-    if (pos || typeof window === "undefined") return;
+    if (typeof window === "undefined") return;
     const isSmall = window.innerWidth < 768;
     if (isSmall) {
+      // Always force an on-screen position on mobile — any stored desktop
+      // position could be off-screen.
       setPos({ x: 8, y: 70 });
-    } else {
-      const x = window.innerWidth - width - 20;
-      const y = window.innerHeight - height - 90;
-      setPos({ x: Math.max(8, x), y: Math.max(8, y) });
+      return;
     }
+    if (pos) return;
+    const x = window.innerWidth - width - 20;
+    const y = window.innerHeight - height - 90;
+    setPos({ x: Math.max(8, x), y: Math.max(8, y) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
