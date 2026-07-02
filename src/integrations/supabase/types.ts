@@ -38,8 +38,81 @@ export type Database = {
         }
         Relationships: []
       }
+      kanban_board_items: {
+        Row: {
+          board_id: string
+          column_key: string
+          created_at: string
+          id: string
+          sort_order: number
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          board_id: string
+          column_key: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          board_id?: string
+          column_key?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kanban_board_items_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "kanban_boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kanban_board_items_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kanban_boards: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       kanban_columns: {
         Row: {
+          board_id: string
           column_key: string
           created_at: string
           id: string
@@ -49,6 +122,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          board_id: string
           column_key: string
           created_at?: string
           id?: string
@@ -58,6 +132,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          board_id?: string
           column_key?: string
           created_at?: string
           id?: string
@@ -66,7 +141,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "kanban_columns_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "kanban_boards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notes: {
         Row: {

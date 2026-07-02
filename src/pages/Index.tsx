@@ -4,7 +4,7 @@ import { useTasks } from "@/hooks/useTasks";
 import { useSettings } from "@/hooks/useSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
-import { useKanbanColumns } from "@/hooks/useKanbanColumns";
+import { useKanbanBoards } from "@/hooks/useKanbanBoards";
 import { Header } from "@/components/Header";
 import { MatrixView } from "@/components/MatrixView";
 import { ListView } from "@/components/ListView";
@@ -72,7 +72,7 @@ const Index = () => {
     tasks, addTask, updateTask, deleteTask, moveTask, toggleStatus, getCategories, setTasks,
   } = useTasks(currentUser?.id);
 
-  const { columns, addColumn, removeColumn, renameColumn } = useKanbanColumns(currentUser?.id);
+  const kanban = useKanbanBoards(currentUser?.id);
 
   const {
     projects, addProject, updateProject, deleteProject,
@@ -369,11 +369,22 @@ const Index = () => {
           {viewMode === "kanban" && (
             <motion.div key="kanban" {...viewAnimation} className="flex-1 min-h-0 flex flex-col">
               <KanbanView
-                tasks={filteredTasks} columns={columns} onAddColumn={addColumn}
-                onRemoveColumn={removeColumn} onRenameColumn={renameColumn}
-                onToggleStatus={toggleStatus} onDeleteTask={handleDeleteTask}
-                onUpdateTask={updateTask} onAddTask={handleAddTask}
-                onTaskClick={setSelectedTask} getCategoryColor={getCategoryColor}
+                tasks={filteredTasks}
+                boards={kanban.boards}
+                columnsByBoard={kanban.columnsByBoard}
+                itemsByBoard={kanban.itemsByBoard}
+                onCreateBoard={kanban.createBoard}
+                onRenameBoard={kanban.renameBoard}
+                onDeleteBoard={kanban.deleteBoard}
+                onAddColumn={kanban.addColumn}
+                onRemoveColumn={kanban.removeColumn}
+                onRenameColumn={kanban.renameColumn}
+                onMoveItem={kanban.moveItem}
+                onRemoveItem={kanban.removeItem}
+                onToggleStatus={toggleStatus}
+                onDeleteTask={handleDeleteTask}
+                onTaskClick={setSelectedTask}
+                getCategoryColor={getCategoryColor}
                 deadlineThresholdDays={settings.deadlineThresholdDays}
               />
             </motion.div>
@@ -454,6 +465,20 @@ const Index = () => {
           if (seeds.length === 0) return;
           setSprintSeed(seeds);
           setViewMode("sprint");
+        }}
+        boards={kanban.boards}
+        columnsByBoard={kanban.columnsByBoard}
+        onAddToNewKanban={async (ids, name, columnTitles) => {
+          const res = await kanban.createBoard(name, columnTitles);
+          if (!res) return;
+          if (res.columnKeys[0]) {
+            await kanban.assignTasks(res.boardId, res.columnKeys[0], ids);
+          }
+          setViewMode("kanban");
+        }}
+        onAddToExistingKanban={async (ids, boardId, columnKey) => {
+          await kanban.assignTasks(boardId, columnKey, ids);
+          setViewMode("kanban");
         }}
       />
 
