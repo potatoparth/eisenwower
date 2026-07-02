@@ -62,11 +62,11 @@ export function useProjectTemplatePresets(userId?: string) {
   const updatePreset = useCallback(async (id: string, updates: Partial<Omit<ProjectTemplatePreset, "id" | "createdAt">>) => {
     setPresets(prev => prev.map(p => p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p));
     if (!userId) return;
-    const patch: Record<string, unknown> = {};
+    const patch: { name?: string; description?: string | null; tasks?: unknown } = {};
     if (updates.name !== undefined) patch.name = updates.name;
     if (updates.description !== undefined) patch.description = updates.description || null;
     if (updates.tasks !== undefined) patch.tasks = updates.tasks;
-    const { error } = await supabase.from("project_template_presets").update(patch).eq("id", id);
+    const { error } = await supabase.from("project_template_presets").update(patch as never).eq("id", id);
     if (error) load();
   }, [userId, load]);
 
