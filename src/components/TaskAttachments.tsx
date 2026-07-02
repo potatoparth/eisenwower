@@ -12,10 +12,13 @@ interface Props {
   taskId: string;
   value: TaskAttachment[];
   onChange: (next: TaskAttachment[]) => void;
+  /** Optional cap on the cumulative size (bytes) of all attachments in `value`. */
+  maxTotalBytes?: number;
 }
 
-export function TaskAttachments({ taskId, value, onChange }: Props) {
+export function TaskAttachments({ taskId, value, onChange, maxTotalBytes }: Props) {
   const attachments = value ?? [];
+  const usedBytes = attachments.reduce((sum, a) => sum + (a.size || 0), 0);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [userId, setUserId] = useState<string | undefined>(undefined);
@@ -32,9 +35,16 @@ export function TaskAttachments({ taskId, value, onChange }: Props) {
     }
     setUploading(true);
     const added: TaskAttachment[] = [];
+    let runningTotal = usedBytes;
     for (const file of Array.from(files)) {
       if (file.size > MAX_BYTES) {
         toast.error(`${file.name} is larger than 25 MB`);
+        continue;
+      }
+      if (maxTotalBytes && runningTotal + file.size > maxTotalBytes) {
+        toast.error(
+          `Attachment limit reached (${(maxTotalBytes / (1024 * 1024)).toFixed(0)} MB total)`
+        );
         continue;
       }
       const safe = file.name.replace(/[^a-zA-Z0-9._-]+/g, "_");
@@ -47,6 +57,7 @@ export function TaskAttachments({ taskId, value, onChange }: Props) {
         toast.error(`Upload failed: ${file.name}`);
         continue;
       }
+      runningTotal += file.size;
       added.push({
         id: crypto.randomUUID(),
         name: file.name,
