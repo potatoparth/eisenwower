@@ -1,9 +1,10 @@
-import { ChevronDown, LayoutGrid, Search } from "lucide-react";
+import { ChevronDown, LayoutGrid, Search, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ProjectTemplate } from "@/types/project";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export type DateFilter = "all" | "today" | "week";
 export type OverdueMode = "all" | "only" | "hide";
@@ -31,6 +32,8 @@ interface FilterBarProps {
   showProjectsFilter?: boolean;
   /** In notes mode only Project + Category filters are shown. */
   notesMode?: boolean;
+  /** Desktop display mode. Mobile always renders as "button". Default "pills". */
+  displayMode?: "pills" | "button";
 }
 
 /** Spec-locked pill base. Light/dark-aware via CSS vars; falls back to spec hex. */
