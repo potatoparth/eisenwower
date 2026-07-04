@@ -26,7 +26,9 @@ export default defineTool({
     if (!ctx.isAuthenticated()) return unauthenticated();
     let q = supabaseForUser(ctx)
       .from("tasks")
-      .select("id,name,description,category,quadrant,due_date,due_time,status,created_at,updated_at")
+      .select(
+        "id,name,description,category,quadrant,due_date,due_time,status,project_id,attachments,kanban_column,recurrence,recurrence_days,recurrence_time,is_recurring_instance,recurring_template_id,deadline_threshold_override,sort_order,created_at,updated_at"
+      )
       .order("created_at", { ascending: false })
       .limit(limit ?? 50);
     if (status) q = q.eq("status", status);
