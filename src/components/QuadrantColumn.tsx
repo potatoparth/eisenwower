@@ -161,6 +161,8 @@ export function QuadrantColumn({
           defaultCategory={defaultCategory}
           onCreateCategory={onCreateCategory}
           onCreateProject={onCreateProject}
+          recentCategories={recentCategories}
+          recentProjectIds={recentProjectIds}
         />
       </div>
 
