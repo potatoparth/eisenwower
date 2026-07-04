@@ -279,6 +279,7 @@ export function CalendarView({
               getCategoryColor={getCategoryColor}
             moveOptions={moveOptions}
             onMove={moveTaskToSection}
+            onAddTask={onAddTask}
               />
             );
           };
