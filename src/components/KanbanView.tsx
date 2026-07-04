@@ -13,9 +13,10 @@ import {
   MAX_KANBAN_BOARDS, MAX_KANBAN_COLUMNS_PER_BOARD,
 } from "@/types/project";
 import { TaskCard } from "./TaskCard";
+import { TaskInput, type TaskInputPickerProps, type TaskAddOptions } from "@/components/TaskInput";
+import { Quadrant } from "@/types/task";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { QuickAddInput } from "@/components/QuickAddInput";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -41,7 +42,15 @@ interface KanbanViewProps {
   onToggleStatus: (id: string) => void;
   onDeleteTask: (id: string) => void;
   onTaskClick?: (task: Task) => void;
-  onQuickAdd?: (name: string, boardId: string, columnKey: string, isDefault: boolean) => void;
+  onQuickAdd?: (
+    name: string,
+    boardId: string,
+    columnKey: string,
+    isDefault: boolean,
+    quadrant: Quadrant,
+    options?: TaskAddOptions,
+  ) => void;
+  taskInputProps?: TaskInputPickerProps;
   getCategoryColor?: (name: string) => string | undefined;
   deadlineThresholdDays?: number;
 }
@@ -78,6 +87,7 @@ export function KanbanView({
   onMoveItem, onRemoveItem,
   onToggleStatus, onDeleteTask, onTaskClick,
   onQuickAdd,
+  taskInputProps,
   getCategoryColor, deadlineThresholdDays = 2,
 }: KanbanViewProps) {
   const [activeBoardId, setActiveBoardId] = useState<string>(DEFAULT_BOARD_ID);
@@ -241,13 +251,15 @@ export function KanbanView({
       </div>
       {addingToColumn === column.id && onQuickAdd && (
         <div className="p-2 border-b border-border bg-secondary/30">
-          <QuickAddInput
+          <TaskInput
+            compact
             placeholder="Task name…"
-            onCommit={(name) => {
-              onQuickAdd(name, activeBoardId, column.id, isDefault);
+            defaultQuadrant="important-not-urgent"
+            onAddTask={(name, quadrant, options) => {
+              onQuickAdd(name, activeBoardId, column.id, isDefault, quadrant, options);
               setAddingToColumn(null);
             }}
-            onCancel={() => setAddingToColumn(null)}
+            {...taskInputProps}
           />
         </div>
       )}

@@ -5,8 +5,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { DateTimePicker } from "@/components/DateTimePicker";
-import { QuickAddInput } from "@/components/QuickAddInput";
-import { Task } from "@/types/task";
+import { TaskInput, type TaskInputPickerProps, type TaskAddOptions } from "@/components/TaskInput";
+import { Task, Quadrant } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { useSelectionOptional } from "@/hooks/useSelection";
 
@@ -16,7 +16,8 @@ interface CalendarViewProps {
   onUpdateTask: (id: string, updates: Partial<Omit<Task, "id" | "createdAt">>) => void;
   onToggleStatus?: (id: string) => void;
   onTaskClick: (task: Task) => void;
-  onAddTask?: (name: string, dueDate: string) => void;
+  onAddTask?: (name: string, quadrant: Quadrant, options?: TaskAddOptions) => void;
+  taskInputProps?: TaskInputPickerProps;
   getCategoryColor?: (name: string) => string | undefined;
 }
 
@@ -34,7 +35,7 @@ function orderOf(t: Task) {
 }
 
 export function CalendarView({
-  tasks, onUpdateTask, onToggleStatus, onTaskClick, onAddTask, getCategoryColor,
+  tasks, onUpdateTask, onToggleStatus, onTaskClick, onAddTask, taskInputProps, getCategoryColor,
 }: CalendarViewProps) {
   const sel = useSelectionOptional();
   const isSelectMode = !!sel?.selectMode;
@@ -280,6 +281,7 @@ export function CalendarView({
             moveOptions={moveOptions}
             onMove={moveTaskToSection}
             onAddTask={onAddTask}
+            taskInputProps={taskInputProps}
               />
             );
           };
@@ -385,14 +387,15 @@ interface DaySectionProps {
   getCategoryColor?: (name: string) => string | undefined;
   moveOptions: { key: string; label: string }[];
   onMove: (id: string, sectionKey: string) => void;
-  onAddTask?: (name: string, dueDate: string) => void;
+  onAddTask?: (name: string, quadrant: Quadrant, options?: TaskAddOptions) => void;
+  taskInputProps?: TaskInputPickerProps;
 }
 
 function DaySection({
   sectionKey, label, dateStr, icon, count, collapsed, onToggleCollapsed,
   items, dragging, dropTarget, setDropTarget, onCommitDrop,
   onDragStart, onDragEnd, onTaskClick, onToggleStatus, getCategoryColor,
-  moveOptions, onMove, onAddTask,
+  moveOptions, onMove, onAddTask, taskInputProps,
 }: DaySectionProps) {
   const [adding, setAdding] = useState(false);
   const allowDrop = (e: React.DragEvent) => {
@@ -439,10 +442,20 @@ function DaySection({
       </div>
       {adding && onAddTask && (
         <div className="p-2 border-b border-border/60 bg-secondary/20">
-          <QuickAddInput
+          <TaskInput
+            compact
             placeholder="Task name…"
-            onCommit={(name) => { onAddTask(name, sectionKey); setAdding(false); }}
-            onCancel={() => setAdding(false)}
+            defaultQuadrant="important-not-urgent"
+            defaultDueDate={sectionKey}
+            onAddTask={(name, quadrant, options) => {
+              onAddTask(
+                name,
+                quadrant,
+                { ...options, dueDate: options?.dueDate || sectionKey },
+              );
+              setAdding(false);
+            }}
+            {...taskInputProps}
           />
         </div>
       )}
