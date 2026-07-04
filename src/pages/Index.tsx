@@ -500,6 +500,15 @@ const Index = () => {
       <BulkActionBar
         onBulkReschedule={handleBulkReschedule}
         onBulkDelete={(ids) => ids.forEach((id) => deleteTask(id))}
+        onBulkSetCategory={(ids, category) =>
+          ids.forEach((id) => updateTask(id, { category }))
+        }
+        onBulkSetProject={(ids, projectId) =>
+          ids.forEach((id) => updateTask(id, { projectId: projectId ?? undefined }))
+        }
+        categories={taskCategories}
+        projects={projects}
+        onCreateCategory={handleCreateCategory}
         onAddToSprint={(ids) => {
           const map = new Map(tasks.map((t) => [t.id, t] as const));
           const seeds: SprintSeedTask[] = ids
