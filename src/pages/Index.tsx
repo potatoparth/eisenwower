@@ -463,6 +463,8 @@ const Index = () => {
                 onAddPreset={addPreset}
                 onUpdatePreset={updatePreset}
                 onDeletePreset={deletePreset}
+                recentCategories={recentCategories}
+                recentProjectIds={recentProjectIds}
               />
             </motion.div>
           )}

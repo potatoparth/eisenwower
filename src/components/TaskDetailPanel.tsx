@@ -12,6 +12,7 @@ import { RecurrenceField } from "@/components/RecurrenceField";
 import { TaskDescription } from "@/components/TaskDescription";
 import { SelectorWithCreate } from "@/components/SelectorWithCreate";
 import { TaskAttachments } from "@/components/TaskAttachments";
+import { RecentChipStrip } from "@/components/RecentChipStrip";
 
 interface TaskDetailPanelProps {
   task: Task;
@@ -29,9 +30,11 @@ interface TaskDetailPanelProps {
   onSwitchToDialog?: () => void;
   onCreateCategory?: (name: string) => string;
   onCreateProject?: (name: string) => string;
+  recentCategories?: string[];
+  recentProjectIds?: string[];
 }
 
-export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose, getCategoryColor, projects = [], quadrants, quadrantMap, categories = [], navTasks = [], onNavigate, onToggleStatus, onSwitchToDialog, onCreateCategory, onCreateProject }: TaskDetailPanelProps) {
+export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose, getCategoryColor, projects = [], quadrants, quadrantMap, categories = [], navTasks = [], onNavigate, onToggleStatus, onSwitchToDialog, onCreateCategory, onCreateProject, recentCategories = [], recentProjectIds = [] }: TaskDetailPanelProps) {
   const [name, setName] = useState(task.name);
   const [description, setDescription] = useState(task.description || "");
   const [category, setCategory] = useState(task.category);
@@ -267,6 +270,14 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
             searchPlaceholder="Search categories…"
             createPlaceholder="New category name…"
           />
+          {recentCategories.length > 0 && (
+            <RecentChipStrip
+              items={recentCategories.map((c) => ({ value: c, label: c }))}
+              value={category}
+              onSelect={(v) => { setCategory(v); onUpdate(task.id, { category: v }); }}
+              ariaLabel="Recent categories"
+            />
+          )}
         </div>
 
         {/* Project */}
@@ -291,6 +302,19 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
             searchPlaceholder="Search projects…"
             createPlaceholder="New project name…"
           />
+          {recentProjectIds.length > 0 && (
+            <RecentChipStrip
+              items={recentProjectIds
+                .map((id) => {
+                  const p = projects.find((x) => x.id === id);
+                  return p ? { value: p.id, label: p.name } : null;
+                })
+                .filter((x): x is { value: string; label: string } => !!x)}
+              value={projectId ?? ""}
+              onSelect={(v) => { setProjectId(v); onUpdate(task.id, { projectId: v }); }}
+              ariaLabel="Recent projects"
+            />
+          )}
         </div>
 
         {/* Metadata */}

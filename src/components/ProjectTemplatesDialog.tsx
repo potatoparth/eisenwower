@@ -13,12 +13,14 @@ import { TaskDescription } from "@/components/TaskDescription";
 import { TaskAttachments } from "@/components/TaskAttachments";
 import { TaskAttachment } from "@/types/task";
 import { format, parseISO } from "date-fns";
+import { RecentChipStrip } from "@/components/RecentChipStrip";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   presets: ProjectTemplatePreset[];
   categories?: string[];
+  recentCategories?: string[];
   onAdd: (name: string, description?: string, tasks?: PresetTask[]) => Promise<ProjectTemplatePreset | null> | ProjectTemplatePreset | null;
   onUpdate: (id: string, updates: Partial<Omit<ProjectTemplatePreset, "id" | "createdAt">>) => void;
   onDelete: (id: string) => void;
@@ -32,7 +34,7 @@ const emptyTask = (): PresetTask => ({
   durationDays: 1,
 });
 
-export function ProjectTemplatesDialog({ open, onOpenChange, presets, categories = [], onAdd, onUpdate, onDelete }: Props) {
+export function ProjectTemplatesDialog({ open, onOpenChange, presets, categories = [], recentCategories = [], onAdd, onUpdate, onDelete }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [draftDesc, setDraftDesc] = useState("");
@@ -161,6 +163,7 @@ export function ProjectTemplatesDialog({ open, onOpenChange, presets, categories
                   index={idx}
                   total={draftTasks.length}
                   categories={categories}
+                  recentCategories={recentCategories}
                   onPatch={(u) => patchTask(t.id, u)}
                   onRemove={() => removeTask(t.id)}
                   onMove={(d) => move(t.id, d)}
@@ -202,17 +205,19 @@ interface RowProps {
   index: number;
   total: number;
   categories: string[];
+  recentCategories?: string[];
   onPatch: (updates: Partial<PresetTask>) => void;
   onRemove: () => void;
   onMove: (dir: -1 | 1) => void;
 }
 
-function PresetTaskRow({ task, index, total, categories, onPatch, onRemove, onMove }: RowProps) {
+function PresetTaskRow({ task, index, total, categories, recentCategories = [], onPatch, onRemove, onMove }: RowProps) {
   const quadrant = QUADRANTS.find(q => q.id === task.quadrant);
   const [catQuery, setCatQuery] = useState("");
   const filteredCats = categories.filter(c => c.toLowerCase().includes(catQuery.toLowerCase()));
 
   return (
+    <div className="space-y-1">
     <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5">
       <span className="text-[11px] text-muted-foreground font-mono w-5 shrink-0 text-center">{index + 1}</span>
       <Input
@@ -369,6 +374,17 @@ function PresetTaskRow({ task, index, total, categories, onPatch, onRemove, onMo
           <Trash2 className="w-3 h-3" />
         </Button>
       </div>
+    </div>
+      {recentCategories.length > 0 && (
+        <div className="pl-7 pr-1">
+          <RecentChipStrip
+            items={recentCategories.map((c) => ({ value: c, label: c }))}
+            value={task.category || ""}
+            onSelect={(v) => onPatch({ category: v })}
+            ariaLabel="Recent categories"
+          />
+        </div>
+      )}
     </div>
   );
 }

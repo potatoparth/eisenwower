@@ -43,6 +43,8 @@ interface ProjectBuilderProps {
   categories?: string[];
   onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
   onCreateProject?: TaskInputPickerProps["onCreateProject"];
+  recentCategories?: TaskInputPickerProps["recentCategories"];
+  recentProjectIds?: TaskInputPickerProps["recentProjectIds"];
   onSelectTask?: (task: Task) => void;
   onDeleteAllDone?: () => void;
   onRescheduleTasks?: (ids: string[], newDueDate: string) => void;
@@ -57,6 +59,7 @@ export function ProjectBuilder({
   onAddProject, onUpdateProject, onDeleteProject,
   onAddTask, onUpdateTask, onDeleteTask,
   onAddMatrixTask, quadrants, categories = [], onCreateCategory, onCreateProject,
+  recentCategories, recentProjectIds,
   onSelectTask, onDeleteAllDone, onRescheduleTasks,
   getProjectRole,
   templatePresets = [], onAddPreset, onUpdatePreset, onDeletePreset,
@@ -244,6 +247,8 @@ export function ProjectBuilder({
                     defaultProjectId={selectedProject.id}
                     onCreateCategory={onCreateCategory}
                     onCreateProject={onCreateProject}
+                    recentCategories={recentCategories}
+                    recentProjectIds={recentProjectIds}
                   />
                 </div>
               )}
@@ -457,6 +462,7 @@ export function ProjectBuilder({
           onOpenChange={setTemplatesOpen}
           presets={templatePresets}
           categories={categories}
+          recentCategories={recentCategories}
           onAdd={onAddPreset}
           onUpdate={onUpdatePreset}
           onDelete={onDeletePreset}
