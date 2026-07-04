@@ -427,13 +427,19 @@ function DaySection({
           onDragOver={(e) => {
             if (!e.dataTransfer.types.includes("text/task-id")) return;
             e.preventDefault();
-            // Empty section → set drop index 0.
-            if (items.length === 0) setDropTarget({ key: sectionKey, index: 0 });
+            // Always mark this section as the active drop target so the
+            // indicator follows the pointer even between rows / in padding.
+            if (!isThisSection || items.length === 0) {
+              setDropTarget({ key: sectionKey, index: items.length });
+            }
           }}
           onDrop={(e) => {
-            if (!isThisSection) return;
+            if (!e.dataTransfer.types.includes("text/task-id")) return;
             e.preventDefault();
-            onCommitDrop(sectionKey, dropTarget!.index);
+            e.stopPropagation();
+            // Commit against THIS section — never trust a stale dropTarget
+            // that could still reference a previously-hovered section.
+            onCommitDrop(sectionKey, items.length);
           }}
         >
           {items.length === 0 && (
@@ -465,9 +471,15 @@ function DaySection({
                     setDropTarget({ key: sectionKey, index: before ? idx : idx + 1 });
                   }}
                   onDropRow={(e) => {
-                    if (!isThisSection) return;
+                    if (!e.dataTransfer.types.includes("text/task-id")) return;
                     e.preventDefault();
-                    onCommitDrop(sectionKey, dropTarget!.index);
+                    e.stopPropagation();
+                    // Recompute insertion index from the actual drop position
+                    // in THIS row — dropTarget state may be stale or point
+                    // at a section the pointer only passed through.
+                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                    const before = e.clientY - rect.top < rect.height / 2;
+                    onCommitDrop(sectionKey, before ? idx : idx + 1);
                   }}
                   onToggleStatus={onToggleStatus}
                   onClick={() => onTaskClick(t)}
