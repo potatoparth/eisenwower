@@ -176,7 +176,7 @@
       {
         "name": "update_task",
         "title": "Update task",
-        "description": "Update fields on an existing task: name, description, quadrant (move between Eisenhower quadrants), category, due date/time (reschedule), or status.",
+        "description": "Update fields on an existing task: name, description, quadrant (move between Eisenhower quadrants), category, due date/time (reschedule), status (mark done/reopen), project association, or attachments. Cannot change task ownership.",
         "annotations": {
           "readOnlyHint": false,
           "idempotentHint": true
@@ -241,10 +241,79 @@
               ]
             },
             "status": {
+              "description": "Set to 'done' to complete, 'open' to reopen.",
               "type": "string",
               "enum": [
                 "open",
                 "done"
+              ]
+            },
+            "project_id": {
+              "description": "Associate with a project, or null to detach.",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "attachments": {
+              "description": "Attachments to add or replace. Use kind='link' with URL, or kind='file' with an existing storage path.",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "description": "Stable id; auto-generated if omitted.",
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Display label."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "file",
+                      "link"
+                    ],
+                    "description": "'link' for URLs, 'file' for objects already in the task-attachments bucket."
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "For links: full URL. For files: storage object path inside the task-attachments bucket."
+                  },
+                  "size": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "contentType": {
+                    "type": "string"
+                  },
+                  "addedAt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "kind",
+                  "path"
+                ]
+              }
+            },
+            "attachments_mode": {
+              "description": "How to apply `attachments`: 'append' (default) adds to existing, 'replace' overwrites the full list.",
+              "type": "string",
+              "enum": [
+                "append",
+                "replace"
               ]
             }
           },

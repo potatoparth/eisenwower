@@ -131,7 +131,7 @@ import { z as z4 } from "npm:zod@^4.4.3";
 var update_task_default = defineTool3({
   name: "update_task",
   title: "Update task",
-  description: "Update fields on an existing task: name, description, quadrant (move between Eisenhower quadrants), category, due date/time (reschedule), or status.",
+  description: "Update fields on an existing task: name, description, quadrant (move between Eisenhower quadrants), category, due date/time (reschedule), status (mark done/reopen), project association, or attachments. Cannot change task ownership.",
   inputSchema: {
     task_id: z4.string().uuid().describe("Task id."),
     name: z4.string().trim().min(1).optional(),
@@ -145,18 +145,33 @@ var update_task_default = defineTool3({
     category: z4.string().optional(),
     due_date: z4.string().nullable().optional().describe("YYYY-MM-DD, or null to clear."),
     due_time: z4.string().nullable().optional().describe("HH:MM (24h), or null to clear."),
-    status: z4.enum(["open", "done"]).optional()
+    status: z4.enum(["open", "done"]).optional().describe("Set to 'done' to complete, 'open' to reopen."),
+    project_id: z4.string().uuid().nullable().optional().describe("Associate with a project, or null to detach."),
+    attachments: z4.array(attachmentSchema).optional().describe("Attachments to add or replace. Use kind='link' with URL, or kind='file' with an existing storage path."),
+    attachments_mode: z4.enum(["append", "replace"]).optional().describe("How to apply `attachments`: 'append' (default) adds to existing, 'replace' overwrites the full list.")
   },
   annotations: { readOnlyHint: false, idempotentHint: true },
-  handler: async ({ task_id, ...fields }, ctx) => {
+  handler: async ({ task_id, attachments, attachments_mode, ...fields }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
     const patch = {};
     for (const [k, v] of Object.entries(fields)) {
       if (v !== void 0) patch[k] = v;
     }
+    const sb = supabaseForUser(ctx);
+    if (attachments !== void 0) {
+      const normalized = normalizeAttachments(attachments);
+      if ((attachments_mode ?? "append") === "replace") {
+        patch.attachments = normalized;
+      } else {
+        const { data: existing, error: readErr } = await sb.from("tasks").select("attachments").eq("id", task_id).single();
+        if (readErr) return toErr(readErr.message);
+        const current = Array.isArray(existing?.attachments) ? existing.attachments : [];
+        patch.attachments = [...current, ...normalized];
+      }
+    }
     if (Object.keys(patch).length === 0)
       return toErr("No fields to update.");
-    const { data, error } = await supabaseForUser(ctx).from("tasks").update(patch).eq("id", task_id).select().single();
+    const { data, error } = await sb.from("tasks").update(patch).eq("id", task_id).select().single();
     if (error) return toErr(error.message);
     return {
       content: [{ type: "text", text: `Updated task ${task_id}` }],
