@@ -469,6 +469,11 @@ body.sprint-immersive header [role="combobox"] {
 body.sprint-immersive header button {
   color: rgba(255, 255, 255, 0.85);
 }
+/* Weizen wordmark: force readable white with subtle shadow over media */
+body.sprint-immersive header span {
+  color: rgba(255, 255, 255, 0.95) !important;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+}
 /* When a sprint media background is active, hide the app-level light/dark
    toggle — the media dictates contrast and switching theme is jarring. */
 body.sprint-immersive header [data-theme-toggle] {
