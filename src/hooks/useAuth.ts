@@ -31,6 +31,15 @@ const getDisplayName = (user: User | null) => {
   return user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || user.email || "User";
 };
 
+function nextRedirect(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  const raw = new URLSearchParams(window.location.search).get("next");
+  if (!raw) return undefined;
+  // Same-origin, relative path only.
+  if (!raw.startsWith("/") || raw.startsWith("//")) return undefined;
+  return window.location.origin + raw;
+}
+
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [authUser, setAuthUser] = useState<User | null>(null);
@@ -104,11 +113,12 @@ export function useAuth() {
   }, [isAdmin, loadUsers]);
 
   const signup = useCallback(async (email: string, password: string, displayName?: string): Promise<AuthResult> => {
+    const redirect = nextRedirect() ?? window.location.origin;
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: redirect,
         data: { display_name: displayName || email.split("@")[0] },
       },
     });
@@ -120,11 +130,14 @@ export function useAuth() {
   const login = useCallback(async (email: string, password: string): Promise<AuthResult> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { success: false, error: error.message };
+    const next = nextRedirect();
+    if (next) window.location.href = next;
     return { success: true };
   }, []);
 
   const loginWithGoogle = useCallback(async (): Promise<AuthResult> => {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    const redirect = nextRedirect() ?? window.location.origin;
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: redirect });
     if (result.error) return { success: false, error: result.error.message };
     return { success: true };
   }, []);

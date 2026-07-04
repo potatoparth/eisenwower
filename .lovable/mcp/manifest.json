@@ -1,0 +1,234 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://bvhwblwojecapnxivqnl.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "weizen-mcp",
+      "version": "0.1.0",
+      "title": "Weizen"
+    },
+    "tools": [
+      {
+        "name": "list_tasks",
+        "title": "List tasks",
+        "description": "List the signed-in user's Eisenhower Matrix tasks. Optionally filter by status, quadrant, or category.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "status": {
+              "description": "Filter by status.",
+              "type": "string",
+              "enum": [
+                "open",
+                "done"
+              ]
+            },
+            "quadrant": {
+              "description": "Filter by Eisenhower quadrant.",
+              "type": "string",
+              "enum": [
+                "important-urgent",
+                "important-not-urgent",
+                "not-important-urgent",
+                "not-important-not-urgent"
+              ]
+            },
+            "category": {
+              "description": "Filter by category name.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Max rows (default 50).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_task",
+        "title": "Create task",
+        "description": "Create a task for the signed-in user in a specific Eisenhower quadrant.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Task name."
+            },
+            "description": {
+              "description": "Optional longer description.",
+              "type": "string"
+            },
+            "quadrant": {
+              "type": "string",
+              "enum": [
+                "important-urgent",
+                "important-not-urgent",
+                "not-important-urgent",
+                "not-important-not-urgent"
+              ],
+              "description": "Eisenhower quadrant."
+            },
+            "category": {
+              "description": "Category name (default 'General').",
+              "type": "string"
+            },
+            "due_date": {
+              "description": "Due date YYYY-MM-DD.",
+              "type": "string"
+            },
+            "due_time": {
+              "description": "Due time HH:MM (24h).",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "quadrant"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "complete_task",
+        "title": "Complete task",
+        "description": "Mark a task as done (or reopen it).",
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Task id."
+            },
+            "done": {
+              "description": "true to mark done (default), false to reopen.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "task_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "delete_task",
+        "title": "Delete task",
+        "description": "Permanently delete a task.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Task id."
+            }
+          },
+          "required": [
+            "task_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_notes",
+        "title": "List notes",
+        "description": "List the signed-in user's notes.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "category": {
+              "description": "Filter by category.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Max rows (default 50).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_note",
+        "title": "Create note",
+        "description": "Create a note for the signed-in user.",
+        "annotations": {
+          "readOnlyHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Note title."
+            },
+            "content": {
+              "description": "Markdown / plain text body.",
+              "type": "string"
+            },
+            "category": {
+              "description": "Category (default 'General').",
+              "type": "string"
+            },
+            "pinned": {
+              "description": "Pin to the top.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "title"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

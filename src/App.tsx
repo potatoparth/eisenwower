@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import JoinProject from "./pages/JoinProject";
+import OAuthConsent from "./pages/OAuthConsent";
 import { SelectionProvider } from "@/hooks/useSelection";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/join/:token" element={<JoinProject />} />
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
