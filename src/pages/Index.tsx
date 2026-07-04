@@ -379,6 +379,8 @@ const Index = () => {
                 onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
                 onRescheduleTasks={handleRescheduleTasks}
                 allTasks={tasks}
+                recentCategories={recentCategories}
+                recentProjectIds={recentProjectIds}
               />
             </motion.div>
           )}
@@ -399,6 +401,8 @@ const Index = () => {
                 onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
                 onRescheduleTasks={handleRescheduleTasks}
                 allTasks={tasks}
+                recentCategories={recentCategories}
+                recentProjectIds={recentProjectIds}
               />
             </motion.div>
           )}
