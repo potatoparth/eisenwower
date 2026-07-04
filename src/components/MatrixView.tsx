@@ -35,6 +35,8 @@ interface MatrixViewProps {
   defaultCategory?: string;
   onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
   onCreateProject?: TaskInputPickerProps["onCreateProject"];
+  recentCategories?: TaskInputPickerProps["recentCategories"];
+  recentProjectIds?: TaskInputPickerProps["recentProjectIds"];
   onReorderTasks?: (reorderedTasks: Task[]) => void;
   onTaskClick?: (task: Task) => void;
   getCategoryColor?: (name: string) => string | undefined;
@@ -75,6 +77,8 @@ export function MatrixView({
   defaultCategory,
   onCreateCategory,
   onCreateProject,
+  recentCategories,
+  recentProjectIds,
   allTasks,
   onSelectTask,
   onDeleteAllDone,
@@ -179,6 +183,8 @@ export function MatrixView({
           defaultCategory={defaultCategory}
           onCreateCategory={onCreateCategory}
           onCreateProject={onCreateProject}
+          recentCategories={recentCategories}
+          recentProjectIds={recentProjectIds}
         />
       </div>
 
@@ -224,6 +230,8 @@ export function MatrixView({
               defaultCategory={defaultCategory}
               onCreateCategory={onCreateCategory}
               onCreateProject={onCreateProject}
+              recentCategories={recentCategories}
+              recentProjectIds={recentProjectIds}
             />
           ))}
         </div>
@@ -263,6 +271,8 @@ export function MatrixView({
           defaultCategory={defaultCategory}
           onCreateCategory={onCreateCategory}
           onCreateProject={onCreateProject}
+          recentCategories={recentCategories}
+          recentProjectIds={recentProjectIds}
         />
       )}
     </div>
