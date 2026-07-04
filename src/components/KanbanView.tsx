@@ -254,7 +254,6 @@ export function KanbanView({
           <TaskInput
             compact
             placeholder="Task name…"
-            defaultQuadrant="important-not-urgent"
             onAddTask={(name, quadrant, options) => {
               onQuickAdd(name, activeBoardId, column.id, isDefault, quadrant, options);
               setAddingToColumn(null);

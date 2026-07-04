@@ -445,7 +445,6 @@ function DaySection({
           <TaskInput
             compact
             placeholder="Task name…"
-            defaultQuadrant="important-not-urgent"
             defaultDueDate={sectionKey}
             onAddTask={(name, quadrant, options) => {
               onAddTask(
