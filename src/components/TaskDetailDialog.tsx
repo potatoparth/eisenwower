@@ -18,6 +18,7 @@ import { RecurrenceField } from "@/components/RecurrenceField";
 import { TaskDescription } from "@/components/TaskDescription";
 import { TaskAttachments } from "@/components/TaskAttachments";
 import { SelectorWithCreate } from "@/components/SelectorWithCreate";
+import { RecentChipStrip } from "@/components/RecentChipStrip";
 
 interface TaskDetailDialogProps {
   task: Task;
@@ -34,6 +35,8 @@ interface TaskDetailDialogProps {
   onToggleStatus?: (id: string) => void;
   onCreateCategory?: (name: string) => string;
   onCreateProject?: (name: string) => string;
+  recentCategories?: string[];
+  recentProjectIds?: string[];
 }
 
 export function TaskDetailDialog({
@@ -51,6 +54,8 @@ export function TaskDetailDialog({
   onToggleStatus,
   onCreateCategory,
   onCreateProject,
+  recentCategories = [],
+  recentProjectIds = [],
 }: TaskDetailDialogProps) {
   const [name, setName] = useState(task.name);
   const [description, setDescription] = useState(task.description || "");
@@ -277,6 +282,14 @@ export function TaskDetailDialog({
               createPlaceholder="New category name…"
               compact
             />
+            {recentCategories.length > 0 && (
+              <RecentChipStrip
+                items={recentCategories.map((c) => ({ value: c, label: c }))}
+                value={category}
+                onSelect={(v) => { setCategory(v); onUpdate(task.id, { category: v }); }}
+                ariaLabel="Recent categories"
+              />
+            )}
           </div>
 
           {/* Project */}
@@ -301,6 +314,19 @@ export function TaskDetailDialog({
               createPlaceholder="New project name…"
               compact
             />
+            {recentProjectIds.length > 0 && (
+              <RecentChipStrip
+                items={recentProjectIds
+                  .map((id) => {
+                    const p = projects.find((x) => x.id === id);
+                    return p ? { value: p.id, label: p.name } : null;
+                  })
+                  .filter((x): x is { value: string; label: string } => !!x)}
+                value={projectId ?? ""}
+                onSelect={(v) => { setProjectId(v); onUpdate(task.id, { projectId: v }); }}
+                ariaLabel="Recent projects"
+              />
+            )}
           </div>
 
           <div className="pt-2 border-t space-y-1">
