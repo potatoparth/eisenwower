@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, CalendarClock, Zap, Trash2, LayoutGrid, Plus, ArrowRight } from "lucide-react";
+import { X, CalendarClock, Zap, Trash2, LayoutGrid, Plus, ArrowRight, Tag, FolderKanban, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -16,8 +16,9 @@ import { DateTimePicker } from "@/components/DateTimePicker";
 import { useSelection } from "@/hooks/useSelection";
 import { Task } from "@/types/task";
 import {
-  KanbanBoard, KanbanColumn, MAX_KANBAN_BOARDS, MAX_KANBAN_COLUMNS_PER_BOARD,
+  KanbanBoard, KanbanColumn, MAX_KANBAN_BOARDS, MAX_KANBAN_COLUMNS_PER_BOARD, ProjectTemplate,
 } from "@/types/project";
+import { cn } from "@/lib/utils";
 
 interface Props {
   onBulkReschedule: (ids: string[], iso: string) => void;
@@ -30,6 +31,13 @@ interface Props {
   columnsByBoard?: Record<string, KanbanColumn[]>;
   onAddToNewKanban?: (ids: string[], name: string, columnTitles: string[]) => void;
   onAddToExistingKanban?: (ids: string[], boardId: string, columnKey: string) => void;
+  /** Bulk-assign a category to the selected tasks. */
+  onBulkSetCategory?: (ids: string[], category: string) => void;
+  /** Bulk-assign a project to the selected tasks (null = detach from any project). */
+  onBulkSetProject?: (ids: string[], projectId: string | null) => void;
+  categories?: string[];
+  projects?: ProjectTemplate[];
+  onCreateCategory?: (name: string) => string;
 }
 
 /**
@@ -39,6 +47,8 @@ interface Props {
 export function BulkActionBar({
   onBulkReschedule, onAddToSprint, onBulkDelete,
   boards = [], columnsByBoard = {}, onAddToNewKanban, onAddToExistingKanban,
+  onBulkSetCategory, onBulkSetProject,
+  categories = [], projects = [], onCreateCategory,
 }: Props) {
   const { selectMode, selectedIds, count, clear, setSelectMode } = useSelection();
   const [date, setDate] = useState<string | undefined>(undefined);
@@ -49,6 +59,10 @@ export function BulkActionBar({
   const [pickBoardId, setPickBoardId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [newCols, setNewCols] = useState<string[]>(["To Do", "Doing", "Done"]);
+  const [catOpen, setCatOpen] = useState(false);
+  const [catQuery, setCatQuery] = useState("");
+  const [projOpen, setProjOpen] = useState(false);
+  const [projQuery, setProjQuery] = useState("");
 
   if (!selectMode || count === 0) return null;
 
@@ -62,6 +76,17 @@ export function BulkActionBar({
 
   const canAddNew = boards.length < MAX_KANBAN_BOARDS;
   const showKanban = !!(onAddToNewKanban || onAddToExistingKanban);
+
+  const filteredCats = categories.filter((c) =>
+    c.toLowerCase().includes(catQuery.trim().toLowerCase())
+  );
+  const filteredProjects = projects.filter((p) =>
+    p.name.toLowerCase().includes(projQuery.trim().toLowerCase())
+  );
+  const canCreateCat =
+    !!onCreateCategory &&
+    catQuery.trim().length > 0 &&
+    !categories.some((c) => c.toLowerCase() === catQuery.trim().toLowerCase());
 
   const finishAndClose = () => {
     setKanbanMenuOpen(false);
@@ -134,6 +159,92 @@ export function BulkActionBar({
                 <div className="text-[11px] text-muted-foreground px-2 py-1">
                   Max {MAX_KANBAN_BOARDS} boards reached
                 </div>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+      )}
+      {onBulkSetCategory && (
+        <Popover open={catOpen} onOpenChange={(o) => { setCatOpen(o); if (!o) setCatQuery(""); }}>
+          <PopoverTrigger asChild>
+            <Button size="sm" variant="secondary" className="rounded-full gap-1.5 px-2 sm:px-3">
+              <Tag className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Category</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="center" className="w-[min(18rem,92vw)] p-2">
+            <Input
+              value={catQuery}
+              onChange={(e) => setCatQuery(e.target.value)}
+              placeholder="Search or create category…"
+              className="h-8 text-xs mb-1.5"
+            />
+            <div className="max-h-56 overflow-y-auto flex flex-col gap-0.5">
+              {filteredCats.map((c) => (
+                <button key={c}
+                  onClick={() => {
+                    onBulkSetCategory(Array.from(selectedIds), c);
+                    setCatOpen(false); setCatQuery(""); clear(); setSelectMode(false);
+                  }}
+                  className="text-left text-xs px-2 py-1.5 rounded-md hover:bg-accent truncate">
+                  {c}
+                </button>
+              ))}
+              {filteredCats.length === 0 && !canCreateCat && (
+                <div className="text-[11px] text-muted-foreground px-2 py-2">No categories</div>
+              )}
+              {canCreateCat && (
+                <button
+                  onClick={() => {
+                    if (!onCreateCategory) return;
+                    const name = onCreateCategory(catQuery.trim());
+                    onBulkSetCategory(Array.from(selectedIds), name);
+                    setCatOpen(false); setCatQuery(""); clear(); setSelectMode(false);
+                  }}
+                  className="text-left text-xs px-2 py-1.5 rounded-md hover:bg-accent flex items-center gap-1.5 text-primary">
+                  <Plus className="w-3 h-3" /> Create “{catQuery.trim()}”
+                </button>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+      )}
+      {onBulkSetProject && (
+        <Popover open={projOpen} onOpenChange={(o) => { setProjOpen(o); if (!o) setProjQuery(""); }}>
+          <PopoverTrigger asChild>
+            <Button size="sm" variant="secondary" className="rounded-full gap-1.5 px-2 sm:px-3">
+              <FolderKanban className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Project</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="center" className="w-[min(20rem,92vw)] p-2">
+            <Input
+              value={projQuery}
+              onChange={(e) => setProjQuery(e.target.value)}
+              placeholder="Search projects…"
+              className="h-8 text-xs mb-1.5"
+            />
+            <div className="max-h-56 overflow-y-auto flex flex-col gap-0.5">
+              <button
+                onClick={() => {
+                  onBulkSetProject(Array.from(selectedIds), null);
+                  setProjOpen(false); setProjQuery(""); clear(); setSelectMode(false);
+                }}
+                className="text-left text-xs px-2 py-1.5 rounded-md hover:bg-accent flex items-center gap-1.5 text-muted-foreground">
+                <X className="w-3 h-3" /> No project (detach)
+              </button>
+              {filteredProjects.map((p) => (
+                <button key={p.id}
+                  onClick={() => {
+                    onBulkSetProject(Array.from(selectedIds), p.id);
+                    setProjOpen(false); setProjQuery(""); clear(); setSelectMode(false);
+                  }}
+                  className="text-left text-xs px-2 py-1.5 rounded-md hover:bg-accent truncate">
+                  {p.name}
+                </button>
+              ))}
+              {filteredProjects.length === 0 && (
+                <div className="text-[11px] text-muted-foreground px-2 py-2">No projects</div>
               )}
             </div>
           </PopoverContent>
