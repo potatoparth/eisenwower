@@ -19,6 +19,49 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@/lib/utils";
 
+function ChipStrip({
+  items,
+  value,
+  onSelect,
+  ariaLabel,
+}: {
+  items: { value: string; label: string }[];
+  value: string;
+  onSelect: (v: string) => void;
+  ariaLabel: string;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <div
+      role="listbox"
+      aria-label={ariaLabel}
+      className="-mx-1 flex items-center gap-1.5 overflow-x-auto scroll-smooth px-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x"
+    >
+      {items.map((it) => {
+        const active = value === it.value;
+        return (
+          <button
+            key={it.value}
+            type="button"
+            role="option"
+            aria-selected={active}
+            onClick={() => onSelect(it.value)}
+            className={cn(
+              "shrink-0 snap-start rounded-full border px-2.5 py-1 text-[11px] leading-none transition-colors max-w-[9rem] truncate",
+              active
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-secondary/40 border-border/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
+            )}
+            title={it.label}
+          >
+            {it.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export interface TaskAddOptions {
   description?: string;
   category?: string;
@@ -31,7 +74,14 @@ export interface TaskAddOptions {
 
 export type TaskInputPickerProps = Pick<
   TaskInputProps,
-  "categories" | "projects" | "defaultProjectId" | "defaultCategory" | "onCreateCategory" | "onCreateProject"
+  | "categories"
+  | "projects"
+  | "defaultProjectId"
+  | "defaultCategory"
+  | "onCreateCategory"
+  | "onCreateProject"
+  | "recentCategories"
+  | "recentProjectIds"
 >;
 
 interface TaskInputProps {
@@ -49,6 +99,10 @@ interface TaskInputProps {
   defaultCategory?: string;
   onCreateCategory?: (name: string) => string;
   onCreateProject?: (name: string) => string;
+  /** Category names ordered most-recent first; rendered as a scrollable chip strip. */
+  recentCategories?: string[];
+  /** Project ids ordered most-recent first; rendered as a scrollable chip strip. */
+  recentProjectIds?: string[];
 }
 
 type InputStep = "name" | "quadrant" | "details";
@@ -70,6 +124,8 @@ export function TaskInput({
   defaultCategory,
   onCreateCategory,
   onCreateProject,
+  recentCategories = [],
+  recentProjectIds = [],
 }: TaskInputProps) {
   const [step, setStep] = useState<InputStep>("name");
   const [name, setName] = useState("");
@@ -428,6 +484,14 @@ export function TaskInput({
                     createPlaceholder="New category name…"
                     compact
                   />
+                  {recentCategories.length > 0 && (
+                    <ChipStrip
+                      items={recentCategories.map((c) => ({ value: c, label: c }))}
+                      value={category}
+                      onSelect={setCategory}
+                      ariaLabel="Recent categories"
+                    />
+                  )}
                   <SelectorWithCreate
                     icon={<FolderKanban className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
                     options={projectOptions}
@@ -439,6 +503,19 @@ export function TaskInput({
                     createPlaceholder="New project name…"
                     compact
                   />
+                  {recentProjectIds.length > 0 && (
+                    <ChipStrip
+                      items={recentProjectIds
+                        .map((id) => {
+                          const p = projects.find((x) => x.id === id);
+                          return p ? { value: p.id, label: p.name } : null;
+                        })
+                        .filter((x): x is { value: string; label: string } => !!x)}
+                      value={projectId}
+                      onSelect={setProjectId}
+                      ariaLabel="Recent projects"
+                    />
+                  )}
                 </div>
                 <div className="flex justify-end gap-1.5 pt-1">
                   <Button

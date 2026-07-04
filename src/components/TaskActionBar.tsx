@@ -31,12 +31,15 @@ interface Props {
   defaultCategory?: string;
   onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
   onCreateProject?: TaskInputPickerProps["onCreateProject"];
+  recentCategories?: TaskInputPickerProps["recentCategories"];
+  recentProjectIds?: TaskInputPickerProps["recentProjectIds"];
 }
 
 export function TaskActionBar({
   tasks, onSelectTask, onDeleteAllDone, onRescheduleTasks,
   onAddTask, quadrants, categories, projects,
   defaultProjectId, defaultCategory, onCreateCategory, onCreateProject,
+  recentCategories, recentProjectIds,
 }: Props) {
   const [searchMode, setSearchMode] = useState(false);
   const [query, setQuery] = useState("");
@@ -192,6 +195,8 @@ export function TaskActionBar({
             defaultCategory={defaultCategory}
             onCreateCategory={onCreateCategory}
             onCreateProject={onCreateProject}
+            recentCategories={recentCategories}
+            recentProjectIds={recentProjectIds}
           />
         )}
       </div>

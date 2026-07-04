@@ -20,6 +20,8 @@ interface QuadrantExpandDialogProps {
   defaultCategory?: string;
   onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
   onCreateProject?: TaskInputPickerProps["onCreateProject"];
+  recentCategories?: TaskInputPickerProps["recentCategories"];
+  recentProjectIds?: TaskInputPickerProps["recentProjectIds"];
   onClose: () => void;
   onTaskClick: (task: Task) => void;
   getCategoryColor?: (name: string) => string | undefined;
@@ -44,6 +46,8 @@ export function QuadrantExpandDialog({
   defaultCategory,
   onCreateCategory,
   onCreateProject,
+  recentCategories,
+  recentProjectIds,
 }: QuadrantExpandDialogProps) {
   const openTasks = tasks.filter(t => t.status === "open");
   const doneTasks = tasks.filter(t => t.status === "done");
@@ -116,6 +120,8 @@ export function QuadrantExpandDialog({
             defaultCategory={defaultCategory}
             onCreateCategory={onCreateCategory}
             onCreateProject={onCreateProject}
+            recentCategories={recentCategories}
+            recentProjectIds={recentProjectIds}
           />
         </div>
 

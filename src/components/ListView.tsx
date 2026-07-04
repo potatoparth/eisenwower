@@ -29,6 +29,8 @@ interface ListViewProps {
   defaultCategory?: string;
   onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
   onCreateProject?: TaskInputPickerProps["onCreateProject"];
+  recentCategories?: TaskInputPickerProps["recentCategories"];
+  recentProjectIds?: TaskInputPickerProps["recentProjectIds"];
   onTaskClick?: (task: Task) => void;
   getCategoryColor?: (name: string) => string | undefined;
   deadlineThresholdDays?: number;
@@ -56,6 +58,8 @@ export function ListView({
   defaultCategory,
   onCreateCategory,
   onCreateProject,
+  recentCategories,
+  recentProjectIds,
   allTasks,
   onSelectTask,
   onDeleteAllDone,
@@ -104,6 +108,8 @@ export function ListView({
           defaultCategory={defaultCategory}
           onCreateCategory={onCreateCategory}
           onCreateProject={onCreateProject}
+          recentCategories={recentCategories}
+          recentProjectIds={recentProjectIds}
         />
       </div>
 
