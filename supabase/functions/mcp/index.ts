@@ -7,10 +7,20 @@ import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 
 // src/lib/mcp/tools/list-tasks.ts
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z } from "npm:zod@^4.4.3";
+import { z as z2 } from "npm:zod@^4.4.3";
 
 // src/lib/mcp/supabase.ts
 import { createClient } from "npm:@supabase/supabase-js@^2.106.1";
+import { z } from "npm:zod@^4.4.3";
+var attachmentSchema = z.object({
+  id: z.string().optional().describe("Stable id; auto-generated if omitted."),
+  name: z.string().min(1).describe("Display label."),
+  kind: z.enum(["file", "link"]).describe("'link' for URLs, 'file' for objects already in the task-attachments bucket."),
+  path: z.string().min(1).describe("For links: full URL. For files: storage object path inside the task-attachments bucket."),
+  size: z.number().int().nonnegative().optional(),
+  contentType: z.string().optional(),
+  addedAt: z.string().optional()
+});
 function supabaseForUser(ctx) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY;
@@ -35,15 +45,15 @@ var list_tasks_default = defineTool({
   title: "List tasks",
   description: "List the signed-in user's Eisenhower Matrix tasks. Optionally filter by status, quadrant, or category.",
   inputSchema: {
-    status: z.enum(["open", "done"]).optional().describe("Filter by status."),
-    quadrant: z.enum([
+    status: z2.enum(["open", "done"]).optional().describe("Filter by status."),
+    quadrant: z2.enum([
       "important-urgent",
       "important-not-urgent",
       "not-important-urgent",
       "not-important-not-urgent"
     ]).optional().describe("Filter by Eisenhower quadrant."),
-    category: z.string().optional().describe("Filter by category name."),
-    limit: z.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
+    category: z2.string().optional().describe("Filter by category name."),
+    limit: z2.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ status, quadrant, category, limit }, ctx) => {
@@ -63,23 +73,23 @@ var list_tasks_default = defineTool({
 
 // src/lib/mcp/tools/create-task.ts
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z2 } from "npm:zod@^4.4.3";
+import { z as z3 } from "npm:zod@^4.4.3";
 var create_task_default = defineTool2({
   name: "create_task",
   title: "Create task",
   description: "Create a task for the signed-in user in a specific Eisenhower quadrant.",
   inputSchema: {
-    name: z2.string().trim().min(1).describe("Task name."),
-    description: z2.string().optional().describe("Optional longer description."),
-    quadrant: z2.enum([
+    name: z3.string().trim().min(1).describe("Task name."),
+    description: z3.string().optional().describe("Optional longer description."),
+    quadrant: z3.enum([
       "important-urgent",
       "important-not-urgent",
       "not-important-urgent",
       "not-important-not-urgent"
     ]).describe("Eisenhower quadrant."),
-    category: z2.string().optional().describe("Category name (default 'General')."),
-    due_date: z2.string().optional().describe("Due date YYYY-MM-DD."),
-    due_time: z2.string().optional().describe("Due time HH:MM (24h).")
+    category: z3.string().optional().describe("Category name (default 'General')."),
+    due_date: z3.string().optional().describe("Due date YYYY-MM-DD."),
+    due_time: z3.string().optional().describe("Due time HH:MM (24h).")
   },
   annotations: { readOnlyHint: false, destructiveHint: false },
   handler: async ({ name, description, quadrant, category, due_date, due_time }, ctx) => {
@@ -104,25 +114,25 @@ var create_task_default = defineTool2({
 
 // src/lib/mcp/tools/update-task.ts
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z3 } from "npm:zod@^4.4.3";
+import { z as z4 } from "npm:zod@^4.4.3";
 var update_task_default = defineTool3({
   name: "update_task",
   title: "Update task",
   description: "Update fields on an existing task: name, description, quadrant (move between Eisenhower quadrants), category, due date/time (reschedule), or status.",
   inputSchema: {
-    task_id: z3.string().uuid().describe("Task id."),
-    name: z3.string().trim().min(1).optional(),
-    description: z3.string().nullable().optional(),
-    quadrant: z3.enum([
+    task_id: z4.string().uuid().describe("Task id."),
+    name: z4.string().trim().min(1).optional(),
+    description: z4.string().nullable().optional(),
+    quadrant: z4.enum([
       "important-urgent",
       "important-not-urgent",
       "not-important-urgent",
       "not-important-not-urgent"
     ]).optional().describe("Move task to a different Eisenhower quadrant."),
-    category: z3.string().optional(),
-    due_date: z3.string().nullable().optional().describe("YYYY-MM-DD, or null to clear."),
-    due_time: z3.string().nullable().optional().describe("HH:MM (24h), or null to clear."),
-    status: z3.enum(["open", "done"]).optional()
+    category: z4.string().optional(),
+    due_date: z4.string().nullable().optional().describe("YYYY-MM-DD, or null to clear."),
+    due_time: z4.string().nullable().optional().describe("HH:MM (24h), or null to clear."),
+    status: z4.enum(["open", "done"]).optional()
   },
   annotations: { readOnlyHint: false, idempotentHint: true },
   handler: async ({ task_id, ...fields }, ctx) => {
@@ -144,14 +154,14 @@ var update_task_default = defineTool3({
 
 // src/lib/mcp/tools/complete-task.ts
 import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z4 } from "npm:zod@^4.4.3";
+import { z as z5 } from "npm:zod@^4.4.3";
 var complete_task_default = defineTool4({
   name: "complete_task",
   title: "Complete task",
   description: "Mark a task as done (or reopen it).",
   inputSchema: {
-    task_id: z4.string().uuid().describe("Task id."),
-    done: z4.boolean().optional().describe("true to mark done (default), false to reopen.")
+    task_id: z5.string().uuid().describe("Task id."),
+    done: z5.boolean().optional().describe("true to mark done (default), false to reopen.")
   },
   annotations: { readOnlyHint: false, idempotentHint: true },
   handler: async ({ task_id, done }, ctx) => {
@@ -168,12 +178,12 @@ var complete_task_default = defineTool4({
 
 // src/lib/mcp/tools/delete-task.ts
 import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z5 } from "npm:zod@^4.4.3";
+import { z as z6 } from "npm:zod@^4.4.3";
 var delete_task_default = defineTool5({
   name: "delete_task",
   title: "Delete task",
   description: "Permanently delete a task.",
-  inputSchema: { task_id: z5.string().uuid().describe("Task id.") },
+  inputSchema: { task_id: z6.string().uuid().describe("Task id.") },
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true },
   handler: async ({ task_id }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
@@ -185,14 +195,14 @@ var delete_task_default = defineTool5({
 
 // src/lib/mcp/tools/list-notes.ts
 import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z6 } from "npm:zod@^4.4.3";
+import { z as z7 } from "npm:zod@^4.4.3";
 var list_notes_default = defineTool6({
   name: "list_notes",
   title: "List notes",
   description: "List the signed-in user's notes.",
   inputSchema: {
-    category: z6.string().optional().describe("Filter by category."),
-    limit: z6.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
+    category: z7.string().optional().describe("Filter by category."),
+    limit: z7.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ category, limit }, ctx) => {
@@ -210,16 +220,16 @@ var list_notes_default = defineTool6({
 
 // src/lib/mcp/tools/create-note.ts
 import { defineTool as defineTool7 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z7 } from "npm:zod@^4.4.3";
+import { z as z8 } from "npm:zod@^4.4.3";
 var create_note_default = defineTool7({
   name: "create_note",
   title: "Create note",
   description: "Create a note for the signed-in user.",
   inputSchema: {
-    title: z7.string().trim().min(1).describe("Note title."),
-    content: z7.string().optional().describe("Markdown / plain text body."),
-    category: z7.string().optional().describe("Category (default 'General')."),
-    pinned: z7.boolean().optional().describe("Pin to the top.")
+    title: z8.string().trim().min(1).describe("Note title."),
+    content: z8.string().optional().describe("Markdown / plain text body."),
+    category: z8.string().optional().describe("Category (default 'General')."),
+    pinned: z8.boolean().optional().describe("Pin to the top.")
   },
   annotations: { readOnlyHint: false },
   handler: async ({ title, content, category, pinned }, ctx) => {
@@ -241,13 +251,13 @@ var create_note_default = defineTool7({
 
 // src/lib/mcp/tools/list-projects.ts
 import { defineTool as defineTool8 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z8 } from "npm:zod@^4.4.3";
+import { z as z9 } from "npm:zod@^4.4.3";
 var list_projects_default = defineTool8({
   name: "list_projects",
   title: "List projects",
   description: "List the signed-in user's projects (project templates). Includes projects owned by the user.",
   inputSchema: {
-    limit: z8.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
+    limit: z9.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ limit }, ctx) => {
@@ -263,14 +273,14 @@ var list_projects_default = defineTool8({
 
 // src/lib/mcp/tools/create-project.ts
 import { defineTool as defineTool9 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z9 } from "npm:zod@^4.4.3";
+import { z as z10 } from "npm:zod@^4.4.3";
 var create_project_default = defineTool9({
   name: "create_project",
   title: "Create project",
   description: "Create a new project for the signed-in user.",
   inputSchema: {
-    name: z9.string().trim().min(1).describe("Project name."),
-    description: z9.string().optional()
+    name: z10.string().trim().min(1).describe("Project name."),
+    description: z10.string().optional()
   },
   annotations: { readOnlyHint: false },
   handler: async ({ name, description }, ctx) => {
@@ -290,13 +300,13 @@ var create_project_default = defineTool9({
 
 // src/lib/mcp/tools/list-project-presets.ts
 import { defineTool as defineTool10 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z10 } from "npm:zod@^4.4.3";
+import { z as z11 } from "npm:zod@^4.4.3";
 var list_project_presets_default = defineTool10({
   name: "list_project_template_presets",
   title: "List project template presets",
   description: "List the signed-in user's reusable project templates (presets).",
   inputSchema: {
-    limit: z10.number().int().min(1).max(200).optional()
+    limit: z11.number().int().min(1).max(200).optional()
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ limit }, ctx) => {
@@ -312,15 +322,15 @@ var list_project_presets_default = defineTool10({
 
 // src/lib/mcp/tools/create-project-preset.ts
 import { defineTool as defineTool11 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z11 } from "npm:zod@^4.4.3";
+import { z as z12 } from "npm:zod@^4.4.3";
 var create_project_preset_default = defineTool11({
   name: "create_project_template_preset",
   title: "Create project template preset",
   description: "Create a reusable project template preset with a list of preset tasks.",
   inputSchema: {
-    name: z11.string().trim().min(1),
-    description: z11.string().optional(),
-    tasks: z11.array(z11.record(z11.string(), z11.unknown())).optional().describe(
+    name: z12.string().trim().min(1),
+    description: z12.string().optional(),
+    tasks: z12.array(z12.record(z12.string(), z12.unknown())).optional().describe(
       "Array of preset task objects (name, description, dependencyType 'sync'|'async', dependsOn[], durationDays, etc.)."
     )
   },
@@ -343,13 +353,13 @@ var create_project_preset_default = defineTool11({
 
 // src/lib/mcp/tools/list-kanban-boards.ts
 import { defineTool as defineTool12 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z12 } from "npm:zod@^4.4.3";
+import { z as z13 } from "npm:zod@^4.4.3";
 var list_kanban_boards_default = defineTool12({
   name: "list_kanban_boards",
   title: "List kanban boards",
   description: "List the signed-in user's kanban boards and their columns.",
   inputSchema: {
-    limit: z12.number().int().min(1).max(200).optional()
+    limit: z13.number().int().min(1).max(200).optional()
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ limit }, ctx) => {
@@ -368,17 +378,17 @@ var list_kanban_boards_default = defineTool12({
 
 // src/lib/mcp/tools/create-kanban-board.ts
 import { defineTool as defineTool13 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z13 } from "npm:zod@^4.4.3";
+import { z as z14 } from "npm:zod@^4.4.3";
 var create_kanban_board_default = defineTool13({
   name: "create_kanban_board",
   title: "Create kanban board",
   description: "Create a new kanban board with optional starter columns. Column keys are stable ids used when adding tasks.",
   inputSchema: {
-    name: z13.string().trim().min(1),
-    columns: z13.array(
-      z13.object({
-        title: z13.string().min(1),
-        column_key: z13.string().min(1).describe("Stable key (e.g. 'todo').")
+    name: z14.string().trim().min(1),
+    columns: z14.array(
+      z14.object({
+        title: z14.string().min(1),
+        column_key: z14.string().min(1).describe("Stable key (e.g. 'todo').")
       })
     ).optional().describe("Optional initial columns. Defaults to To Do / Doing / Done.")
   },
@@ -413,16 +423,16 @@ var create_kanban_board_default = defineTool13({
 
 // src/lib/mcp/tools/add-task-to-kanban.ts
 import { defineTool as defineTool14 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z14 } from "npm:zod@^4.4.3";
+import { z as z15 } from "npm:zod@^4.4.3";
 var add_task_to_kanban_default = defineTool14({
   name: "add_task_to_kanban",
   title: "Add task to kanban",
   description: "Place an existing task on a kanban board in a specific column. Uses the column's stable key.",
   inputSchema: {
-    board_id: z14.string().uuid(),
-    task_id: z14.string().uuid(),
-    column_key: z14.string().min(1).describe("Stable column key from list_kanban_boards."),
-    sort_order: z14.number().int().optional()
+    board_id: z15.string().uuid(),
+    task_id: z15.string().uuid(),
+    column_key: z15.string().min(1).describe("Stable column key from list_kanban_boards."),
+    sort_order: z15.number().int().optional()
   },
   annotations: { readOnlyHint: false },
   handler: async ({ board_id, task_id, column_key, sort_order }, ctx) => {
