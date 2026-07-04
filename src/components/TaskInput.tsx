@@ -31,7 +31,14 @@ export interface TaskAddOptions {
 
 export type TaskInputPickerProps = Pick<
   TaskInputProps,
-  "categories" | "projects" | "defaultProjectId" | "defaultCategory" | "onCreateCategory" | "onCreateProject"
+  | "categories"
+  | "projects"
+  | "defaultProjectId"
+  | "defaultCategory"
+  | "onCreateCategory"
+  | "onCreateProject"
+  | "recentCategories"
+  | "recentProjectIds"
 >;
 
 interface TaskInputProps {
@@ -49,6 +56,10 @@ interface TaskInputProps {
   defaultCategory?: string;
   onCreateCategory?: (name: string) => string;
   onCreateProject?: (name: string) => string;
+  /** Category names ordered most-recent first; rendered as a scrollable chip strip. */
+  recentCategories?: string[];
+  /** Project ids ordered most-recent first; rendered as a scrollable chip strip. */
+  recentProjectIds?: string[];
 }
 
 type InputStep = "name" | "quadrant" | "details";
@@ -70,6 +81,8 @@ export function TaskInput({
   defaultCategory,
   onCreateCategory,
   onCreateProject,
+  recentCategories = [],
+  recentProjectIds = [],
 }: TaskInputProps) {
   const [step, setStep] = useState<InputStep>("name");
   const [name, setName] = useState("");
