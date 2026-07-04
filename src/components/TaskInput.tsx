@@ -441,6 +441,14 @@ export function TaskInput({
                     createPlaceholder="New category name…"
                     compact
                   />
+                  {recentCategories.length > 0 && (
+                    <ChipStrip
+                      items={recentCategories.map((c) => ({ value: c, label: c }))}
+                      value={category}
+                      onSelect={setCategory}
+                      ariaLabel="Recent categories"
+                    />
+                  )}
                   <SelectorWithCreate
                     icon={<FolderKanban className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
                     options={projectOptions}
@@ -452,6 +460,19 @@ export function TaskInput({
                     createPlaceholder="New project name…"
                     compact
                   />
+                  {recentProjectIds.length > 0 && (
+                    <ChipStrip
+                      items={recentProjectIds
+                        .map((id) => {
+                          const p = projects.find((x) => x.id === id);
+                          return p ? { value: p.id, label: p.name } : null;
+                        })
+                        .filter((x): x is { value: string; label: string } => !!x)}
+                      value={projectId}
+                      onSelect={setProjectId}
+                      ariaLabel="Recent projects"
+                    />
+                  )}
                 </div>
                 <div className="flex justify-end gap-1.5 pt-1">
                   <Button
