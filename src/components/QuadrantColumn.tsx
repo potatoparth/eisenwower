@@ -24,6 +24,8 @@ interface QuadrantColumnProps {
   defaultCategory?: string;
   onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
   onCreateProject?: TaskInputPickerProps["onCreateProject"];
+  recentCategories?: TaskInputPickerProps["recentCategories"];
+  recentProjectIds?: TaskInputPickerProps["recentProjectIds"];
   onExpand?: () => void;
   onTaskClick?: (task: Task) => void;
   getCategoryColor?: (name: string) => string | undefined;
@@ -46,6 +48,8 @@ export function QuadrantColumn({
   defaultCategory,
   onCreateCategory,
   onCreateProject,
+  recentCategories,
+  recentProjectIds,
 }: QuadrantColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: quadrant.id,
