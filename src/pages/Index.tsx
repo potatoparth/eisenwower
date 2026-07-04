@@ -424,6 +424,25 @@ const Index = () => {
                 onToggleStatus={toggleStatus}
                 onDeleteTask={handleDeleteTask}
                 onTaskClick={setSelectedTask}
+                onQuickAdd={(name, boardId, columnKey, isDefault) => {
+                  // Default board: derive quadrant/status/due from column.
+                  if (isDefault) {
+                    if (columnKey === "overdue") {
+                      const y = new Date(); y.setDate(y.getDate() - 1);
+                      const due = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, "0")}-${String(y.getDate()).padStart(2, "0")}`;
+                      handleAddTask(name, "important-urgent", { dueDate: due });
+                    } else if (columnKey === "done") {
+                      const t = handleAddTask(name, "important-not-urgent");
+                      toggleStatus(t.id);
+                    } else {
+                      handleAddTask(name, "important-not-urgent");
+                    }
+                    return;
+                  }
+                  // Custom board: create the task, then assign it to the target column.
+                  const created = handleAddTask(name, "important-not-urgent");
+                  kanban.assignTasks(boardId, columnKey, [created.id]);
+                }}
                 getCategoryColor={getCategoryColor}
                 deadlineThresholdDays={settings.deadlineThresholdDays}
               />
@@ -437,6 +456,7 @@ const Index = () => {
                 onUpdateTask={updateTask}
                 onToggleStatus={toggleStatus}
                 onTaskClick={setSelectedTask}
+                onAddTask={(name, dueDate) => handleAddTask(name, "important-not-urgent", { dueDate })}
                 getCategoryColor={getCategoryColor}
               />
             </motion.div>

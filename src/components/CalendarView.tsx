@@ -1,10 +1,11 @@
 import { useMemo, useState, useRef } from "react";
-import { ChevronRight, ChevronLeft, GripVertical, Check as CheckIcon, Inbox, MoveVertical } from "lucide-react";
+import { ChevronRight, ChevronLeft, GripVertical, Check as CheckIcon, Inbox, MoveVertical, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { DateTimePicker } from "@/components/DateTimePicker";
+import { QuickAddInput } from "@/components/QuickAddInput";
 import { Task } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { useSelectionOptional } from "@/hooks/useSelection";
@@ -15,6 +16,7 @@ interface CalendarViewProps {
   onUpdateTask: (id: string, updates: Partial<Omit<Task, "id" | "createdAt">>) => void;
   onToggleStatus?: (id: string) => void;
   onTaskClick: (task: Task) => void;
+  onAddTask?: (name: string, dueDate: string) => void;
   getCategoryColor?: (name: string) => string | undefined;
 }
 
@@ -32,7 +34,7 @@ function orderOf(t: Task) {
 }
 
 export function CalendarView({
-  tasks, onUpdateTask, onToggleStatus, onTaskClick, getCategoryColor,
+  tasks, onUpdateTask, onToggleStatus, onTaskClick, onAddTask, getCategoryColor,
 }: CalendarViewProps) {
   const sel = useSelectionOptional();
   const isSelectMode = !!sel?.selectMode;
@@ -277,6 +279,7 @@ export function CalendarView({
               getCategoryColor={getCategoryColor}
             moveOptions={moveOptions}
             onMove={moveTaskToSection}
+            onAddTask={onAddTask}
               />
             );
           };
@@ -382,14 +385,16 @@ interface DaySectionProps {
   getCategoryColor?: (name: string) => string | undefined;
   moveOptions: { key: string; label: string }[];
   onMove: (id: string, sectionKey: string) => void;
+  onAddTask?: (name: string, dueDate: string) => void;
 }
 
 function DaySection({
   sectionKey, label, dateStr, icon, count, collapsed, onToggleCollapsed,
   items, dragging, dropTarget, setDropTarget, onCommitDrop,
   onDragStart, onDragEnd, onTaskClick, onToggleStatus, getCategoryColor,
-  moveOptions, onMove,
+  moveOptions, onMove, onAddTask,
 }: DaySectionProps) {
+  const [adding, setAdding] = useState(false);
   const allowDrop = (e: React.DragEvent) => {
     if (e.dataTransfer.types.includes("text/task-id")) {
       e.preventDefault();
@@ -403,22 +408,44 @@ function DaySection({
   return (
     <section className="rounded-lg border border-border bg-background/50 overflow-hidden">
       {/* Header */}
-      <button
-        type="button"
-        onClick={onToggleCollapsed}
-        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors"
-      >
-        <ChevronRight
-          className={cn(
-            "w-4 h-4 text-muted-foreground transition-transform",
-            !collapsed && "rotate-90"
-          )}
-        />
-        {icon}
-        <span className="text-sm font-semibold text-foreground">{label}</span>
-        {dateStr && <span className="text-xs text-muted-foreground">{dateStr}</span>}
-        <span className="ml-auto text-xs text-muted-foreground tabular-nums">{count}</span>
-      </button>
+      <div className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/40 transition-colors">
+        <button
+          type="button"
+          onClick={onToggleCollapsed}
+          className="flex items-center gap-2 min-w-0 flex-1 text-left"
+        >
+          <ChevronRight
+            className={cn(
+              "w-4 h-4 text-muted-foreground transition-transform",
+              !collapsed && "rotate-90"
+            )}
+          />
+          {icon}
+          <span className="text-sm font-semibold text-foreground">{label}</span>
+          {dateStr && <span className="text-xs text-muted-foreground">{dateStr}</span>}
+          <span className="ml-auto text-xs text-muted-foreground tabular-nums">{count}</span>
+        </button>
+        {onAddTask && sectionKey !== "__unscheduled__" && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setAdding(true); }}
+            className="p-1 -mr-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+            title="Add task on this day"
+            aria-label="Add task on this day"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+      {adding && onAddTask && (
+        <div className="p-2 border-b border-border/60 bg-secondary/20">
+          <QuickAddInput
+            placeholder="Task name…"
+            onCommit={(name) => { onAddTask(name, sectionKey); setAdding(false); }}
+            onCancel={() => setAdding(false)}
+          />
+        </div>
+      )}
 
       {/* Body */}
       {!collapsed && (

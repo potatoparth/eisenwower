@@ -15,6 +15,7 @@ import {
 import { TaskCard } from "./TaskCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { QuickAddInput } from "@/components/QuickAddInput";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -40,6 +41,7 @@ interface KanbanViewProps {
   onToggleStatus: (id: string) => void;
   onDeleteTask: (id: string) => void;
   onTaskClick?: (task: Task) => void;
+  onQuickAdd?: (name: string, boardId: string, columnKey: string, isDefault: boolean) => void;
   getCategoryColor?: (name: string) => string | undefined;
   deadlineThresholdDays?: number;
 }
@@ -75,6 +77,7 @@ export function KanbanView({
   onAddColumn, onRemoveColumn, onRenameColumn,
   onMoveItem, onRemoveItem,
   onToggleStatus, onDeleteTask, onTaskClick,
+  onQuickAdd,
   getCategoryColor, deadlineThresholdDays = 2,
 }: KanbanViewProps) {
   const [activeBoardId, setActiveBoardId] = useState<string>(DEFAULT_BOARD_ID);
@@ -90,6 +93,7 @@ export function KanbanView({
   const [newBoardCols, setNewBoardCols] = useState<string[]>(["To Do", "Doing", "Done"]);
   const [expandedColumnKey, setExpandedColumnKey] = useState<string | null>(null);
   const [deleteBoardConfirm, setDeleteBoardConfirm] = useState(false);
+  const [addingToColumn, setAddingToColumn] = useState<string | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
@@ -203,6 +207,17 @@ export function KanbanView({
               <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{colTasks.length}</span>
             </button>
             <div className="flex items-center gap-0.5">
+              {onQuickAdd && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="w-6 h-6"
+                  onClick={() => setAddingToColumn(column.id)}
+                  title="Add task to this column"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </Button>
+              )}
               {!expanded && (
                 <Button size="icon" variant="ghost" className="w-6 h-6" onClick={() => setExpandedColumnKey(column.id)} title="Expand">
                   <Maximize2 className="w-3 h-3" />
@@ -224,6 +239,18 @@ export function KanbanView({
           </>
         )}
       </div>
+      {addingToColumn === column.id && onQuickAdd && (
+        <div className="p-2 border-b border-border bg-secondary/30">
+          <QuickAddInput
+            placeholder="Task name…"
+            onCommit={(name) => {
+              onQuickAdd(name, activeBoardId, column.id, isDefault);
+              setAddingToColumn(null);
+            }}
+            onCancel={() => setAddingToColumn(null)}
+          />
+        </div>
+      )}
       <SortableContext items={colTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
         <div className="flex-1 p-2 space-y-1.5 overflow-y-auto min-h-[100px]">
           {colTasks.map(task => (
