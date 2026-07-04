@@ -1,10 +1,11 @@
 import { useMemo, useState, useRef } from "react";
-import { ChevronRight, ChevronLeft, GripVertical, Check as CheckIcon, Inbox, MoveVertical } from "lucide-react";
+import { ChevronRight, ChevronLeft, GripVertical, Check as CheckIcon, Inbox, MoveVertical, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { DateTimePicker } from "@/components/DateTimePicker";
+import { QuickAddInput } from "@/components/QuickAddInput";
 import { Task } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { useSelectionOptional } from "@/hooks/useSelection";
@@ -15,6 +16,7 @@ interface CalendarViewProps {
   onUpdateTask: (id: string, updates: Partial<Omit<Task, "id" | "createdAt">>) => void;
   onToggleStatus?: (id: string) => void;
   onTaskClick: (task: Task) => void;
+  onAddTask?: (name: string, dueDate: string) => void;
   getCategoryColor?: (name: string) => string | undefined;
 }
 
@@ -32,7 +34,7 @@ function orderOf(t: Task) {
 }
 
 export function CalendarView({
-  tasks, onUpdateTask, onToggleStatus, onTaskClick, getCategoryColor,
+  tasks, onUpdateTask, onToggleStatus, onTaskClick, onAddTask, getCategoryColor,
 }: CalendarViewProps) {
   const sel = useSelectionOptional();
   const isSelectMode = !!sel?.selectMode;
