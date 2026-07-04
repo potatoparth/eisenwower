@@ -61,6 +61,8 @@ interface TaskInputProps {
   recentCategories?: string[];
   /** Project ids ordered most-recent first; rendered as a scrollable chip strip. */
   recentProjectIds?: string[];
+  /** Prefill the deadline (yyyy-mm-dd) when the details step opens. */
+  defaultDueDate?: string;
 }
 
 type InputStep = "name" | "quadrant" | "details";
@@ -84,6 +86,7 @@ export function TaskInput({
   onCreateProject,
   recentCategories = [],
   recentProjectIds = [],
+  defaultDueDate,
 }: TaskInputProps) {
   const [step, setStep] = useState<InputStep>("name");
   const [name, setName] = useState("");
@@ -92,7 +95,7 @@ export function TaskInput({
   );
   const [category, setCategory] = useState("");
   const [projectId, setProjectId] = useState<string>("");
-  const [dueDate, setDueDate] = useState("");
+  const [dueDate, setDueDate] = useState(defaultDueDate ?? "");
   const [description, setDescription] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [descOpen, setDescOpen] = useState(false);
@@ -142,6 +145,7 @@ export function TaskInput({
         : NO_PROJECT
     );
     setCategory(defaultCategory || "General");
+    if (defaultDueDate && !dueDate) setDueDate(defaultDueDate);
     setStep("details");
   };
 
