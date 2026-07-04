@@ -126,6 +126,37 @@ const Index = () => {
     return Array.from(names).sort((a, b) => a.localeCompare(b));
   }, [tasks, settings.categoryColors]);
 
+  // Most-recent-first ordered lists for the "recent chip strips" in TaskInput
+  // (categories & projects). Derived from task creation order.
+  const recentCategories = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    [...tasks]
+      .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""))
+      .forEach((t) => {
+        const c = t.category?.trim();
+        if (c && !seen.has(c)) {
+          seen.add(c);
+          out.push(c);
+        }
+      });
+    return out;
+  }, [tasks]);
+  const recentProjectIds = useMemo(() => {
+    const validIds = new Set(projects.map((p) => p.id));
+    const seen = new Set<string>();
+    const out: string[] = [];
+    [...tasks]
+      .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""))
+      .forEach((t) => {
+        if (t.projectId && validIds.has(t.projectId) && !seen.has(t.projectId)) {
+          seen.add(t.projectId);
+          out.push(t.projectId);
+        }
+      });
+    return out;
+  }, [tasks, projects]);
+
   // Auto-assign a random color to any newly-seen category that doesn't have one yet.
   useEffect(() => {
     const palette = [
