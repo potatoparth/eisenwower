@@ -113,6 +113,87 @@
         "outputSchema": null
       },
       {
+        "name": "update_task",
+        "title": "Update task",
+        "description": "Update fields on an existing task: name, description, quadrant (move between Eisenhower quadrants), category, due date/time (reschedule), or status.",
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Task id."
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "quadrant": {
+              "description": "Move task to a different Eisenhower quadrant.",
+              "type": "string",
+              "enum": [
+                "important-urgent",
+                "important-not-urgent",
+                "not-important-urgent",
+                "not-important-not-urgent"
+              ]
+            },
+            "category": {
+              "type": "string"
+            },
+            "due_date": {
+              "description": "YYYY-MM-DD, or null to clear.",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "due_time": {
+              "description": "HH:MM (24h), or null to clear.",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "open",
+                "done"
+              ]
+            }
+          },
+          "required": [
+            "task_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
         "name": "complete_task",
         "title": "Complete task",
         "description": "Mark a task as done (or reopen it).",
@@ -225,6 +306,219 @@
           },
           "required": [
             "title"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_projects",
+        "title": "List projects",
+        "description": "List the signed-in user's projects (project templates). Includes projects owned by the user.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "description": "Max rows (default 50).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_project",
+        "title": "Create project",
+        "description": "Create a new project for the signed-in user.",
+        "annotations": {
+          "readOnlyHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Project name."
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_project_template_presets",
+        "title": "List project template presets",
+        "description": "List the signed-in user's reusable project templates (presets).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_project_template_preset",
+        "title": "Create project template preset",
+        "description": "Create a reusable project template preset with a list of preset tasks.",
+        "annotations": {
+          "readOnlyHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": {
+              "type": "string"
+            },
+            "tasks": {
+              "description": "Array of preset task objects (name, description, dependencyType 'sync'|'async', dependsOn[], durationDays, etc.).",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              }
+            }
+          },
+          "required": [
+            "name"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_kanban_boards",
+        "title": "List kanban boards",
+        "description": "List the signed-in user's kanban boards and their columns.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_kanban_board",
+        "title": "Create kanban board",
+        "description": "Create a new kanban board with optional starter columns. Column keys are stable ids used when adding tasks.",
+        "annotations": {
+          "readOnlyHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "columns": {
+              "description": "Optional initial columns. Defaults to To Do / Doing / Done.",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "column_key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Stable key (e.g. 'todo')."
+                  }
+                },
+                "required": [
+                  "title",
+                  "column_key"
+                ]
+              }
+            }
+          },
+          "required": [
+            "name"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "add_task_to_kanban",
+        "title": "Add task to kanban",
+        "description": "Place an existing task on a kanban board in a specific column. Uses the column's stable key.",
+        "annotations": {
+          "readOnlyHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "board_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "task_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "column_key": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Stable column key from list_kanban_boards."
+            },
+            "sort_order": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "board_id",
+            "task_id",
+            "column_key"
           ]
         },
         "outputSchema": null
