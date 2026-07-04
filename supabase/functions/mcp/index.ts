@@ -21,6 +21,14 @@ var attachmentSchema = z.object({
   contentType: z.string().optional(),
   addedAt: z.string().optional()
 });
+function normalizeAttachments(list) {
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  return list.map((a) => ({
+    ...a,
+    id: a.id ?? (globalThis.crypto?.randomUUID?.() ?? `${now}-${Math.random().toString(36).slice(2)}`),
+    addedAt: a.addedAt ?? now
+  }));
+}
 function supabaseForUser(ctx) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY;
@@ -77,7 +85,7 @@ import { z as z3 } from "npm:zod@^4.4.3";
 var create_task_default = defineTool2({
   name: "create_task",
   title: "Create task",
-  description: "Create a task for the signed-in user in a specific Eisenhower quadrant.",
+  description: "Create a task for the signed-in user in a specific Eisenhower quadrant. Supports description, project association, status, and attachments (links or already-uploaded files).",
   inputSchema: {
     name: z3.string().trim().min(1).describe("Task name."),
     description: z3.string().optional().describe("Optional longer description."),
@@ -89,10 +97,13 @@ var create_task_default = defineTool2({
     ]).describe("Eisenhower quadrant."),
     category: z3.string().optional().describe("Category name (default 'General')."),
     due_date: z3.string().optional().describe("Due date YYYY-MM-DD."),
-    due_time: z3.string().optional().describe("Due time HH:MM (24h).")
+    due_time: z3.string().optional().describe("Due time HH:MM (24h)."),
+    project_id: z3.string().uuid().optional().describe("Associate the task with a project (project_templates.id)."),
+    status: z3.enum(["open", "done"]).optional().describe("Initial status (default 'open'). Pass 'done' to create it already completed."),
+    attachments: z3.array(attachmentSchema).optional().describe("Attachments to add. Use kind='link' with a URL, or kind='file' with an existing storage path in the task-attachments bucket.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false },
-  handler: async ({ name, description, quadrant, category, due_date, due_time }, ctx) => {
+  handler: async ({ name, description, quadrant, category, due_date, due_time, project_id, status, attachments }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
     const { data, error } = await supabaseForUser(ctx).from("tasks").insert({
       user_id: ctx.getUserId(),
@@ -102,7 +113,9 @@ var create_task_default = defineTool2({
       category: category ?? "General",
       due_date: due_date ?? null,
       due_time: due_time ?? null,
-      status: "open"
+      status: status ?? "open",
+      project_id: project_id ?? null,
+      attachments: attachments ? normalizeAttachments(attachments) : []
     }).select().single();
     if (error) return toErr(error.message);
     return {
