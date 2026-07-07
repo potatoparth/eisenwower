@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pin, PinOff, Trash2, Palette, FolderKanban, Tag, ListChecks, Search, X, StickyNote } from "lucide-react";
+import { Pin, PinOff, Trash2, Palette, FolderKanban, ListChecks, Search, X, StickyNote } from "lucide-react";
 import { Note, NOTE_COLORS, noteColorFor } from "@/types/note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -328,8 +328,6 @@ export function NoteComposer(props: ComposerProps) {
   };
 
   const bg = noteColorFor(color, props.dark ? "dark" : "light");
-  const catList = props.categories.length ? props.categories : ["General"];
-  const catOptions = catList.map((c) => ({ value: c, label: c }));
   const projectOptions = [{ value: "", label: "No project" }, ...props.projects.map((p) => ({ value: p.id, label: p.name }))];
 
   return (
@@ -461,8 +459,6 @@ interface CardProps {
 function NoteCard(props: CardProps) {
   const { note, dark } = props;
   const bg = noteColorFor(note.color, dark ? "dark" : "light");
-  const catColor = props.getCategoryColor?.(note.category);
-
   return (
     <motion.div
       layout
