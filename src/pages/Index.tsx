@@ -126,6 +126,18 @@ const Index = () => {
     });
   }, [notes, selectedCategories, activeProjectIds, projectNodeIndex]);
 
+  // "View scope" toggle from Settings: default "mine" hides rows owned by other
+  // collaborators from every view EXCEPT the Projects view (which always shows
+  // everything the user can see). Rows without userId (legacy/optimistic) pass through.
+  const viewScope = settings.viewScope ?? "mine";
+  const scopeFilter = useCallback(
+    <T extends { userId?: string }>(rows: T[]) => {
+      if (viewScope === "all" || !currentUser) return rows;
+      return rows.filter((r) => !r.userId || r.userId === currentUser.id);
+    },
+    [viewScope, currentUser],
+  );
+
   useEffect(() => {
     setViewMode(settings.defaultView as ViewMode);
   }, [settings.defaultView]);
