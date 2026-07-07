@@ -230,6 +230,7 @@ export type Database = {
       }
       project_collaborators: {
         Row: {
+          can_create_subprojects: boolean
           created_at: string
           id: string
           invited_by: string
@@ -239,6 +240,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          can_create_subprojects?: boolean
           created_at?: string
           id?: string
           invited_by: string
@@ -248,6 +250,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          can_create_subprojects?: boolean
           created_at?: string
           id?: string
           invited_by?: string
@@ -270,6 +273,7 @@ export type Database = {
         Row: {
           accepted_at: string | null
           accepted_by: string | null
+          can_create_subprojects: boolean
           created_at: string
           created_by: string
           expires_at: string
@@ -284,6 +288,7 @@ export type Database = {
         Insert: {
           accepted_at?: string | null
           accepted_by?: string | null
+          can_create_subprojects?: boolean
           created_at?: string
           created_by: string
           expires_at?: string
@@ -298,6 +303,7 @@ export type Database = {
         Update: {
           accepted_at?: string | null
           accepted_by?: string | null
+          can_create_subprojects?: boolean
           created_at?: string
           created_by?: string
           expires_at?: string
@@ -751,6 +757,7 @@ export type Database = {
       list_project_collaborators: {
         Args: { _project_id: string }
         Returns: {
+          can_create_subprojects: boolean
           created_at: string
           display_name: string
           email: string
