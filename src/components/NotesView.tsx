@@ -73,9 +73,11 @@ export function NotesView(props: NotesViewProps) {
       (n) =>
         n.title.toLowerCase().includes(q) ||
         n.content.toLowerCase().includes(q) ||
-        (n.category || "").toLowerCase().includes(q)
+        (projectName(n.projectId) || "").toLowerCase().includes(q)
     );
-  }, [notes, searchQuery]);
+    // projectName is stable per render; disabling exhaustive-deps for local helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notes, searchQuery, projects]);
 
   const startEdit = (id: string) => {
     setEditingId(id);
