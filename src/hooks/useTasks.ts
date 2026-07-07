@@ -31,7 +31,7 @@ function computeNextOccurrence(template: Task): string | undefined {
 }
 
 type TaskRow = {
-  id: string; name: string; description: string | null; category: string; quadrant: string; due_date: string | null;
+  id: string; name: string; description: string | null; quadrant: string; due_date: string | null;
   due_time: string | null;
   status: string; created_at: string; updated_at: string; deadline_threshold_override: number | null; kanban_column: string | null; sort_order: number;
   project_id: string | null;
@@ -47,7 +47,8 @@ const fromRow = (row: TaskRow): Task => ({
   id: row.id,
   name: row.name,
   description: row.description || undefined,
-  category: row.category,
+  // `category` is a derived label (leaf project name). Enriched in useTasks post-fetch.
+  category: "",
   quadrant: row.quadrant as Quadrant,
   dueDate: row.due_date || undefined,
   dueTime: row.due_time || undefined,
@@ -69,7 +70,6 @@ const fromRow = (row: TaskRow): Task => ({
 const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => ({
   name: updates.name,
   description: updates.description ?? null,
-  category: updates.category,
   quadrant: updates.quadrant,
   due_date: updates.dueDate ?? null,
   due_time: updates.dueTime ?? null,
@@ -93,7 +93,7 @@ export function useTasks(userId?: string) {
     if (!userId) { setTasksState([]); return; }
     // RLS returns own tasks + tasks on shared projects the user can see.
     const { data } = await supabase.from("tasks").select("*").order("sort_order", { ascending: true }).order("created_at", { ascending: false });
-    setTasksState(((data || []) as TaskRow[]).map(fromRow));
+    setTasksState(((data || []) as unknown as TaskRow[]).map(fromRow));
   }, [userId]);
 
   useEffect(() => { loadTasks(); }, [loadTasks]);
@@ -127,7 +127,7 @@ export function useTasks(userId?: string) {
     if (userId) {
       supabase.from("tasks").insert({
         id: optimistic.id, user_id: userId, name: optimistic.name,
-        description: optimistic.description || null, category: optimistic.category,
+        description: optimistic.description || null,
         quadrant, due_date: optimistic.dueDate || null, status: optimistic.status,
         due_time: optimistic.dueTime || null,
         kanban_column: optimistic.kanbanColumn, sort_order: 0,
@@ -155,7 +155,7 @@ export function useTasks(userId?: string) {
       }
       const now = new Date().toISOString();
       const propagated: Partial<Task> = {
-        name: updates.name, description: updates.description, category: updates.category,
+        name: updates.name, description: updates.description,
         quadrant: updates.quadrant, projectId: updates.projectId,
         recurrence: updates.recurrence, recurrenceDays: updates.recurrenceDays,
         recurrenceTime: updates.recurrenceTime,
@@ -170,7 +170,7 @@ export function useTasks(userId?: string) {
       supabase.from("tasks").update(toUpdate(updates)).eq("id", id).then(({ error }) => { if (error) loadTasks(); });
       if (propagateIds.length) {
         const propagateUpdates: Partial<Omit<Task, "id" | "createdAt">> = {
-          name: updates.name, description: updates.description, category: updates.category,
+          name: updates.name, description: updates.description,
           quadrant: updates.quadrant, projectId: updates.projectId,
           recurrence: updates.recurrence, recurrenceDays: updates.recurrenceDays,
           recurrenceTime: updates.recurrenceTime,
@@ -240,7 +240,7 @@ export function useTasks(userId?: string) {
       recurringTemplateId: templateId,
     });
   }, [tasks, updateTask, addTask]);
-  const getCategories = useCallback(() => Array.from(new Set(tasks.map(t => t.category))).sort(), [tasks]);
+  const getCategories = useCallback(() => Array.from(new Set(tasks.map(t => t.category).filter(Boolean))).sort(), [tasks]);
   const filterTasks = useCallback((filters: { category?: string; status?: TaskStatus }) => tasks.filter(task => (!filters.category || task.category === filters.category) && (!filters.status || task.status === filters.status)), [tasks]);
 
   return { tasks, setTasks, addTask, updateTask, deleteTask, moveTask, toggleStatus, getCategories, filterTasks };

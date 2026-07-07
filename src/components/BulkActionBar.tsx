@@ -13,6 +13,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { DateTimePicker } from "@/components/DateTimePicker";
+import { ProjectTreePicker } from "@/components/ProjectTreePicker";
 import { useSelection } from "@/hooks/useSelection";
 import { Task } from "@/types/task";
 import {
@@ -38,6 +39,7 @@ interface Props {
   categories?: string[];
   projects?: ProjectTemplate[];
   onCreateCategory?: (name: string) => string;
+  onCreateProject?: (name: string, parentId?: string | null) => string;
 }
 
 /**
@@ -48,7 +50,7 @@ export function BulkActionBar({
   onBulkReschedule, onAddToSprint, onBulkDelete,
   boards = [], columnsByBoard = {}, onAddToNewKanban, onAddToExistingKanban,
   onBulkSetCategory, onBulkSetProject,
-  categories = [], projects = [], onCreateCategory,
+  categories = [], projects = [], onCreateCategory, onCreateProject,
 }: Props) {
   const { selectMode, selectedIds, count, clear, setSelectMode } = useSelection();
   const [date, setDate] = useState<string | undefined>(undefined);
@@ -210,45 +212,19 @@ export function BulkActionBar({
         </Popover>
       )}
       {onBulkSetProject && (
-        <Popover open={projOpen} onOpenChange={(o) => { setProjOpen(o); if (!o) setProjQuery(""); }}>
-          <PopoverTrigger asChild>
-            <Button size="sm" variant="secondary" className="rounded-full gap-1.5 px-2 sm:px-3">
-              <FolderKanban className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Project</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="center" className="w-[min(20rem,92vw)] p-2">
-            <Input
-              value={projQuery}
-              onChange={(e) => setProjQuery(e.target.value)}
-              placeholder="Search projects…"
-              className="h-8 text-xs mb-1.5"
-            />
-            <div className="max-h-56 overflow-y-auto flex flex-col gap-0.5">
-              <button
-                onClick={() => {
-                  onBulkSetProject(Array.from(selectedIds), null);
-                  setProjOpen(false); setProjQuery(""); clear(); setSelectMode(false);
-                }}
-                className="text-left text-xs px-2 py-1.5 rounded-md hover:bg-accent flex items-center gap-1.5 text-muted-foreground">
-                <X className="w-3 h-3" /> No project (detach)
-              </button>
-              {filteredProjects.map((p) => (
-                <button key={p.id}
-                  onClick={() => {
-                    onBulkSetProject(Array.from(selectedIds), p.id);
-                    setProjOpen(false); setProjQuery(""); clear(); setSelectMode(false);
-                  }}
-                  className="text-left text-xs px-2 py-1.5 rounded-md hover:bg-accent truncate">
-                  {p.name}
-                </button>
-              ))}
-              {filteredProjects.length === 0 && (
-                <div className="text-[11px] text-muted-foreground px-2 py-2">No projects</div>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
+        <div className="hidden sm:block">
+          <ProjectTreePicker
+            projects={projects}
+            value={null}
+            onChange={(id) => {
+              onBulkSetProject(Array.from(selectedIds), id ?? null);
+              clear(); setSelectMode(false);
+            }}
+            onCreate={onCreateProject}
+            placeholder="Move to project…"
+            compact
+          />
+        </div>
       )}
       {onBulkDelete && (
         <AlertDialog>

@@ -4,7 +4,11 @@ import { ProjectTemplate, ProjectTask } from "@/types/project";
 
 export type ProjectRole = "owner" | "editor" | "viewer";
 
-type ProjectRow = { id: string; user_id: string; name: string; description: string | null; created_at: string; updated_at: string };
+type ProjectRow = {
+  id: string; user_id: string; name: string; description: string | null;
+  parent_id: string | null; sort_order: number;
+  created_at: string; updated_at: string;
+};
 type ProjectTaskRow = {
   id: string; project_id: string; name: string; description: string | null; dependency_type: string; depends_on: string[];
   duration_days: number; start_date: string | null; end_date: string | null; status: string; sort_order: number;
@@ -53,6 +57,8 @@ export function useProjects(userId?: string) {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       userId: row.user_id,
+      parentId: row.parent_id || null,
+      sortOrder: row.sort_order ?? 0,
     })));
   }, [userId]);
 
@@ -72,17 +78,25 @@ export function useProjects(userId?: string) {
     return () => { supabase.removeChannel(channel); };
   }, [userId, loadProjects]);
 
-  const addProject = useCallback((name: string, description?: string): ProjectTemplate => {
+  const addProject = useCallback((name: string, description?: string, parentId?: string | null): ProjectTemplate => {
     const now = new Date().toISOString();
-    const project: ProjectTemplate = { id: crypto.randomUUID(), name, description, tasks: [], createdAt: now, updatedAt: now, userId };
+    const project: ProjectTemplate = { id: crypto.randomUUID(), name, description, tasks: [], createdAt: now, updatedAt: now, userId, parentId: parentId ?? null, sortOrder: 0 };
     setProjects(prev => [project, ...prev]);
-    if (userId) supabase.from("project_templates").insert({ id: project.id, user_id: userId, name, description: description || null }).then(({ error }) => { if (error) loadProjects(); });
+    if (userId) supabase.from("project_templates").insert({ id: project.id, user_id: userId, name, description: description || null, parent_id: parentId ?? null }).then(({ error }) => { if (error) loadProjects(); });
     return project;
   }, [userId, loadProjects]);
 
   const updateProject = useCallback((id: string, updates: Partial<Omit<ProjectTemplate, "id" | "createdAt">>) => {
     setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p));
-    if (userId) supabase.from("project_templates").update({ name: updates.name, description: updates.description || null }).eq("id", id).then(({ error }) => { if (error) loadProjects(); });
+    if (userId) {
+      const payload: Record<string, unknown> = {};
+      if (updates.name !== undefined) payload.name = updates.name;
+      if (updates.description !== undefined) payload.description = updates.description || null;
+      if (updates.parentId !== undefined) payload.parent_id = updates.parentId ?? null;
+      if (updates.sortOrder !== undefined) payload.sort_order = updates.sortOrder;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      supabase.from("project_templates").update(payload as any).eq("id", id).then(({ error }) => { if (error) loadProjects(); });
+    }
   }, [userId, loadProjects]);
 
   const deleteProject = useCallback((id: string) => {
@@ -108,5 +122,9 @@ export function useProjects(userId?: string) {
 
   const getProjectRole = useCallback((projectId: string): ProjectRole | undefined => roles[projectId], [roles]);
 
-  return { projects, roles, getProjectRole, addProject, updateProject, deleteProject, addTaskToProject, updateProjectTask, deleteProjectTask };
+  const reparentProject = useCallback((id: string, newParentId: string | null) => {
+    updateProject(id, { parentId: newParentId });
+  }, [updateProject]);
+
+  return { projects, roles, getProjectRole, addProject, updateProject, deleteProject, addTaskToProject, updateProjectTask, deleteProjectTask, reparentProject };
 }

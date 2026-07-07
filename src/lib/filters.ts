@@ -34,22 +34,32 @@ function passCategory(t: Task, selected: string[]): boolean {
   return !!t.category && selected.includes(t.category);
 }
 
-function passProject(t: Task, ids: string[]): boolean {
+function passProject(t: Task, ids: string[], allowedIds?: Set<string>): boolean {
   if (!ids.length) return true;
   if (!t.projectId) return ids.includes("__none__");
+  if (allowedIds) return allowedIds.has(t.projectId);
   return ids.includes(t.projectId);
 }
 
-export function applyTaskFilters(tasks: Task[], f: TaskFilters): Task[] {
+export interface TaskFilterContext {
+  /** Optional expander: given a selected project id, return its own id + all descendants. */
+  expandProjectIds?: (ids: string[]) => string[];
+}
+
+export function applyTaskFilters(tasks: Task[], f: TaskFilters, ctx?: TaskFilterContext): Task[] {
   const dateFilter = f.dateFilter ?? "all";
   const overdueMode = f.overdueMode ?? "all";
   const selectedCategories = f.selectedCategories ?? [];
   const activeProjectIds = f.activeProjectIds ?? [];
+  const expanded = ctx?.expandProjectIds
+    ? new Set(ctx.expandProjectIds(activeProjectIds.filter((id) => id !== "__none__")))
+    : undefined;
+  if (expanded && activeProjectIds.includes("__none__")) expanded.add("__none__");
   return tasks.filter(
     (t) =>
       passDate(t, dateFilter) &&
       passOverdue(t, overdueMode) &&
       passCategory(t, selectedCategories) &&
-      passProject(t, activeProjectIds)
+      passProject(t, activeProjectIds, expanded)
   );
 }

@@ -5,7 +5,7 @@ import { Note } from "@/types/note";
 import { TaskAttachment } from "@/types/task";
 
 type NoteRow = {
-  id: string; user_id: string; title: string; content: string; category: string;
+  id: string; user_id: string; title: string; content: string;
   project_id: string | null; color: string | null; pinned: boolean; sort_order: number;
   created_at: string; updated_at: string; attachments: unknown;
 };
@@ -14,7 +14,8 @@ const fromRow = (r: NoteRow): Note => ({
   id: r.id,
   title: r.title,
   content: r.content,
-  category: r.category,
+  // Derived (leaf project name) — enriched in the page.
+  category: "",
   projectId: r.project_id || undefined,
   color: r.color || undefined,
   pinned: r.pinned,
@@ -35,7 +36,7 @@ export function useNotes(userId?: string) {
       .order("pinned", { ascending: false })
       .order("sort_order", { ascending: true })
       .order("updated_at", { ascending: false });
-    setNotes(((data || []) as NoteRow[]).map(fromRow));
+    setNotes(((data || []) as unknown as NoteRow[]).map(fromRow));
   }, [userId]);
 
   useEffect(() => { load(); }, [load]);
@@ -73,7 +74,6 @@ export function useNotes(userId?: string) {
       user_id: userId,
       title: optimistic.title,
       content: optimistic.content,
-      category: optimistic.category,
       project_id: optimistic.projectId || null,
       color: optimistic.color || null,
       pinned: optimistic.pinned,
@@ -87,14 +87,13 @@ export function useNotes(userId?: string) {
     setNotes((prev) => prev.map((n) => n.id === id ? { ...n, ...updates, updatedAt: new Date().toISOString() } : n));
     if (!userId) return;
     const payload: Partial<{
-      title: string; content: string; category: string;
+      title: string; content: string;
       project_id: string | null; color: string | null;
       pinned: boolean; sort_order: number;
       attachments: Json;
     }> = {};
     if (updates.title !== undefined) payload.title = updates.title;
     if (updates.content !== undefined) payload.content = updates.content;
-    if (updates.category !== undefined) payload.category = updates.category;
     if (updates.projectId !== undefined) payload.project_id = updates.projectId || null;
     if (updates.color !== undefined) payload.color = updates.color || null;
     if (updates.pinned !== undefined) payload.pinned = updates.pinned;
