@@ -84,6 +84,39 @@ var list_tasks_default = defineTool({
 // src/lib/mcp/tools/create-task.ts
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z as z3 } from "npm:zod@^4.4.3";
+
+// src/lib/mcp/projectResolver.ts
+async function resolveProjectPath(sb, userId, path, create = false) {
+  if (!path?.trim()) return { projectId: null, created: [] };
+  const parts = path.split("/").map((s) => s.trim()).filter(Boolean);
+  if (parts.length === 0) return { projectId: null, created: [] };
+  const { data, error } = await sb.from("project_templates").select("id,name,parent_id").eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  const all = data ?? [];
+  const created = [];
+  let currentParent = null;
+  let currentId = null;
+  for (const part of parts) {
+    const match = all.find(
+      (p) => (p.parent_id ?? null) === currentParent && p.name.toLowerCase() === part.toLowerCase()
+    );
+    if (match) {
+      currentId = match.id;
+      currentParent = match.id;
+      continue;
+    }
+    if (!create) return { projectId: null, created };
+    const { data: inserted, error: insErr } = await sb.from("project_templates").insert({ user_id: userId, name: part, parent_id: currentParent }).select("id,name,parent_id").single();
+    if (insErr) throw new Error(insErr.message);
+    all.push(inserted);
+    created.push(inserted.id);
+    currentId = inserted.id;
+    currentParent = inserted.id;
+  }
+  return { projectId: currentId, created };
+}
+
+// src/lib/mcp/tools/create-task.ts
 var create_task_default = defineTool2({
   name: "create_task",
   title: "Create task",
@@ -97,26 +130,48 @@ var create_task_default = defineTool2({
       "not-important-urgent",
       "not-important-not-urgent"
     ]).describe("Eisenhower quadrant."),
-    category: z3.string().optional().describe("Category name (default 'General')."),
+    category: z3.string().optional().describe(
+      "DEPRECATED. Treated as a leaf subproject under `project_id` (or as a new top-level project if none). Prefer `project_path`."
+    ),
     due_date: z3.string().optional().describe("Due date YYYY-MM-DD."),
     due_time: z3.string().optional().describe("Due time HH:MM (24h)."),
-    project_id: z3.string().uuid().optional().describe("Associate the task with a project (project_templates.id)."),
+    project_id: z3.string().uuid().optional().describe("Associate the task with a specific project id (project_templates.id)."),
+    project_path: z3.string().optional().describe(
+      "Alternative to project_id: '/'-separated project path like 'Work/Q4/Launch'. Any missing intermediate projects are auto-created for the user."
+    ),
     status: z3.enum(["open", "done"]).optional().describe("Initial status (default 'open'). Pass 'done' to create it already completed."),
     attachments: z3.array(attachmentSchema).optional().describe("Attachments to add. Use kind='link' with a URL, or kind='file' with an existing storage path in the task-attachments bucket.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false },
-  handler: async ({ name, description, quadrant, category, due_date, due_time, project_id, status, attachments }, ctx) => {
+  handler: async ({ name, description, quadrant, category, due_date, due_time, project_id, project_path, status, attachments }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
-    const { data, error } = await supabaseForUser(ctx).from("tasks").insert({
+    const sb = supabaseForUser(ctx);
+    let effectiveProjectId = project_id ?? null;
+    if (!effectiveProjectId && project_path) {
+      const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, true);
+      effectiveProjectId = projectId;
+    }
+    if (category && category !== "General") {
+      const cur = effectiveProjectId;
+      const { data: siblings } = await sb.from("project_templates").select("id,name,parent_id").eq("user_id", ctx.getUserId()).is("parent_id", cur === null ? null : void 0).eq("parent_id", cur);
+      const existing = (siblings ?? []).find((p) => p.name.toLowerCase() === category.toLowerCase());
+      if (existing) {
+        effectiveProjectId = existing.id;
+      } else {
+        const { data: created, error: cErr } = await sb.from("project_templates").insert({ user_id: ctx.getUserId(), name: category, parent_id: cur }).select("id").single();
+        if (cErr) return toErr(cErr.message);
+        effectiveProjectId = created.id;
+      }
+    }
+    const { data, error } = await sb.from("tasks").insert({
       user_id: ctx.getUserId(),
       name,
       description: description ?? null,
       quadrant,
-      category: category ?? "General",
       due_date: due_date ?? null,
       due_time: due_time ?? null,
       status: status ?? "open",
-      project_id: project_id ?? null,
+      project_id: effectiveProjectId,
       attachments: attachments ? normalizeAttachments(attachments) : []
     }).select().single();
     if (error) return toErr(error.message);

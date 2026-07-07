@@ -93,7 +93,7 @@
               "description": "Eisenhower quadrant."
             },
             "category": {
-              "description": "Category name (default 'General').",
+              "description": "DEPRECATED. Treated as a leaf subproject under `project_id` (or as a new top-level project if none). Prefer `project_path`.",
               "type": "string"
             },
             "due_date": {
@@ -105,10 +105,14 @@
               "type": "string"
             },
             "project_id": {
-              "description": "Associate the task with a project (project_templates.id).",
+              "description": "Associate the task with a specific project id (project_templates.id).",
               "type": "string",
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "project_path": {
+              "description": "Alternative to project_id: '/'-separated project path like 'Work/Q4/Launch'. Any missing intermediate projects are auto-created for the user.",
+              "type": "string"
             },
             "status": {
               "description": "Initial status (default 'open'). Pass 'done' to create it already completed.",
