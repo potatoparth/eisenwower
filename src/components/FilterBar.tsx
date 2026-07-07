@@ -177,10 +177,29 @@ export function FilterBar(p: FilterBarProps) {
         const availableSet = available ? new Set(available) : null;
         const showNone = p.hasNoProjectOption !== false;
         const q = projSearch.trim().toLowerCase();
+        const isSearching = q.length > 0;
+        const parentIds = flat.filter((n) => n.children.length > 0).map((n) => n.project.id);
+        // In search mode: show flat matching list (auto-expanded).
+        // Otherwise: honor collapsed state — hide any node whose ancestor is collapsed.
+        const hiddenByCollapse = new Set<string>();
+        if (!isSearching) {
+          const walk = (n: typeof flat[number], hiddenParent: boolean) => {
+            if (hiddenParent) hiddenByCollapse.add(n.project.id);
+            const collapsed = collapsedProjNodes.has(n.project.id);
+            const treeNode = nodeIndex.get(n.project.id);
+            treeNode?.children.forEach((c) => walk(
+              { project: c.project, depth: c.depth, path: c.path, children: c.children },
+              hiddenParent || collapsed,
+            ));
+          };
+          tree.forEach((r) => walk({ project: r.project, depth: r.depth, path: r.path, children: r.children }, false));
+        }
         const filteredNodes = flat.filter((n) => {
-          if (!q) return true;
-          return n.path.join(" / ").toLowerCase().includes(q);
+          if (isSearching) return n.path.join(" / ").toLowerCase().includes(q);
+          return !hiddenByCollapse.has(n.project.id);
         });
+        const expandAll = () => setCollapsedProjNodes(new Set());
+        const collapseAll = () => setCollapsedProjNodes(new Set(parentIds));
         // Selected breadcrumb summary — show the deepest selected node's path.
         const selectedPath = activeIds.length === 1 && activeIds[0] !== "__none__"
           ? getProjectPath(nodeIndex, activeIds[0])
@@ -220,6 +239,24 @@ export function FilterBar(p: FilterBarProps) {
                   className="w-full h-8 pl-7 pr-2 text-xs bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
+              {!isSearching && parentIds.length > 0 && (
+                <div className="flex items-center gap-1 px-1 pb-1.5">
+                  <button
+                    type="button"
+                    onClick={expandAll}
+                    className="inline-flex items-center gap-1 text-[10.5px] uppercase tracking-wide text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded"
+                  >
+                    <ChevronsUpDown className="w-3 h-3" /> Expand all
+                  </button>
+                  <button
+                    type="button"
+                    onClick={collapseAll}
+                    className="inline-flex items-center gap-1 text-[10.5px] uppercase tracking-wide text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded"
+                  >
+                    <ChevronsDownUp className="w-3 h-3" /> Collapse all
+                  </button>
+                </div>
+              )}
               <div className="max-h-64 overflow-y-auto space-y-1">
                 {showNone && (
                   <label className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary cursor-pointer text-sm">
@@ -234,19 +271,43 @@ export function FilterBar(p: FilterBarProps) {
                   const pr = n.project;
                   const checked = activeIds.includes(pr.id);
                   const dimmed = availableSet ? !availableSet.has(pr.id) : false;
+                  const hasChildren = n.children.length > 0;
+                  const isCollapsed = collapsedProjNodes.has(pr.id);
                   return (
-                    <label
+                    <div
                       key={pr.id}
                       className={cn(
-                        "flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary cursor-pointer text-sm",
+                        "flex items-center gap-1 pr-2 py-1 rounded-md hover:bg-secondary text-sm",
                         dimmed && "opacity-50",
                       )}
-                      style={{ paddingLeft: `${n.depth * 12 + 8}px` }}
+                      style={{ paddingLeft: `${n.depth * 14 + 4}px` }}
                       title={n.path.join(" / ")}
                     >
-                      <Checkbox checked={checked} onCheckedChange={() => toggleProj(pr.id)} />
-                      <span className="flex-1 truncate">{pr.name}</span>
-                    </label>
+                      {hasChildren && !isSearching ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCollapsedProjNodes((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(pr.id)) next.delete(pr.id); else next.add(pr.id);
+                              return next;
+                            });
+                          }}
+                          className="w-4 h-4 flex items-center justify-center rounded text-muted-foreground/70 hover:text-foreground flex-shrink-0"
+                        >
+                          <ChevronRight className={cn("w-3 h-3 transition-transform", !isCollapsed && "rotate-90")} />
+                        </button>
+                      ) : (
+                        <span className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                          {n.depth > 0 && <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />}
+                        </span>
+                      )}
+                      <label className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer">
+                        <Checkbox checked={checked} onCheckedChange={() => toggleProj(pr.id)} />
+                        <span className={cn("flex-1 truncate", hasChildren && "font-medium")}>{pr.name}</span>
+                      </label>
+                    </div>
                   );
                 })}
                 {filteredNodes.length === 0 && !showNone && (
