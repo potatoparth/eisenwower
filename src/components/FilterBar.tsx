@@ -166,58 +166,6 @@ export function FilterBar(p: FilterBarProps) {
         </>
       )}
 
-      {p.categories.length > 0 && (
-        <Popover>
-          <PopoverTrigger asChild>
-            <button type="button" className={cn(pillBase, p.selectedCategories.length > 0 ? pillActive : pillIdle)}>
-              Category{p.selectedCategories.length > 0 ? ` · ${p.selectedCategories.length}` : ""}
-              <ChevronDown className="w-3 h-3 opacity-70" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-64 p-2">
-            <div className="flex items-center justify-between px-1 pb-2">
-              <span className="text-[11px] font-medium text-muted-foreground">Filter by category</span>
-              {p.selectedCategories.length > 0 && (
-                <button
-                  className="text-[11px] text-muted-foreground hover:text-foreground"
-                  onClick={() => p.onSelectedCategoriesChange([])}
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-            <div className="relative mb-2">
-              <Search className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                value={catSearch}
-                onChange={(e) => setCatSearch(e.target.value)}
-                placeholder="Search categories..."
-                className="w-full h-8 pl-7 pr-2 text-xs bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
-              />
-            </div>
-            <div className="max-h-64 overflow-y-auto space-y-1">
-              {p.categories
-                .filter((c) => c.toLowerCase().includes(catSearch.toLowerCase()))
-                .map((c) => {
-                const color = p.getCategoryColor?.(c);
-                const checked = p.selectedCategories.includes(c);
-                return (
-                  <label
-                    key={c}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary cursor-pointer text-sm"
-                  >
-                    <Checkbox checked={checked} onCheckedChange={() => toggleCat(c)} />
-                    {color && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />}
-                    <span className="flex-1 truncate">{c}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </PopoverContent>
-        </Popover>
-      )}
-
       {p.projects && p.onActiveProjectIdsChange && p.showProjectsFilter !== false && (() => {
         const available = p.availableProjectIds;
         // Always render the full tree; grey-out ones that don't survive the cascade instead
@@ -354,37 +302,6 @@ export function FilterBar(p: FilterBarProps) {
                 <Pill active={p.dateFilter === "all"} onClick={() => p.onDateFilterChange("all")}>All</Pill>
                 <Pill active={p.dateFilter === "today"} onClick={() => p.onDateFilterChange("today")}>Today</Pill>
                 <Pill active={p.dateFilter === "week"} onClick={() => p.onDateFilterChange("week")}>This Week</Pill>
-              </div>
-            </div>
-          )}
-
-          {p.categories.length > 0 && (
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-medium text-muted-foreground">
-                  Category{p.selectedCategories.length > 0 ? ` · ${p.selectedCategories.length}` : ""}
-                </p>
-                {p.selectedCategories.length > 0 && (
-                  <button
-                    className="text-[11px] text-muted-foreground hover:text-foreground"
-                    onClick={() => p.onSelectedCategoriesChange([])}
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              <div className="max-h-40 overflow-y-auto space-y-1 border border-border rounded-md p-1">
-                {p.categories.map((c) => {
-                  const color = p.getCategoryColor?.(c);
-                  const checked = p.selectedCategories.includes(c);
-                  return (
-                    <label key={c} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary cursor-pointer text-sm">
-                      <Checkbox checked={checked} onCheckedChange={() => toggleCat(c)} />
-                      {color && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />}
-                      <span className="flex-1 truncate">{c}</span>
-                    </label>
-                  );
-                })}
               </div>
             </div>
           )}

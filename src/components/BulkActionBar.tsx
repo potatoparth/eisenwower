@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, CalendarClock, Zap, Trash2, LayoutGrid, Plus, ArrowRight, Tag, FolderKanban, Check } from "lucide-react";
+import { X, CalendarClock, Zap, Trash2, LayoutGrid, Plus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -161,51 +161,6 @@ export function BulkActionBar({
                 <div className="text-[11px] text-muted-foreground px-2 py-1">
                   Max {MAX_KANBAN_BOARDS} boards reached
                 </div>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
-      )}
-      {onBulkSetCategory && (
-        <Popover open={catOpen} onOpenChange={(o) => { setCatOpen(o); if (!o) setCatQuery(""); }}>
-          <PopoverTrigger asChild>
-            <Button size="sm" variant="secondary" className="rounded-full gap-1.5 px-2 sm:px-3">
-              <Tag className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Category</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="center" className="w-[min(18rem,92vw)] p-2">
-            <Input
-              value={catQuery}
-              onChange={(e) => setCatQuery(e.target.value)}
-              placeholder="Search or create category…"
-              className="h-8 text-xs mb-1.5"
-            />
-            <div className="max-h-56 overflow-y-auto flex flex-col gap-0.5">
-              {filteredCats.map((c) => (
-                <button key={c}
-                  onClick={() => {
-                    onBulkSetCategory(Array.from(selectedIds), c);
-                    setCatOpen(false); setCatQuery(""); clear(); setSelectMode(false);
-                  }}
-                  className="text-left text-xs px-2 py-1.5 rounded-md hover:bg-accent truncate">
-                  {c}
-                </button>
-              ))}
-              {filteredCats.length === 0 && !canCreateCat && (
-                <div className="text-[11px] text-muted-foreground px-2 py-2">No categories</div>
-              )}
-              {canCreateCat && (
-                <button
-                  onClick={() => {
-                    if (!onCreateCategory) return;
-                    const name = onCreateCategory(catQuery.trim());
-                    onBulkSetCategory(Array.from(selectedIds), name);
-                    setCatOpen(false); setCatQuery(""); clear(); setSelectMode(false);
-                  }}
-                  className="text-left text-xs px-2 py-1.5 rounded-md hover:bg-accent flex items-center gap-1.5 text-primary">
-                  <Plus className="w-3 h-3" /> Create “{catQuery.trim()}”
-                </button>
               )}
             </div>
           </PopoverContent>

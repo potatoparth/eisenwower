@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, Tag, FolderKanban, PanelRightOpen, AlertCircle, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
+import { Calendar, FolderKanban, PanelRightOpen, AlertCircle, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,6 @@ import { DateTimePicker } from "@/components/DateTimePicker";
 import { RecurrenceField } from "@/components/RecurrenceField";
 import { TaskDescription } from "@/components/TaskDescription";
 import { TaskAttachments } from "@/components/TaskAttachments";
-import { SelectorWithCreate } from "@/components/SelectorWithCreate";
 import { ProjectTreePicker } from "@/components/ProjectTreePicker";
 import { RecentChipStrip } from "@/components/RecentChipStrip";
 
@@ -60,7 +59,6 @@ export function TaskDetailDialog({
 }: TaskDetailDialogProps) {
   const [name, setName] = useState(task.name);
   const [description, setDescription] = useState(task.description || "");
-  const [category, setCategory] = useState(task.category);
   const [dueDate, setDueDate] = useState(task.dueDate || "");
   const [quadrant, setQuadrant] = useState<Quadrant>(task.quadrant);
   const [projectId, setProjectId] = useState<string | undefined>(task.projectId);
@@ -70,7 +68,6 @@ export function TaskDetailDialog({
   useEffect(() => {
     setName(task.name);
     setDescription(task.description || "");
-    setCategory(task.category);
     setDueDate(task.dueDate || "");
     setQuadrant(task.quadrant);
     setProjectId(task.projectId);
@@ -82,7 +79,6 @@ export function TaskDetailDialog({
     onUpdate(task.id, {
       name: name.trim() || task.name,
       description: description || undefined,
-      category,
       dueDate: dueDate || undefined,
       quadrant,
       projectId,
@@ -253,44 +249,6 @@ export function TaskDetailDialog({
               }}
               compact
             />
-          </div>
-
-          {/* Category */}
-          <div className="space-y-1">
-            <label className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
-              <Tag className="w-3 h-3" /> Category
-            </label>
-            <SelectorWithCreate
-              icon={
-                getCategoryColor?.(category) ? (
-                  <span
-                    className="w-2.5 h-2.5 rounded-full inline-block"
-                    style={{ backgroundColor: getCategoryColor(category) }}
-                  />
-                ) : undefined
-              }
-              options={Array.from(new Set([...categories, "General", category].filter(Boolean)))
-                .sort((a, b) => a.localeCompare(b))
-                .map((c) => ({ value: c, label: c }))}
-              value={category}
-              onChange={(v) => {
-                setCategory(v);
-                onUpdate(task.id, { category: v });
-              }}
-              onCreate={onCreateCategory}
-              placeholder="Select category"
-              searchPlaceholder="Search categories…"
-              createPlaceholder="New category name…"
-              compact
-            />
-            {recentCategories.length > 0 && (
-              <RecentChipStrip
-                items={recentCategories.map((c) => ({ value: c, label: c }))}
-                value={category}
-                onSelect={(v) => { setCategory(v); onUpdate(task.id, { category: v }); }}
-                ariaLabel="Recent categories"
-              />
-            )}
           </div>
 
           {/* Project */}

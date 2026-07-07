@@ -65,16 +65,14 @@ export function ListView({
   onDeleteAllDone,
   onRescheduleTasks,
 }: ListViewProps) {
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
-      if (categoryFilter !== "all" && task.category !== categoryFilter) return false;
       if (statusFilter !== "all" && task.status !== statusFilter) return false;
       return true;
     });
-  }, [tasks, categoryFilter, statusFilter]);
+  }, [tasks, statusFilter]);
 
   const groupedTasks = useMemo(() => {
     const groups: Record<Quadrant, Task[]> = {
@@ -88,7 +86,6 @@ export function ListView({
   }, [filteredTasks]);
 
   const activeFilters = [
-    categoryFilter !== "all" ? categoryFilter : null,
     statusFilter !== "all" ? (statusFilter === "open" ? "Open" : "Done") : null,
   ].filter(Boolean);
 
@@ -117,22 +114,6 @@ export function ListView({
         <Filter className="w-4 h-4 text-muted-foreground" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="rounded-xl gap-2">Category<ChevronDown className="w-3 h-3" /></Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="min-w-[160px]">
-            <DropdownMenuLabel>Filter by category</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuRadioGroup value={categoryFilter} onValueChange={setCategoryFilter}>
-              <DropdownMenuRadioItem value="all">All categories</DropdownMenuRadioItem>
-              {categories.map((cat) => (
-                <DropdownMenuRadioItem key={cat} value={cat}>{cat}</DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="rounded-xl gap-2">Status<ChevronDown className="w-3 h-3" /></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[160px]">
@@ -151,7 +132,7 @@ export function ListView({
             {activeFilters.map((filter) => (
               <span key={filter} className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">{filter}</span>
             ))}
-            <button onClick={() => { setCategoryFilter("all"); setStatusFilter("all"); }} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Clear</button>
+            <button onClick={() => { setStatusFilter("all"); }} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Clear</button>
           </div>
         )}
         <span className="text-sm text-muted-foreground ml-auto">{filteredTasks.length} task{filteredTasks.length !== 1 ? "s" : ""}</span>
