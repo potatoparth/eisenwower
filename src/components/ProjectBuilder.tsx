@@ -550,7 +550,7 @@ export function ProjectBuilder({
             </div>
 
             {/* Notes column */}
-            <div className="min-h-0 flex flex-col">
+            <div className="lg:min-h-0 flex flex-col">
               <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">
                 Notes · {mappedNotes.length}
               </h4>
