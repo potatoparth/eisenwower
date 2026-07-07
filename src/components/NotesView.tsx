@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pin, PinOff, Trash2, Palette, FolderKanban, Tag, ListChecks, Search, X, StickyNote } from "lucide-react";
+import { Pin, PinOff, Trash2, Palette, FolderKanban, ListChecks, Search, X, StickyNote } from "lucide-react";
 import { Note, NOTE_COLORS, noteColorFor } from "@/types/note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,6 +66,7 @@ export function NotesView(props: NotesViewProps) {
     if (searchOpen) searchInputRef.current?.focus();
   }, [searchOpen]);
 
+  const projectName = (id?: string) => projects.find((p) => p.id === id)?.name;
   const filteredNotes = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return notes;
@@ -73,9 +74,9 @@ export function NotesView(props: NotesViewProps) {
       (n) =>
         n.title.toLowerCase().includes(q) ||
         n.content.toLowerCase().includes(q) ||
-        (n.category || "").toLowerCase().includes(q)
+        (projects.find((p) => p.id === n.projectId)?.name || "").toLowerCase().includes(q)
     );
-  }, [notes, searchQuery]);
+  }, [notes, searchQuery, projects]);
 
   const startEdit = (id: string) => {
     setEditingId(id);
@@ -87,8 +88,6 @@ export function NotesView(props: NotesViewProps) {
 
   const pinned = useMemo(() => filteredNotes.filter((n) => n.pinned), [filteredNotes]);
   const others = useMemo(() => filteredNotes.filter((n) => !n.pinned), [filteredNotes]);
-
-  const projectName = (id?: string) => projects.find((p) => p.id === id)?.name;
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto">
@@ -329,8 +328,6 @@ export function NoteComposer(props: ComposerProps) {
   };
 
   const bg = noteColorFor(color, props.dark ? "dark" : "light");
-  const catList = props.categories.length ? props.categories : ["General"];
-  const catOptions = catList.map((c) => ({ value: c, label: c }));
   const projectOptions = [{ value: "", label: "No project" }, ...props.projects.map((p) => ({ value: p.id, label: p.name }))];
 
   return (
@@ -388,15 +385,6 @@ export function NoteComposer(props: ComposerProps) {
             {/* Footer bar */}
             <div className="px-3 py-2.5 bg-muted/40 border-t border-border/60 flex items-center gap-2 rounded-b-2xl">
               <div className="flex items-center gap-1 flex-wrap">
-                <SelectorWithCreate
-                  options={catOptions}
-                  value={category}
-                  onChange={setCategory}
-                  onCreate={props.onCreateCategory}
-                  placeholder="Category"
-                  compact
-                  icon={<Tag className="w-3.5 h-3.5" />}
-                />
                 <SelectorWithCreate
                   options={projectOptions}
                   value={projectId}
@@ -471,8 +459,6 @@ interface CardProps {
 function NoteCard(props: CardProps) {
   const { note, dark } = props;
   const bg = noteColorFor(note.color, dark ? "dark" : "light");
-  const catColor = props.getCategoryColor?.(note.category);
-
   return (
     <motion.div
       layout
@@ -517,21 +503,15 @@ function NoteCard(props: CardProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 mt-3 text-[11px]">
-          <span
-            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 border"
-            style={{
-              borderColor: catColor ? `${catColor}66` : undefined,
-              backgroundColor: catColor ? `${catColor}22` : undefined,
-              color: catColor,
-            }}
-          >
-            <Tag className="w-3 h-3" />
-            {note.category}
-          </span>
-          {props.projectName && (
+          {props.projectName ? (
             <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 border border-border/60 text-muted-foreground">
               <FolderKanban className="w-3 h-3" />
               {props.projectName}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 border border-border/40 text-muted-foreground/60">
+              <FolderKanban className="w-3 h-3" />
+              Unassigned
             </span>
           )}
         </div>
