@@ -416,25 +416,6 @@ export function TaskInput({
                     }}
                     compact
                   />
-                  <SelectorWithCreate
-                    icon={<Tag className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
-                    options={categoryOptions}
-                    value={category}
-                    onChange={setCategory}
-                    onCreate={onCreateCategory}
-                    placeholder="Select category"
-                    searchPlaceholder="Search categories…"
-                    createPlaceholder="New category name…"
-                    compact
-                  />
-                  {recentCategories.length > 0 && (
-                    <ChipStrip
-                      items={recentCategories.map((c) => ({ value: c, label: c }))}
-                      value={category}
-                      onSelect={setCategory}
-                      ariaLabel="Recent categories"
-                    />
-                  )}
                   <div className="flex items-center gap-1.5">
                     <FolderKanban className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
                     <ProjectTreePicker
