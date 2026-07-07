@@ -280,9 +280,9 @@ export function ProjectBuilder({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 h-full min-h-0">
+    <div className="flex flex-col lg:grid lg:grid-cols-[320px_1fr] gap-4 lg:h-full lg:min-h-0 pb-24 lg:pb-0">
       {/* Left rail: project directory */}
-      <aside className="flex flex-col min-h-0 gap-3 rounded-2xl border border-border/60 bg-card/30 p-3">
+      <aside className="flex flex-col lg:min-h-0 gap-3 rounded-2xl border border-border/60 bg-card/30 p-3">
         <div className="flex items-center justify-between gap-2 px-1">
           <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Projects</h2>
           {onAddPreset && onUpdatePreset && onDeletePreset && (
@@ -328,8 +328,8 @@ export function ProjectBuilder({
         )}
 
         {projectTree.length > 0 ? (
-          <div className="flex-1 min-h-0 flex flex-col">
-            <div className="flex-1 min-h-0 overflow-y-auto space-y-0.5 pr-1">
+          <div className="lg:flex-1 lg:min-h-0 flex flex-col">
+            <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto max-h-[50vh] overflow-y-auto space-y-0.5 pr-1">
               {projectTree.map((n) => renderProjectTreeNode(n))}
             </div>
             <div
@@ -371,7 +371,7 @@ export function ProjectBuilder({
       </aside>
 
       {/* Right pane: detail workspace */}
-      <section className="flex flex-col min-h-0 gap-4">
+      <section className="flex flex-col lg:min-h-0 gap-4">
       {/* New project form */}
       <AnimatePresence>
         {showNewProject && (
@@ -416,7 +416,7 @@ export function ProjectBuilder({
 
       {/* Selected project */}
       {selectedProject ? (
-        <div className="flex-1 flex flex-col gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/30 p-5">
+        <div className="lg:flex-1 flex flex-col gap-4 lg:overflow-hidden rounded-2xl border border-border/60 bg-card/30 p-4 lg:p-5">
           <div className="flex items-start justify-between gap-4 pb-4 border-b border-border/50">
             <div>
               <div className="flex items-center gap-2">
@@ -442,9 +442,9 @@ export function ProjectBuilder({
           </div>
 
           {/* Tasks + Notes side-by-side */}
-          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-hidden">
+          <div className="lg:flex-1 lg:min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:overflow-hidden">
             {/* Tasks column */}
-            <div className="min-h-0 flex flex-col">
+            <div className="lg:min-h-0 flex flex-col">
               <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">
                 Tasks · {selectedProject.tasks.length + mappedTasks.length}
               </h4>
@@ -467,7 +467,7 @@ export function ProjectBuilder({
                   />
                 </div>
               )}
-              <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+              <div className="lg:flex-1 lg:overflow-y-auto space-y-2 pr-1">
                 {selectedProject.tasks.sort((a, b) => a.order - b.order).map((task, idx) => {
               const dependsOnTask = task.dependsOn.length > 0 ? selectedProject.tasks.find(t => t.id === task.dependsOn[0]) : null;
               return (
@@ -550,7 +550,7 @@ export function ProjectBuilder({
             </div>
 
             {/* Notes column */}
-            <div className="min-h-0 flex flex-col">
+            <div className="lg:min-h-0 flex flex-col">
               <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">
                 Notes · {mappedNotes.length}
               </h4>
@@ -594,7 +594,7 @@ export function ProjectBuilder({
                   <div aria-hidden />
                 </div>
               )}
-              <div className="flex-1 overflow-y-auto pr-1">
+              <div className="lg:flex-1 lg:overflow-y-auto pr-1">
                 {filteredMappedNotes.length > 0 ? (
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
                     {filteredMappedNotes.map(n => (
