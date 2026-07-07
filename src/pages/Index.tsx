@@ -138,6 +138,11 @@ const Index = () => {
     [viewScope, currentUser],
   );
 
+  // Views other than "Projects" respect the scope toggle; Projects view uses
+  // the raw filtered lists so everyone can see everything they have access to.
+  const scopedTasks = useMemo(() => scopeFilter(filteredTasks), [scopeFilter, filteredTasks]);
+  const scopedNotes = useMemo(() => scopeFilter(filteredNotes), [scopeFilter, filteredNotes]);
+
   useEffect(() => {
     setViewMode(settings.defaultView as ViewMode);
   }, [settings.defaultView]);
