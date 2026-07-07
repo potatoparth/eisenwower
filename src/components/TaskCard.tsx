@@ -138,13 +138,15 @@ export function TaskCard({
 
         {/* Inline meta indicators */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          {categoryColor && (
+          {task.category && task.category !== "General" && (
             <span
               className="text-[10px] px-1.5 py-0.5 rounded-md font-medium"
-              style={{
-                backgroundColor: `${categoryColor}22`,
-                color: categoryColor,
-              }}
+              style={
+                categoryColor
+                  ? { backgroundColor: `${categoryColor}22`, color: categoryColor }
+                  : { backgroundColor: "hsl(var(--secondary))", color: "hsl(var(--muted-foreground))" }
+              }
+              title={task.category}
             >
               {task.category}
             </span>
