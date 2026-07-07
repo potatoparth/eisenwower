@@ -318,15 +318,15 @@ export function ProjectBuilder({
 
       {/* Project tree */}
       {projectTree.length > 0 && (
-        <div className="rounded-xl border border-border/60 bg-card/40 p-2 max-h-[38vh] overflow-y-auto">
-          <div className="space-y-0.5">
+        <div className="rounded-xl border border-border/60 bg-card/40 p-2">
+          <div className="space-y-0.5 max-h-[38vh] overflow-y-auto">
             {projectTree.map((n) => renderProjectTreeNode(n))}
           </div>
           <div
             onDragOver={(e) => {
               if (!dragProjectId) return;
               const moving = projectNodeIndex.get(dragProjectId)?.project;
-              if (!moving || moving.parentId == null) return; // already top-level
+              if (!moving) return;
               e.preventDefault();
               e.dataTransfer.dropEffect = "move";
               if (dropTargetId !== "__root__") setDropTargetId("__root__");
@@ -342,15 +342,15 @@ export function ProjectBuilder({
               onUpdateProject(id, { parentId: null });
             }}
             className={cn(
-              "mt-2 rounded-lg border border-dashed text-[11px] text-muted-foreground py-2 px-3 transition-colors",
+              "mt-2 rounded-lg border border-dashed text-xs text-muted-foreground py-4 px-3 text-center transition-colors",
               dropTargetId === "__root__"
                 ? "border-primary/60 bg-primary/10 text-foreground"
                 : dragProjectId
-                  ? "border-border/80 opacity-90"
+                  ? "border-primary/40 bg-primary/5 opacity-100"
                   : "border-transparent opacity-0 h-0 py-0 overflow-hidden",
             )}
           >
-            Drop here to make top-level
+            ⤴ Drop here to make top-level
           </div>
         </div>
       )}
