@@ -31,6 +31,8 @@ export interface Task {
   status: TaskStatus;
   createdAt: string;
   updatedAt: string;
+  /** Owner of the row. Used to filter "my tasks" vs "all tasks" on shared projects. */
+  userId?: string;
   deadlineThresholdOverride?: number; // per-task override for deadline warning days
   kanbanColumn?: string; // which kanban column this task belongs to
   projectId?: string; // optional project association
