@@ -40,6 +40,13 @@ export interface AppSettings {
   noDateTasksPosition: "top" | "bottom";
   /** How filters render on desktop. Mobile is always "button". Default: "pills". */
   filterBarDisplay?: "pills" | "button";
+  /**
+   * Whose tasks/notes to show in general views (Matrix, List, Kanban, Calendar, Notes).
+   * "mine" = only rows the current user created; "all" = everything they have access to.
+   * The Projects view always shows everything the user can see, ignoring this.
+   * Default: "mine".
+   */
+  viewScope?: "mine" | "all";
   localUsername?: string;
   quadrantLabels: QuadrantLabels;
 }
@@ -87,6 +94,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   showOverdue: true,
   noDateTasksPosition: "bottom",
   filterBarDisplay: "pills",
+  viewScope: "mine",
   quadrantLabels: DEFAULT_QUADRANT_LABELS,
 };
 
