@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, ChevronRight, ChevronDown, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { ProjectTemplate, ProjectTask, ProjectTemplatePreset, PresetTask } from "@/types/project";
-import { buildProjectTree, flattenProjectTree, indexProjectNodes, getDescendantIds } from "@/lib/projectTree";
+import { buildProjectTree, flattenProjectTree, indexProjectNodes, getDescendantIds, wouldCreateCycle } from "@/lib/projectTree";
 import { ShareProjectDialog } from "@/components/ShareProjectDialog";
 import { ProjectTemplatesDialog } from "@/components/ProjectTemplatesDialog";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
@@ -79,6 +79,8 @@ export function ProjectBuilder({
   const [notePopoverOpen, setNotePopoverOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [collapsedProjectIds, setCollapsedProjectIds] = useState<Set<string>>(new Set());
+  const [dragProjectId, setDragProjectId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | "__root__" | null>(null);
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const selectedRole = selectedProject ? (getProjectRole?.(selectedProject.id) ?? "owner") : undefined;
