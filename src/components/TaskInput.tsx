@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect, useMemo, useCallback, type ReactNode } from "react";
-import { Calendar, Tag, CornerDownLeft, FolderKanban, Zap } from "lucide-react";
+import { Calendar, CornerDownLeft, FolderKanban, Zap } from "lucide-react";
 import { Quadrant, QUADRANTS, QuadrantInfo, Recurrence } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { SelectorWithCreate } from "@/components/SelectorWithCreate";
 import { ProjectTreePicker } from "@/components/ProjectTreePicker";
 import {
   Select,
@@ -94,7 +93,6 @@ export function TaskInput({
   const [selectedQuadrant, setSelectedQuadrant] = useState<Quadrant | null>(
     defaultQuadrant || null
   );
-  const [category, setCategory] = useState("");
   const [projectId, setProjectId] = useState<string>("");
   const [dueDate, setDueDate] = useState(defaultDueDate ?? "");
   const [description, setDescription] = useState("");
@@ -106,14 +104,6 @@ export function TaskInput({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const categoryOptions = useMemo(() => {
-    const names = new Set(categories);
-    names.add("General");
-    return Array.from(names)
-      .sort((a, b) => a.localeCompare(b))
-      .map((c) => ({ value: c, label: c }));
-  }, [categories]);
-
   // (Project selection now uses ProjectTreePicker.)
 
   const canComplete =
@@ -123,7 +113,6 @@ export function TaskInput({
     setStep("name");
     setName("");
     setSelectedQuadrant(defaultQuadrant || null);
-    setCategory("");
     setProjectId("");
     setDueDate("");
     setDescription("");
@@ -139,7 +128,6 @@ export function TaskInput({
         ? defaultProjectId
         : NO_PROJECT
     );
-    setCategory(defaultCategory || "General");
     if (defaultDueDate && !dueDate) setDueDate(defaultDueDate);
     setStep("details");
   };
@@ -172,7 +160,6 @@ export function TaskInput({
 
     onAddTask(name, q, {
       description: description || undefined,
-      category: category || defaultCategory || "General",
       dueDate: finalDueDate || undefined,
       projectId:
         !projectId || projectId === NO_PROJECT ? undefined : projectId,
@@ -182,7 +169,6 @@ export function TaskInput({
     setStep("name");
     setName("");
     setSelectedQuadrant(defaultQuadrant || null);
-    setCategory("");
     setProjectId("");
     setDueDate("");
     setDescription("");
@@ -190,7 +176,7 @@ export function TaskInput({
     setRecurrence("none");
     setRecurrenceDays([]);
     inputRef.current?.focus();
-  }, [name, selectedQuadrant, defaultQuadrant, category, projectId, description, dueDate, defaultCategory, onAddTask, recurrence, recurrenceDays]);
+  }, [name, selectedQuadrant, defaultQuadrant, projectId, description, dueDate, onAddTask, recurrence, recurrenceDays]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
