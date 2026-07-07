@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Calendar, Tag, AlertCircle, FolderKanban, ChevronLeft, ChevronRight, Check, PanelRightClose } from "lucide-react";
+import { X, Calendar, AlertCircle, FolderKanban, ChevronLeft, ChevronRight, Check, PanelRightClose } from "lucide-react";
 import { Task, Quadrant, QuadrantInfo, Recurrence } from "@/types/task";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,6 @@ import { isOverdue } from "@/lib/sort";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { RecurrenceField } from "@/components/RecurrenceField";
 import { TaskDescription } from "@/components/TaskDescription";
-import { SelectorWithCreate } from "@/components/SelectorWithCreate";
 import { ProjectTreePicker } from "@/components/ProjectTreePicker";
 import { TaskAttachments } from "@/components/TaskAttachments";
 import { RecentChipStrip } from "@/components/RecentChipStrip";
@@ -38,7 +37,6 @@ interface TaskDetailPanelProps {
 export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose, getCategoryColor, projects = [], quadrants, quadrantMap, categories = [], navTasks = [], onNavigate, onToggleStatus, onSwitchToDialog, onCreateCategory, onCreateProject, recentCategories = [], recentProjectIds = [] }: TaskDetailPanelProps) {
   const [name, setName] = useState(task.name);
   const [description, setDescription] = useState(task.description || "");
-  const [category, setCategory] = useState(task.category);
   const [dueDate, setDueDate] = useState(task.dueDate || "");
   const [quadrant, setQuadrant] = useState<Quadrant>(task.quadrant);
   const [projectId, setProjectId] = useState<string | undefined>(task.projectId);
@@ -48,7 +46,6 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
   useEffect(() => {
     setName(task.name);
     setDescription(task.description || "");
-    setCategory(task.category);
     setDueDate(task.dueDate || "");
     setQuadrant(task.quadrant);
     setProjectId(task.projectId);
@@ -60,7 +57,6 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
     onUpdate(task.id, {
       name: name.trim() || task.name,
       description: description || undefined,
-      category,
       dueDate: dueDate || undefined,
       quadrant,
     });
@@ -241,44 +237,6 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
               onUpdate(task.id, { recurrence: r, recurrenceDays: d, dueDate: nextDue || undefined });
             }}
           />
-        </div>
-
-        {/* Category */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-            <Tag className="w-3.5 h-3.5" />
-            Category
-          </label>
-          <SelectorWithCreate
-            icon={
-              getCategoryColor && getCategoryColor(category) ? (
-                <span
-                  className="w-3 h-3 rounded-full flex-shrink-0 inline-block"
-                  style={{ backgroundColor: getCategoryColor(category) }}
-                />
-              ) : undefined
-            }
-            options={Array.from(new Set([...categories, "General", category].filter(Boolean)))
-              .sort((a, b) => a.localeCompare(b))
-              .map((c) => ({ value: c, label: c }))}
-            value={category}
-            onChange={(v) => {
-              setCategory(v);
-              onUpdate(task.id, { category: v });
-            }}
-            onCreate={onCreateCategory}
-            placeholder="Select category"
-            searchPlaceholder="Search categories…"
-            createPlaceholder="New category name…"
-          />
-          {recentCategories.length > 0 && (
-            <RecentChipStrip
-              items={recentCategories.map((c) => ({ value: c, label: c }))}
-              value={category}
-              onSelect={(v) => { setCategory(v); onUpdate(task.id, { category: v }); }}
-              ariaLabel="Recent categories"
-            />
-          )}
         </div>
 
         {/* Project */}
