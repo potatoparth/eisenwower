@@ -153,54 +153,130 @@ export function ProjectBuilder({
     onAddMatrixTask(name, quadrant, { ...options, projectId: selectedProjectId });
   };
 
+  const renderProjectTreeNode = (n: ReturnType<typeof buildProjectTree>[number]): JSX.Element => {
+    const p = n.project;
+    const active = selectedProjectId === p.id;
+    const hasChildren = n.children.length > 0;
+    const isCollapsed = collapsedProjectIds.has(p.id);
+    const count =
+      p.tasks.length +
+      allTasks.filter((t) => t.projectId === p.id).length +
+      allNotes.filter((n2) => n2.projectId === p.id).length;
+    return (
+      <div key={p.id} className="relative">
+        <div
+          className={cn(
+            "group flex items-center gap-1 rounded-lg pr-1 py-1 text-sm transition-colors",
+            active ? "bg-primary/15 text-foreground" : "hover:bg-secondary/60 text-muted-foreground",
+          )}
+          style={{ paddingLeft: n.depth * 16 + 4 }}
+        >
+          {hasChildren ? (
+            <button
+              type="button"
+              onClick={() => toggleCollapseProject(p.id)}
+              className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground/70 hover:text-foreground hover:bg-secondary/70 flex-shrink-0"
+              title={isCollapsed ? "Expand" : "Collapse"}
+            >
+              <ChevronRight className={cn("w-3.5 h-3.5 transition-transform", !isCollapsed && "rotate-90")} />
+            </button>
+          ) : (
+            <span className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => setSelectedProjectId(p.id)}
+            className={cn(
+              "flex-1 min-w-0 text-left truncate px-1.5 py-0.5 rounded-md",
+              active && "font-semibold text-foreground",
+            )}
+            title={n.path.join(" / ")}
+          >
+            {p.name}
+          </button>
+          <span
+            className={cn(
+              "text-[11px] tabular-nums px-1.5 py-0.5 rounded-md flex-shrink-0",
+              active ? "bg-primary/25 text-foreground" : "bg-secondary/60 text-muted-foreground",
+            )}
+          >
+            {count}
+          </span>
+          <button
+            title="Add subproject"
+            onClick={() => { setNewProjectParentId(p.id); setNewProjectName(""); setNewProjectDesc(""); setShowNewProject(true); }}
+            className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground rounded flex-shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        {hasChildren && !isCollapsed && (
+          <div
+            className="relative"
+            // guide line for the subtree
+            style={{ marginLeft: n.depth * 16 + 12 }}
+          >
+            <div className="absolute top-0 bottom-1 left-0 w-px bg-border/60" />
+            <div className="pl-0">
+              {n.children.map((c) => (
+                <div key={c.project.id} style={{ marginLeft: -(n.depth * 16 + 12) }}>
+                  {renderProjectTreeNode(c)}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col h-full gap-4">
-      {/* Project list & selector */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <h2 className="text-lg font-bold">Projects</h2>
-        {flattenProjectTree(projectTree).map((n) => {
-          const p = n.project;
-          const active = selectedProjectId === p.id;
-          return (
-            <div key={p.id} className="flex items-center gap-0.5 group">
-              <button
-                onClick={() => setSelectedProjectId(p.id)}
-                style={{ marginLeft: n.depth * 8 }}
-                className={cn(
-                  "px-3 py-1.5 rounded-xl text-sm font-medium transition-all",
-                  active
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-muted-foreground hover:text-foreground",
-                )}
-                title={n.path.join(" / ")}
-              >
-                {n.depth > 0 && <span className="opacity-40 mr-1">›</span>}
-                {p.name}
-                <span className="ml-1.5 text-xs opacity-70">
-                  {p.tasks.length + allTasks.filter(t => t.projectId === p.id).length + allNotes.filter(n2 => n2.projectId === p.id).length}
-                </span>
-              </button>
-              <button
-                title="Add subproject"
-                onClick={() => { setNewProjectParentId(p.id); setNewProjectName(""); setNewProjectDesc(""); setShowNewProject(true); }}
-                className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground rounded"
-              >
-                <Plus className="w-3 h-3" />
-              </button>
-            </div>
-          );
-        })}
+      {/* Project list header */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <h2 className="text-lg font-bold mr-2">Projects</h2>
+        {allParentIds.length > 0 && (
+          <>
+            <Button
+              variant="ghost" size="sm"
+              className="h-7 px-2 rounded-lg gap-1 text-xs text-muted-foreground hover:text-foreground"
+              onClick={expandAllProjects}
+              title="Expand all"
+            >
+              <ChevronsUpDown className="w-3.5 h-3.5" /> Expand all
+            </Button>
+            <Button
+              variant="ghost" size="sm"
+              className="h-7 px-2 rounded-lg gap-1 text-xs text-muted-foreground hover:text-foreground"
+              onClick={collapseAllProjects}
+              title="Collapse all"
+            >
+              <ChevronsDownUp className="w-3.5 h-3.5" /> Collapse all
+            </Button>
+          </>
+        )}
         {!showNewProject && (
-          <Button variant="outline" size="sm" className="rounded-xl gap-1" onClick={() => setShowNewProject(true)}>
+          <Button variant="outline" size="sm" className="rounded-lg gap-1 h-7" onClick={() => { setNewProjectParentId(null); setShowNewProject(true); }}>
             <Plus className="w-3 h-3" /> New top-level
           </Button>
         )}
         {onAddPreset && onUpdatePreset && onDeletePreset && (
-          <Button variant="ghost" size="sm" className="rounded-xl gap-1 ml-auto" onClick={() => setTemplatesOpen(true)}>
+          <Button variant="ghost" size="sm" className="rounded-lg gap-1 ml-auto h-7" onClick={() => setTemplatesOpen(true)}>
             <LayoutTemplate className="w-3.5 h-3.5" /> Templates
           </Button>
         )}
       </div>
+
+      {/* Project tree */}
+      {projectTree.length > 0 && (
+        <div className="rounded-xl border border-border/60 bg-card/40 p-2 max-h-[38vh] overflow-y-auto">
+          <div className="space-y-0.5">
+            {projectTree.map((n) => renderProjectTreeNode(n))}
+          </div>
+        </div>
+      )}
 
       {/* New project form */}
       <AnimatePresence>
