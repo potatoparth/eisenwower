@@ -466,7 +466,7 @@ const Index = () => {
           {viewMode === "matrix" && (
             <motion.div key="matrix" {...viewAnimation} className="flex-1 min-h-0 flex flex-col">
               <MatrixView
-                tasks={filteredTasks} categories={taskCategories} onMoveTask={moveTask}
+                tasks={scopedTasks} categories={taskCategories} onMoveTask={moveTask}
                 onToggleStatus={toggleStatus} onDeleteTask={handleDeleteTask} onAddTask={handleAddTask}
                 onReorderTasks={setTasks} onTaskClick={setSelectedTask}
                 getCategoryColor={getCategoryColor} deadlineThresholdDays={settings.deadlineThresholdDays}
@@ -491,7 +491,7 @@ const Index = () => {
           {viewMode === "list" && (
             <motion.div key="list" {...viewAnimation} className="flex-1 min-h-0 w-full max-w-4xl mx-auto overflow-y-auto">
               <ListView
-                tasks={filteredTasks} categories={taskCategories} onToggleStatus={toggleStatus}
+                tasks={scopedTasks} categories={taskCategories} onToggleStatus={toggleStatus}
                 onDeleteTask={handleDeleteTask} onAddTask={handleAddTask} onTaskClick={setSelectedTask}
                 getCategoryColor={getCategoryColor} deadlineThresholdDays={settings.deadlineThresholdDays}
                 quadrants={quadrants}
@@ -513,7 +513,7 @@ const Index = () => {
           {viewMode === "kanban" && (
             <motion.div key="kanban" {...viewAnimation} className="flex-1 min-h-0 flex flex-col">
               <KanbanView
-                tasks={filteredTasks}
+                tasks={scopedTasks}
                 boards={kanban.boards}
                 columnsByBoard={kanban.columnsByBoard}
                 itemsByBoard={kanban.itemsByBoard}
@@ -565,7 +565,7 @@ const Index = () => {
           {viewMode === "calendar" && (
             <motion.div key="calendar" {...viewAnimation} className="flex-1 min-h-0 flex flex-col">
               <CalendarView
-                tasks={filteredTasks}
+                tasks={scopedTasks}
                 allTasks={tasks}
                 onUpdateTask={updateTask}
                 onToggleStatus={toggleStatus}
@@ -615,7 +615,7 @@ const Index = () => {
           {viewMode === "notes" && (
             <motion.div key="notes" {...viewAnimation} className="flex-1 min-h-0 flex flex-col">
               <NotesView
-                notes={filteredNotes}
+                notes={scopedNotes}
                 categories={taskCategories}
                 projects={projects}
                 defaultCategory={defaultCategory}
