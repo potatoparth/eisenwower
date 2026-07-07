@@ -306,37 +306,6 @@ export function FilterBar(p: FilterBarProps) {
             </div>
           )}
 
-          {p.categories.length > 0 && (
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-medium text-muted-foreground">
-                  Category{p.selectedCategories.length > 0 ? ` · ${p.selectedCategories.length}` : ""}
-                </p>
-                {p.selectedCategories.length > 0 && (
-                  <button
-                    className="text-[11px] text-muted-foreground hover:text-foreground"
-                    onClick={() => p.onSelectedCategoriesChange([])}
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              <div className="max-h-40 overflow-y-auto space-y-1 border border-border rounded-md p-1">
-                {p.categories.map((c) => {
-                  const color = p.getCategoryColor?.(c);
-                  const checked = p.selectedCategories.includes(c);
-                  return (
-                    <label key={c} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary cursor-pointer text-sm">
-                      <Checkbox checked={checked} onCheckedChange={() => toggleCat(c)} />
-                      {color && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />}
-                      <span className="flex-1 truncate">{c}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {p.projects && p.onActiveProjectIdsChange && p.showProjectsFilter !== false && (() => {
             const available = p.availableProjectIds;
             const visibleProjects = available ? p.projects.filter((pr) => available.includes(pr.id)) : p.projects;
