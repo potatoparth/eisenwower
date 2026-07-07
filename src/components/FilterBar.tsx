@@ -1,4 +1,4 @@
-import { ChevronDown, LayoutGrid, Search, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, LayoutGrid, Search, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -120,6 +120,7 @@ function OverdueButton({
 export function FilterBar(p: FilterBarProps) {
   const [catSearch, setCatSearch] = useState("");
   const [projSearch, setProjSearch] = useState("");
+  const [collapsedProjNodes, setCollapsedProjNodes] = useState<Set<string>>(new Set());
   const isMobile = useIsMobile();
   const asButton = isMobile || p.displayMode === "button";
   const toggleCat = (c: string) => {
