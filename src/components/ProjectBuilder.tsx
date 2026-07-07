@@ -280,9 +280,9 @@ export function ProjectBuilder({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 h-full min-h-0">
+    <div className="flex flex-col lg:grid lg:grid-cols-[320px_1fr] gap-4 lg:h-full lg:min-h-0 pb-24 lg:pb-0">
       {/* Left rail: project directory */}
-      <aside className="flex flex-col min-h-0 gap-3 rounded-2xl border border-border/60 bg-card/30 p-3">
+      <aside className="flex flex-col lg:min-h-0 gap-3 rounded-2xl border border-border/60 bg-card/30 p-3">
         <div className="flex items-center justify-between gap-2 px-1">
           <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Projects</h2>
           {onAddPreset && onUpdatePreset && onDeletePreset && (
@@ -328,8 +328,8 @@ export function ProjectBuilder({
         )}
 
         {projectTree.length > 0 ? (
-          <div className="flex-1 min-h-0 flex flex-col">
-            <div className="flex-1 min-h-0 overflow-y-auto space-y-0.5 pr-1">
+          <div className="lg:flex-1 lg:min-h-0 flex flex-col">
+            <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto max-h-[50vh] overflow-y-auto space-y-0.5 pr-1">
               {projectTree.map((n) => renderProjectTreeNode(n))}
             </div>
             <div
