@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate } from "lucide-react";
 import { ProjectTemplate, ProjectTask, ProjectTemplatePreset, PresetTask } from "@/types/project";
+import { buildProjectTree, flattenProjectTree, indexProjectNodes, getDescendantIds } from "@/lib/projectTree";
 import { ShareProjectDialog } from "@/components/ShareProjectDialog";
 import { ProjectTemplatesDialog } from "@/components/ProjectTemplatesDialog";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
@@ -31,7 +32,7 @@ interface ProjectBuilderProps {
   onAddNote?: (options?: Partial<Note>) => Note | null;
   onUpdateNote?: (id: string, updates: Partial<Note>) => void;
   onDeleteNote?: (id: string) => void;
-  onAddProject: (name: string, description?: string) => ProjectTemplate;
+  onAddProject: (name: string, description?: string, parentId?: string | null) => ProjectTemplate;
   onUpdateProject: (id: string, updates: Partial<Omit<ProjectTemplate, "id" | "createdAt">>) => void;
   onDeleteProject: (id: string) => void;
   onAddTask: (projectId: string, task: Omit<ProjectTask, "id" | "order">) => void;
@@ -82,8 +83,16 @@ export function ProjectBuilder({
   const selectedRole = selectedProject ? (getProjectRole?.(selectedProject.id) ?? "owner") : undefined;
   const isOwner = selectedRole === "owner";
   const canEdit = selectedRole === "owner" || selectedRole === "editor";
-  const mappedTasks = selectedProject ? allTasks.filter(t => t.projectId === selectedProject.id) : [];
-  const mappedNotes = selectedProject ? allNotes.filter(n => n.projectId === selectedProject.id) : [];
+  // Descendants roll up to their ancestor: viewing a parent project shows tasks/notes
+  // from every subproject too.
+  const projectTree = useMemo(() => buildProjectTree(projects), [projects]);
+  const projectNodeIndex = useMemo(() => indexProjectNodes(projectTree), [projectTree]);
+  const descendantIds = useMemo(
+    () => selectedProject ? new Set(getDescendantIds(projectNodeIndex, selectedProject.id)) : new Set<string>(),
+    [projectNodeIndex, selectedProject],
+  );
+  const mappedTasks = selectedProject ? allTasks.filter(t => t.projectId && descendantIds.has(t.projectId)) : [];
+  const mappedNotes = selectedProject ? allNotes.filter(n => n.projectId && descendantIds.has(n.projectId)) : [];
   const filteredMappedNotes = useMemo(() => {
     const q = noteQuery.trim().toLowerCase();
     if (!q) return mappedNotes;
@@ -99,9 +108,10 @@ export function ProjectBuilder({
   const openEditNote = (n: Note) => { setEditingNoteId(n.id); setComposerMode("edit"); setComposerOpen(true); };
   const closeComposer = () => { setComposerOpen(false); setEditingNoteId(null); };
 
+  const [newProjectParentId, setNewProjectParentId] = useState<string | null>(null);
   const handleCreateProject = () => {
     if (!newProjectName.trim()) return;
-    const p = onAddProject(newProjectName.trim(), newProjectDesc.trim() || undefined);
+    const p = onAddProject(newProjectName.trim(), newProjectDesc.trim() || undefined, newProjectParentId);
     // If a template was selected, prefill tasks (preserving dependsOn wiring via id remap).
     const preset = templatePresets.find(tp => tp.id === newProjectPresetId);
     if (preset && preset.tasks.length > 0) {
@@ -135,26 +145,41 @@ export function ProjectBuilder({
       {/* Project list & selector */}
       <div className="flex items-center gap-3 flex-wrap">
         <h2 className="text-lg font-bold">Projects</h2>
-        {projects.map(p => (
-          <button
-            key={p.id}
-            onClick={() => setSelectedProjectId(p.id)}
-            className={cn(
-              "px-3 py-1.5 rounded-xl text-sm font-medium transition-all",
-              selectedProjectId === p.id
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {p.name}
-            <span className="ml-1.5 text-xs opacity-70">
-              {p.tasks.length + allTasks.filter(t => t.projectId === p.id).length + allNotes.filter(n => n.projectId === p.id).length}
-            </span>
-          </button>
-        ))}
+        {flattenProjectTree(projectTree).map((n) => {
+          const p = n.project;
+          const active = selectedProjectId === p.id;
+          return (
+            <div key={p.id} className="flex items-center gap-0.5 group">
+              <button
+                onClick={() => setSelectedProjectId(p.id)}
+                style={{ marginLeft: n.depth * 8 }}
+                className={cn(
+                  "px-3 py-1.5 rounded-xl text-sm font-medium transition-all",
+                  active
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground hover:text-foreground",
+                )}
+                title={n.path.join(" / ")}
+              >
+                {n.depth > 0 && <span className="opacity-40 mr-1">›</span>}
+                {p.name}
+                <span className="ml-1.5 text-xs opacity-70">
+                  {p.tasks.length + allTasks.filter(t => t.projectId === p.id).length + allNotes.filter(n2 => n2.projectId === p.id).length}
+                </span>
+              </button>
+              <button
+                title="Add subproject"
+                onClick={() => { setNewProjectParentId(p.id); setNewProjectName(""); setNewProjectDesc(""); setShowNewProject(true); }}
+                className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground rounded"
+              >
+                <Plus className="w-3 h-3" />
+              </button>
+            </div>
+          );
+        })}
         {!showNewProject && (
           <Button variant="outline" size="sm" className="rounded-xl gap-1" onClick={() => setShowNewProject(true)}>
-            <Plus className="w-3 h-3" /> New Project
+            <Plus className="w-3 h-3" /> New top-level
           </Button>
         )}
         {onAddPreset && onUpdatePreset && onDeletePreset && (
@@ -171,7 +196,14 @@ export function ProjectBuilder({
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
             className="bg-card rounded-2xl border border-border p-4 space-y-3"
           >
-            <Input placeholder="Project name" value={newProjectName} onChange={e => setNewProjectName(e.target.value)} />
+            <div className="flex items-center gap-2">
+              <Input placeholder={newProjectParentId ? "Subproject name" : "Project name"} value={newProjectName} onChange={e => setNewProjectName(e.target.value)} />
+              {newProjectParentId && (
+                <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                  under {projectNodeIndex.get(newProjectParentId)?.path.join(" / ")}
+                </span>
+              )}
+            </div>
             <Textarea placeholder="Description (optional)" value={newProjectDesc} onChange={e => setNewProjectDesc(e.target.value)} rows={2} />
             {templatePresets.length > 0 && (
               <div className="flex items-center gap-2">
@@ -193,7 +225,7 @@ export function ProjectBuilder({
             )}
             <div className="flex gap-2">
               <Button size="sm" onClick={handleCreateProject}>Create Project</Button>
-              <Button size="sm" variant="ghost" onClick={() => setShowNewProject(false)}>Cancel</Button>
+              <Button size="sm" variant="ghost" onClick={() => { setShowNewProject(false); setNewProjectParentId(null); }}>Cancel</Button>
             </div>
           </motion.div>
         )}
