@@ -118,6 +118,7 @@ export function useTasks(userId?: string) {
       dueTime: options?.dueTime,
       status: "open", createdAt: now, updatedAt: now, kanbanColumn: "todo",
       projectId: options?.projectId,
+      userId: userId,
       recurrence: options?.recurrence ?? "none",
       recurrenceDays: options?.recurrenceDays ?? [],
       recurrenceTime: options?.recurrenceTime ?? "22:00",
