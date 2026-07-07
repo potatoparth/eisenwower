@@ -42,14 +42,14 @@ export function RecurrenceField({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 w-full min-w-0">
         <Repeat className={cn("text-muted-foreground flex-shrink-0", compact ? "w-3.5 h-3.5" : "w-4 h-4")} />
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <Select value={recurrence} onValueChange={handleRecurrenceChange}>
-            <SelectTrigger className={cn("border-0 bg-secondary/60 rounded-lg", compact ? "h-8 text-xs" : "h-9 text-sm")}>
+            <SelectTrigger className={cn("w-full min-w-0 border-0 bg-secondary/60 rounded-lg", compact ? "h-8 text-xs" : "h-9 text-sm")}>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-w-[calc(100vw-2rem)]">
               <SelectItem value="none">Does not repeat</SelectItem>
               <SelectItem value="daily">Daily</SelectItem>
               <SelectItem value="weekly">Weekly</SelectItem>
