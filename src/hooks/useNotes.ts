@@ -22,6 +22,7 @@ const fromRow = (r: NoteRow): Note => ({
   sortOrder: r.sort_order,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
+  userId: r.user_id,
   attachments: Array.isArray(r.attachments) ? (r.attachments as TaskAttachment[]) : [],
 });
 
@@ -67,6 +68,7 @@ export function useNotes(userId?: string) {
       attachments: options?.attachments ?? [],
       createdAt: now,
       updatedAt: now,
+      userId: userId,
     };
     setNotes((prev) => [optimistic, ...prev]);
     supabase.from("notes").insert({

@@ -254,6 +254,28 @@ export function SettingsPanel({
               </div>
               <p className="text-[11px] text-muted-foreground">Mobile always uses the Filters button.</p>
             </div>
+            <div className="pt-2 border-t space-y-2">
+              <p className="text-xs font-medium text-foreground">Task visibility</p>
+              <div className="flex gap-2">
+                {(["mine", "all"] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => onUpdateSettings({ viewScope: v })}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+                      (settings.viewScope ?? "mine") === v
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+                    )}
+                  >
+                    {v === "mine" ? "My tasks only" : "All tasks I can see"}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Applies to Matrix, List, Kanban, Calendar, and Notes. The Projects view always shows every task and note you have access to.
+              </p>
+            </div>
           </Section>
 
           {/* Matrix view */}

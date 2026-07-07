@@ -14,6 +14,7 @@ import { toast } from "@/hooks/use-toast";
 import { ProjectTemplate, ProjectTask } from "@/types/project";
 import { Task } from "@/types/task";
 import { Note } from "@/types/note";
+import { Switch } from "@/components/ui/switch";
 
 type Role = "editor" | "viewer";
 type Scope = "all" | "selected";
@@ -23,6 +24,7 @@ interface Collaborator {
   user_id: string;
   role: string;
   scope: string;
+  can_create_subprojects: boolean;
   display_name: string | null;
   email: string | null;
 }
@@ -51,10 +53,11 @@ export function ShareProjectDialog({ open, onOpenChange, project, matrixTasks, n
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [loadingCollab, setLoadingCollab] = useState(false);
+  const [canCreateSubprojects, setCanCreateSubprojects] = useState(true);
 
   const reset = useCallback(() => {
     setRole("editor"); setScope("all"); setSelectedTasks(new Set());
-    setSelectedNotes(new Set()); setInviteUrl(null);
+    setSelectedNotes(new Set()); setInviteUrl(null); setCanCreateSubprojects(true);
   }, []);
 
   const loadCollaborators = useCallback(async () => {
@@ -101,6 +104,7 @@ export function ShareProjectDialog({ open, onOpenChange, project, matrixTasks, n
     if (!user) { setCreating(false); toast({ title: "Sign in required" }); return; }
     const { error } = await supabase.from("project_invites").insert({
       token, project_id: project.id, role, scope, item_ids, created_by: user.id,
+      can_create_subprojects: role === "editor" ? canCreateSubprojects : false,
     });
     setCreating(false);
     if (error) { toast({ title: "Could not create invite", description: error.message }); return; }
@@ -125,6 +129,15 @@ export function ShareProjectDialog({ open, onOpenChange, project, matrixTasks, n
 
   const changeRole = async (userId: string, next: Role) => {
     await supabase.from("project_collaborators").update({ role: next }).eq("project_id", project.id).eq("user_id", userId);
+    loadCollaborators();
+  };
+
+  const changeCanCreateSubprojects = async (userId: string, value: boolean) => {
+    await supabase
+      .from("project_collaborators")
+      .update({ can_create_subprojects: value })
+      .eq("project_id", project.id)
+      .eq("user_id", userId);
     loadCollaborators();
   };
 
@@ -164,6 +177,16 @@ export function ShareProjectDialog({ open, onOpenChange, project, matrixTasks, n
               </Select>
             </div>
           </div>
+
+          {role === "editor" && (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-sm font-medium">Can create sub-projects</p>
+                <p className="text-[11px] text-muted-foreground">Editor can add sub-projects under this project's tree.</p>
+              </div>
+              <Switch checked={canCreateSubprojects} onCheckedChange={setCanCreateSubprojects} />
+            </div>
+          )}
 
           {scope === "selected" && (
             <div className="rounded-lg border border-border p-3 space-y-3 max-h-64 overflow-y-auto">
@@ -236,6 +259,15 @@ export function ShareProjectDialog({ open, onOpenChange, project, matrixTasks, n
                       <p className="text-[11px] text-muted-foreground truncate">
                         {c.email} · {c.scope === "all" ? "all items" : "selected items"}
                       </p>
+                      {c.role === "editor" && (
+                        <label className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
+                          <Switch
+                            checked={!!c.can_create_subprojects}
+                            onCheckedChange={(v) => changeCanCreateSubprojects(c.user_id, v)}
+                          />
+                          Can create sub-projects
+                        </label>
+                      )}
                     </div>
                     <Select value={c.role} onValueChange={(v) => changeRole(c.user_id, v as Role)}>
                       <SelectTrigger className="w-24 h-7 text-xs"><SelectValue /></SelectTrigger>
