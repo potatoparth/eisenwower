@@ -1,0 +1,21 @@
+REVOKE EXECUTE ON FUNCTION public.can_view_project_item(uuid, uuid, project_share_item_type, uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.project_role(uuid, uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.is_project_owner(uuid, uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.can_edit_project(uuid, uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.accept_project_invite(text) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.project_descendants(uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.project_ancestors(uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.project_root(uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.list_project_collaborators(uuid) FROM anon, public;
+REVOKE EXECUTE ON FUNCTION public.get_project_invite_preview(text) FROM anon, public;
+
+GRANT EXECUTE ON FUNCTION public.can_view_project_item(uuid, uuid, project_share_item_type, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.project_role(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_project_owner(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_edit_project(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.accept_project_invite(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.project_descendants(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.project_ancestors(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.project_root(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.list_project_collaborators(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_project_invite_preview(text) TO authenticated;
