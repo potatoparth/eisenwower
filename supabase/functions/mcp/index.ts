@@ -444,18 +444,33 @@ import { z as z9 } from "npm:zod@^4.4.3";
 var list_projects_default = defineTool8({
   name: "list_projects",
   title: "List projects",
-  description: "List the signed-in user's projects (project templates). Includes projects owned by the user.",
+  description: "List the signed-in user's projects (project templates). Each row includes `parent_id` and a computed breadcrumb `path` (root-first, '/'-joined). Projects form a tree \u2014 a project with `parent_id` set is a subproject of that parent.",
   inputSchema: {
     limit: z9.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ limit }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
-    const { data, error } = await supabaseForUser(ctx).from("project_templates").select("id,name,description,created_at,updated_at").order("updated_at", { ascending: false }).limit(limit ?? 50);
+    const { data, error } = await supabaseForUser(ctx).from("project_templates").select("id,name,description,parent_id,sort_order,created_at,updated_at").order("updated_at", { ascending: false }).limit(limit ?? 50);
     if (error) return toErr(error.message);
+    const rows = data ?? [];
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    const withPath = rows.map((r) => {
+      const chain = [];
+      let cur = r.id;
+      const seen = /* @__PURE__ */ new Set();
+      while (cur && !seen.has(cur)) {
+        seen.add(cur);
+        const row = byId.get(cur);
+        if (!row) break;
+        chain.unshift(row.name);
+        cur = row.parent_id;
+      }
+      return { ...r, path: chain.join(" / ") };
+    });
     return {
-      content: [{ type: "text", text: JSON.stringify(data ?? []) }],
-      structuredContent: { projects: data ?? [] }
+      content: [{ type: "text", text: JSON.stringify(withPath) }],
+      structuredContent: { projects: withPath }
     };
   }
 });
