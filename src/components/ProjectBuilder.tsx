@@ -282,59 +282,115 @@ export function ProjectBuilder({
     );
   };
 
-  return (
-    <div className="flex flex-col lg:grid lg:grid-cols-[320px_1fr] gap-4 lg:h-full lg:min-h-0 pb-24 lg:pb-0">
-      {/* Left rail: project directory */}
-      <aside className="flex flex-col lg:min-h-0 gap-3 rounded-2xl border border-border/60 bg-card/30 p-3">
-        <div className="flex items-center justify-between gap-2 px-1">
-          <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Projects</h2>
-          {onAddPreset && onUpdatePreset && onDeletePreset && (
-            <Button
-              variant="ghost" size="sm"
-              className="h-7 px-2 rounded-lg gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-              onClick={() => setTemplatesOpen(true)}
-            >
-              <LayoutTemplate className="w-3.5 h-3.5" /> Templates
-            </Button>
-          )}
-        </div>
+  // Search-filtered flat list of tree nodes (used when treeQuery is non-empty).
+  const searchResults = useMemo(
+    () => (treeQuery.trim() ? searchProjectTree(projectTree, treeQuery) : []),
+    [projectTree, treeQuery],
+  );
 
-        {!showNewProject && (
+  const renderSearchResult = (n: ReturnType<typeof buildProjectTree>[number]): JSX.Element => {
+    const p = n.project;
+    const active = selectedProjectId === p.id;
+    return (
+      <button
+        key={p.id}
+        type="button"
+        onClick={() => { setSelectedProjectId(p.id); setMobileRailOpen(false); }}
+        className={cn(
+          "w-full text-left flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors",
+          active ? "bg-primary/15 text-foreground" : "hover:bg-secondary/60 text-muted-foreground",
+        )}
+        title={n.path.join(" / ")}
+      >
+        <FolderOpen className="w-3.5 h-3.5 flex-shrink-0 opacity-60" />
+        <span className="flex-1 min-w-0 truncate">
+          <span className={cn(active && "font-semibold text-foreground")}>{p.name}</span>
+          {n.path.length > 1 && (
+            <span className="ml-1 text-[11px] text-muted-foreground/70">
+              · {n.path.slice(0, -1).join(" / ")}
+            </span>
+          )}
+        </span>
+      </button>
+    );
+  };
+
+  const railBody = (
+    <div className="flex flex-col lg:min-h-0 gap-3 h-full">
+      <div className="flex items-center justify-between gap-2 px-1">
+        <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Projects</h2>
+        {onAddPreset && onUpdatePreset && onDeletePreset && (
           <Button
-            size="sm"
-            className="w-full h-9 rounded-xl gap-1.5 font-semibold"
-            onClick={() => { setNewProjectParentId(null); setShowNewProject(true); }}
+            variant="ghost" size="sm"
+            className="h-7 px-2 rounded-lg gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+            onClick={() => setTemplatesOpen(true)}
           >
-            <Plus className="w-4 h-4" /> New project
+            <LayoutTemplate className="w-3.5 h-3.5" /> Templates
           </Button>
         )}
+      </div>
 
-        {allParentIds.length > 0 && (
-          <div className="flex items-center gap-1 px-1">
-            <Button
-              variant="ghost" size="sm"
-              className="h-6 px-1.5 rounded-md gap-1 text-[10px] text-muted-foreground hover:text-foreground"
-              onClick={expandAllProjects}
-              title="Expand all"
-            >
-              <ChevronsUpDown className="w-3 h-3" /> Expand
-            </Button>
-            <Button
-              variant="ghost" size="sm"
-              className="h-6 px-1.5 rounded-md gap-1 text-[10px] text-muted-foreground hover:text-foreground"
-              onClick={collapseAllProjects}
-              title="Collapse all"
-            >
-              <ChevronsDownUp className="w-3 h-3" /> Collapse
-            </Button>
-          </div>
+      {!showNewProject && (
+        <Button
+          size="sm"
+          className="w-full h-9 rounded-xl gap-1.5 font-semibold"
+          onClick={() => { setNewProjectParentId(null); setShowNewProject(true); setMobileRailOpen(false); }}
+        >
+          <Plus className="w-4 h-4" /> New project
+        </Button>
+      )}
+
+      <div className="relative">
+        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 pointer-events-none" />
+        <Input
+          value={treeQuery}
+          onChange={(e) => setTreeQuery(e.target.value)}
+          placeholder="Search projects..."
+          className="h-8 pl-7 pr-7 text-xs rounded-lg"
+        />
+        {treeQuery && (
+          <button
+            type="button"
+            onClick={() => setTreeQuery("")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            aria-label="Clear search"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         )}
+      </div>
 
-        {projectTree.length > 0 ? (
-          <div className="lg:flex-1 lg:min-h-0 flex flex-col">
-            <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto max-h-[50vh] overflow-y-auto space-y-0.5 pr-1">
-              {projectTree.map((n) => renderProjectTreeNode(n))}
-            </div>
+      {!treeQuery && allParentIds.length > 0 && (
+        <div className="flex items-center gap-1 px-1">
+          <Button
+            variant="ghost" size="sm"
+            className="h-6 px-1.5 rounded-md gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+            onClick={expandAllProjects}
+            title="Expand all"
+          >
+            <ChevronsUpDown className="w-3 h-3" /> Expand
+          </Button>
+          <Button
+            variant="ghost" size="sm"
+            className="h-6 px-1.5 rounded-md gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+            onClick={collapseAllProjects}
+            title="Collapse all"
+          >
+            <ChevronsDownUp className="w-3 h-3" /> Collapse
+          </Button>
+        </div>
+      )}
+
+      {projectTree.length > 0 ? (
+        <div className="flex-1 min-h-0 flex flex-col">
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-0.5 pr-1">
+            {treeQuery
+              ? (searchResults.length > 0
+                  ? searchResults.map((n) => renderSearchResult(n))
+                  : <p className="text-xs text-muted-foreground text-center py-6">No projects match.</p>)
+              : projectTree.map((n) => renderProjectTreeNode(n))}
+          </div>
+          {!treeQuery && (
             <div
               onDragOver={(e) => {
                 if (!dragProjectId) return;
@@ -365,16 +421,50 @@ export function ProjectBuilder({
             >
               ⤴ Drop here to make top-level
             </div>
-          </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-center px-4">
-            <p className="text-xs text-muted-foreground">No projects yet.<br/>Create one to get started.</p>
-          </div>
-        )}
+          )}
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center text-center px-4">
+          <p className="text-xs text-muted-foreground">No projects yet.<br/>Create one to get started.</p>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col lg:grid lg:grid-cols-[320px_1fr] gap-4 lg:h-full lg:min-h-0 pb-24 lg:pb-0">
+      {/* Desktop rail */}
+      <aside className="hidden lg:flex flex-col min-h-0 rounded-2xl border border-border/60 bg-card/30 p-3">
+        {railBody}
       </aside>
+
+      {/* Mobile drawer */}
+      <Sheet open={mobileRailOpen} onOpenChange={setMobileRailOpen}>
+        <SheetContent side="left" className="lg:hidden w-[85vw] max-w-[340px] p-3 flex flex-col">
+          <SheetHeader className="sr-only"><SheetTitle>Projects</SheetTitle></SheetHeader>
+          {railBody}
+        </SheetContent>
+      </Sheet>
 
       {/* Right pane: detail workspace */}
       <section className="flex flex-col lg:min-h-0 gap-4">
+      {/* Mobile toolbar with drawer trigger + current selection */}
+      <div className="lg:hidden flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-9 rounded-xl gap-2"
+          onClick={() => setMobileRailOpen(true)}
+        >
+          <PanelLeft className="w-4 h-4" />
+          Projects
+        </Button>
+        {selectedProject && (
+          <span className="text-xs text-muted-foreground truncate">
+            {projectNodeIndex.get(selectedProject.id)?.path.join(" / ") || selectedProject.name}
+          </span>
+        )}
+      </div>
       {/* New project form */}
       <AnimatePresence>
         {showNewProject && (
