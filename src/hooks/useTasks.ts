@@ -31,7 +31,7 @@ function computeNextOccurrence(template: Task): string | undefined {
 }
 
 type TaskRow = {
-  id: string; name: string; description: string | null; quadrant: string; due_date: string | null;
+  id: string; user_id: string; name: string; description: string | null; quadrant: string; due_date: string | null;
   due_time: string | null;
   status: string; created_at: string; updated_at: string; deadline_threshold_override: number | null; kanban_column: string | null; sort_order: number;
   project_id: string | null;
@@ -55,6 +55,7 @@ const fromRow = (row: TaskRow): Task => ({
   status: row.status as TaskStatus,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
+  userId: row.user_id,
   deadlineThresholdOverride: row.deadline_threshold_override ?? undefined,
   kanbanColumn: row.kanban_column || undefined,
   projectId: row.project_id || undefined,
