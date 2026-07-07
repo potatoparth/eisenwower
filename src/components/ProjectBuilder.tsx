@@ -82,6 +82,8 @@ export function ProjectBuilder({
   const [collapsedProjectIds, setCollapsedProjectIds] = useState<Set<string>>(new Set());
   const [dragProjectId, setDragProjectId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | "__root__" | null>(null);
+  const [treeQuery, setTreeQuery] = useState("");
+  const [mobileRailOpen, setMobileRailOpen] = useState(false);
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const selectedRole = selectedProject ? (getProjectRole?.(selectedProject.id) ?? "owner") : undefined;
