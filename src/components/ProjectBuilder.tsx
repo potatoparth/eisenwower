@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, ChevronRight, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate } from "lucide-react";
+import { Plus, Trash2, ChevronRight, ChevronDown, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { ProjectTemplate, ProjectTask, ProjectTemplatePreset, PresetTask } from "@/types/project";
 import { buildProjectTree, flattenProjectTree, indexProjectNodes, getDescendantIds } from "@/lib/projectTree";
 import { ShareProjectDialog } from "@/components/ShareProjectDialog";
@@ -78,6 +78,7 @@ export function ProjectBuilder({
   const [noteQuery, setNoteQuery] = useState("");
   const [notePopoverOpen, setNotePopoverOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [collapsedProjectIds, setCollapsedProjectIds] = useState<Set<string>>(new Set());
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const selectedRole = selectedProject ? (getProjectRole?.(selectedProject.id) ?? "owner") : undefined;
@@ -87,6 +88,18 @@ export function ProjectBuilder({
   // from every subproject too.
   const projectTree = useMemo(() => buildProjectTree(projects), [projects]);
   const projectNodeIndex = useMemo(() => indexProjectNodes(projectTree), [projectTree]);
+  const allParentIds = useMemo(
+    () => flattenProjectTree(projectTree).filter((n) => n.children.length > 0).map((n) => n.project.id),
+    [projectTree],
+  );
+  const toggleCollapseProject = (id: string) =>
+    setCollapsedProjectIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  const collapseAllProjects = () => setCollapsedProjectIds(new Set(allParentIds));
+  const expandAllProjects = () => setCollapsedProjectIds(new Set());
   const descendantIds = useMemo(
     () => selectedProject ? new Set(getDescendantIds(projectNodeIndex, selectedProject.id)) : new Set<string>(),
     [projectNodeIndex, selectedProject],
