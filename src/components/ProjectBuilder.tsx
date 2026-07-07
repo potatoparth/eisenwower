@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, ChevronRight, ChevronDown, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { ProjectTemplate, ProjectTask, ProjectTemplatePreset, PresetTask } from "@/types/project";
-import { buildProjectTree, flattenProjectTree, indexProjectNodes, getDescendantIds } from "@/lib/projectTree";
+import { buildProjectTree, flattenProjectTree, indexProjectNodes, getDescendantIds, wouldCreateCycle } from "@/lib/projectTree";
 import { ShareProjectDialog } from "@/components/ShareProjectDialog";
 import { ProjectTemplatesDialog } from "@/components/ProjectTemplatesDialog";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
@@ -79,6 +79,8 @@ export function ProjectBuilder({
   const [notePopoverOpen, setNotePopoverOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [collapsedProjectIds, setCollapsedProjectIds] = useState<Set<string>>(new Set());
+  const [dragProjectId, setDragProjectId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | "__root__" | null>(null);
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const selectedRole = selectedProject ? (getProjectRole?.(selectedProject.id) ?? "owner") : undefined;
@@ -162,12 +164,57 @@ export function ProjectBuilder({
       p.tasks.length +
       allTasks.filter((t) => t.projectId === p.id).length +
       allNotes.filter((n2) => n2.projectId === p.id).length;
+    const canEditThis = (getProjectRole?.(p.id) ?? "owner") !== "viewer";
+    const isDragTarget = dropTargetId === p.id;
+    const invalidDrop =
+      dragProjectId != null &&
+      isDragTarget &&
+      (dragProjectId === p.id || wouldCreateCycle(projectNodeIndex, dragProjectId, p.id));
     return (
       <div key={p.id} className="relative">
         <div
+          draggable={canEditThis}
+          onDragStart={(e) => {
+            setDragProjectId(p.id);
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", p.id);
+          }}
+          onDragEnd={() => { setDragProjectId(null); setDropTargetId(null); }}
+          onDragOver={(e) => {
+            if (!dragProjectId || dragProjectId === p.id) return;
+            if (wouldCreateCycle(projectNodeIndex, dragProjectId, p.id)) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            if (dropTargetId !== p.id) setDropTargetId(p.id);
+          }}
+          onDragLeave={(e) => {
+            // Only clear if leaving the row itself (not entering a child).
+            const related = e.relatedTarget as Node | null;
+            if (!related || !(e.currentTarget as Node).contains(related)) {
+              if (dropTargetId === p.id) setDropTargetId(null);
+            }
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            const id = dragProjectId ?? e.dataTransfer.getData("text/plain");
+            setDragProjectId(null); setDropTargetId(null);
+            if (!id || id === p.id) return;
+            if (wouldCreateCycle(projectNodeIndex, id, p.id)) return;
+            const moving = projectNodeIndex.get(id)?.project;
+            if (!moving || moving.parentId === p.id) return;
+            onUpdateProject(id, { parentId: p.id });
+            // Auto-expand the new parent so the moved node is visible.
+            setCollapsedProjectIds((prev) => {
+              const next = new Set(prev);
+              next.delete(p.id);
+              return next;
+            });
+          }}
           className={cn(
-            "group flex items-center gap-1 rounded-lg pr-1 py-1 text-sm transition-colors",
+            "group flex items-center gap-1 rounded-lg pr-1 py-1 text-sm transition-colors cursor-grab active:cursor-grabbing",
             active ? "bg-primary/15 text-foreground" : "hover:bg-secondary/60 text-muted-foreground",
+            isDragTarget && !invalidDrop && "ring-2 ring-primary/60 bg-primary/10",
+            dragProjectId === p.id && "opacity-50",
           )}
           style={{ paddingLeft: n.depth * 16 + 4 }}
         >
@@ -274,6 +321,36 @@ export function ProjectBuilder({
         <div className="rounded-xl border border-border/60 bg-card/40 p-2 max-h-[38vh] overflow-y-auto">
           <div className="space-y-0.5">
             {projectTree.map((n) => renderProjectTreeNode(n))}
+          </div>
+          <div
+            onDragOver={(e) => {
+              if (!dragProjectId) return;
+              const moving = projectNodeIndex.get(dragProjectId)?.project;
+              if (!moving || moving.parentId == null) return; // already top-level
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              if (dropTargetId !== "__root__") setDropTargetId("__root__");
+            }}
+            onDragLeave={() => { if (dropTargetId === "__root__") setDropTargetId(null); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              const id = dragProjectId ?? e.dataTransfer.getData("text/plain");
+              setDragProjectId(null); setDropTargetId(null);
+              if (!id) return;
+              const moving = projectNodeIndex.get(id)?.project;
+              if (!moving || moving.parentId == null) return;
+              onUpdateProject(id, { parentId: null });
+            }}
+            className={cn(
+              "mt-2 rounded-lg border border-dashed text-[11px] text-muted-foreground py-2 px-3 transition-colors",
+              dropTargetId === "__root__"
+                ? "border-primary/60 bg-primary/10 text-foreground"
+                : dragProjectId
+                  ? "border-border/80 opacity-90"
+                  : "border-transparent opacity-0 h-0 py-0 overflow-hidden",
+            )}
+          >
+            Drop here to make top-level
           </div>
         </div>
       )}
