@@ -371,7 +371,7 @@ export function ProjectBuilder({
       </aside>
 
       {/* Right pane: detail workspace */}
-      <section className="flex flex-col min-h-0 gap-4">
+      <section className="flex flex-col lg:min-h-0 gap-4">
       {/* New project form */}
       <AnimatePresence>
         {showNewProject && (
@@ -416,7 +416,7 @@ export function ProjectBuilder({
 
       {/* Selected project */}
       {selectedProject ? (
-        <div className="flex-1 flex flex-col gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/30 p-5">
+        <div className="lg:flex-1 flex flex-col gap-4 lg:overflow-hidden rounded-2xl border border-border/60 bg-card/30 p-4 lg:p-5">
           <div className="flex items-start justify-between gap-4 pb-4 border-b border-border/50">
             <div>
               <div className="flex items-center gap-2">
@@ -442,9 +442,9 @@ export function ProjectBuilder({
           </div>
 
           {/* Tasks + Notes side-by-side */}
-          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-hidden">
+          <div className="lg:flex-1 lg:min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:overflow-hidden">
             {/* Tasks column */}
-            <div className="min-h-0 flex flex-col">
+            <div className="lg:min-h-0 flex flex-col">
               <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">
                 Tasks · {selectedProject.tasks.length + mappedTasks.length}
               </h4>
