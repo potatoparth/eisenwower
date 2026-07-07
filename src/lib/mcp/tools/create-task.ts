@@ -52,13 +52,13 @@ export default defineTool({
     if (category && category !== "General") {
       // Route category into a subproject under whatever parent we have (or a new root).
       const cur = effectiveProjectId;
-      const { data: siblings } = await sb
+      const { data: allProjects } = await sb
         .from("project_templates")
         .select("id,name,parent_id")
-        .eq("user_id", ctx.getUserId())
-        .is("parent_id", cur === null ? null : undefined as never)
-        .eq("parent_id", cur as string);
-      const existing = (siblings ?? []).find((p) => (p.name as string).toLowerCase() === category.toLowerCase());
+        .eq("user_id", ctx.getUserId());
+      const existing = (allProjects ?? []).find(
+        (p) => (p.parent_id ?? null) === cur && (p.name as string).toLowerCase() === category.toLowerCase(),
+      );
       if (existing) {
         effectiveProjectId = existing.id as string;
       } else {

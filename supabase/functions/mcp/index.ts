@@ -153,8 +153,10 @@ var create_task_default = defineTool2({
     }
     if (category && category !== "General") {
       const cur = effectiveProjectId;
-      const { data: siblings } = await sb.from("project_templates").select("id,name,parent_id").eq("user_id", ctx.getUserId()).is("parent_id", cur === null ? null : void 0).eq("parent_id", cur);
-      const existing = (siblings ?? []).find((p) => p.name.toLowerCase() === category.toLowerCase());
+      const { data: allProjects } = await sb.from("project_templates").select("id,name,parent_id").eq("user_id", ctx.getUserId());
+      const existing = (allProjects ?? []).find(
+        (p) => (p.parent_id ?? null) === cur && p.name.toLowerCase() === category.toLowerCase()
+      );
       if (existing) {
         effectiveProjectId = existing.id;
       } else {
