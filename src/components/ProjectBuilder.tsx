@@ -318,8 +318,8 @@ export function ProjectBuilder({
 
       {/* Project tree */}
       {projectTree.length > 0 && (
-        <div className="rounded-xl border border-border/60 bg-card/40 p-2 max-h-[38vh] overflow-y-auto">
-          <div className="space-y-0.5">
+        <div className="rounded-xl border border-border/60 bg-card/40 p-2">
+          <div className="space-y-0.5 max-h-[38vh] overflow-y-auto">
             {projectTree.map((n) => renderProjectTreeNode(n))}
           </div>
           <div
