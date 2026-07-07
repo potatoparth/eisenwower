@@ -47,44 +47,6 @@ function toErr(message) {
   return { content: [{ type: "text", text: message }], isError: true };
 }
 
-// src/lib/mcp/tools/list-tasks.ts
-var list_tasks_default = defineTool({
-  name: "list_tasks",
-  title: "List tasks",
-  description: "List the signed-in user's Eisenhower Matrix tasks. Optionally filter by status, quadrant, or category.",
-  inputSchema: {
-    status: z2.enum(["open", "done"]).optional().describe("Filter by status."),
-    quadrant: z2.enum([
-      "important-urgent",
-      "important-not-urgent",
-      "not-important-urgent",
-      "not-important-not-urgent"
-    ]).optional().describe("Filter by Eisenhower quadrant."),
-    category: z2.string().optional().describe("Filter by category name."),
-    limit: z2.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
-  },
-  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ status, quadrant, category, limit }, ctx) => {
-    if (!ctx.isAuthenticated()) return unauthenticated();
-    let q = supabaseForUser(ctx).from("tasks").select(
-      "id,name,description,category,quadrant,due_date,due_time,status,project_id,attachments,kanban_column,recurrence,recurrence_days,recurrence_time,is_recurring_instance,recurring_template_id,deadline_threshold_override,sort_order,created_at,updated_at"
-    ).order("created_at", { ascending: false }).limit(limit ?? 50);
-    if (status) q = q.eq("status", status);
-    if (quadrant) q = q.eq("quadrant", quadrant);
-    if (category) q = q.eq("category", category);
-    const { data, error } = await q;
-    if (error) return toErr(error.message);
-    return {
-      content: [{ type: "text", text: JSON.stringify(data ?? []) }],
-      structuredContent: { tasks: data ?? [] }
-    };
-  }
-});
-
-// src/lib/mcp/tools/create-task.ts
-import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { z as z3 } from "npm:zod@^4.4.3";
-
 // src/lib/mcp/projectResolver.ts
 async function resolveProjectPath(sb, userId, path, create = false) {
   if (!path?.trim()) return { projectId: null, created: [] };
@@ -115,8 +77,80 @@ async function resolveProjectPath(sb, userId, path, create = false) {
   }
   return { projectId: currentId, created };
 }
+async function descendantProjectIds(sb, userId, rootId) {
+  const { data, error } = await sb.from("project_templates").select("id,parent_id").eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  const rows = data ?? [];
+  const childrenBy = /* @__PURE__ */ new Map();
+  rows.forEach((r) => {
+    const k = r.parent_id ?? null;
+    if (!childrenBy.has(k)) childrenBy.set(k, []);
+    childrenBy.get(k).push(r.id);
+  });
+  const out = [];
+  const walk = (id) => {
+    out.push(id);
+    (childrenBy.get(id) ?? []).forEach(walk);
+  };
+  walk(rootId);
+  return out;
+}
+
+// src/lib/mcp/tools/list-tasks.ts
+var list_tasks_default = defineTool({
+  name: "list_tasks",
+  title: "List tasks",
+  description: "List the signed-in user's Eisenhower Matrix tasks. Optionally filter by status, quadrant, or category.",
+  inputSchema: {
+    status: z2.enum(["open", "done"]).optional().describe("Filter by status."),
+    quadrant: z2.enum([
+      "important-urgent",
+      "important-not-urgent",
+      "not-important-urgent",
+      "not-important-not-urgent"
+    ]).optional().describe("Filter by Eisenhower quadrant."),
+    project_id: z2.string().uuid().optional().describe("Filter to tasks under this project id (includes tasks on all descendant subprojects)."),
+    project_path: z2.string().optional().describe("Alternative to project_id: '/'-separated project path."),
+    category: z2.string().optional().describe("DEPRECATED. Filters tasks whose immediate project has this leaf name."),
+    limit: z2.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
+  },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ status, quadrant, project_id, project_path, category, limit }, ctx) => {
+    if (!ctx.isAuthenticated()) return unauthenticated();
+    const sb = supabaseForUser(ctx);
+    let q = sb.from("tasks").select(
+      "id,name,description,quadrant,due_date,due_time,status,project_id,attachments,kanban_column,recurrence,recurrence_days,recurrence_time,is_recurring_instance,recurring_template_id,deadline_threshold_override,sort_order,created_at,updated_at"
+    ).order("created_at", { ascending: false }).limit(limit ?? 50);
+    if (status) q = q.eq("status", status);
+    if (quadrant) q = q.eq("quadrant", quadrant);
+    let filterProjectId = project_id ?? null;
+    if (!filterProjectId && project_path) {
+      const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, false);
+      filterProjectId = projectId;
+    }
+    if (filterProjectId) {
+      const ids = await descendantProjectIds(sb, ctx.getUserId(), filterProjectId);
+      q = q.in("project_id", ids);
+    }
+    const { data, error } = await q;
+    if (error) return toErr(error.message);
+    let rows = data ?? [];
+    if (category) {
+      const { data: projs } = await sb.from("project_templates").select("id,name").eq("user_id", ctx.getUserId());
+      const nameById = new Map((projs ?? []).map((p) => [p.id, p.name.toLowerCase()]));
+      const wanted = category.toLowerCase();
+      rows = rows.filter((t) => t.project_id && nameById.get(t.project_id) === wanted);
+    }
+    return {
+      content: [{ type: "text", text: JSON.stringify(rows) }],
+      structuredContent: { tasks: rows }
+    };
+  }
+});
 
 // src/lib/mcp/tools/create-task.ts
+import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z3 } from "npm:zod@^4.4.3";
 var create_task_default = defineTool2({
   name: "create_task",
   title: "Create task",
