@@ -66,6 +66,7 @@ export function NotesView(props: NotesViewProps) {
     if (searchOpen) searchInputRef.current?.focus();
   }, [searchOpen]);
 
+  const projectName = (id?: string) => projects.find((p) => p.id === id)?.name;
   const filteredNotes = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return notes;
@@ -73,10 +74,8 @@ export function NotesView(props: NotesViewProps) {
       (n) =>
         n.title.toLowerCase().includes(q) ||
         n.content.toLowerCase().includes(q) ||
-        (projectName(n.projectId) || "").toLowerCase().includes(q)
+        (projects.find((p) => p.id === n.projectId)?.name || "").toLowerCase().includes(q)
     );
-    // projectName is stable per render; disabling exhaustive-deps for local helper.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notes, searchQuery, projects]);
 
   const startEdit = (id: string) => {
@@ -89,8 +88,6 @@ export function NotesView(props: NotesViewProps) {
 
   const pinned = useMemo(() => filteredNotes.filter((n) => n.pinned), [filteredNotes]);
   const others = useMemo(() => filteredNotes.filter((n) => !n.pinned), [filteredNotes]);
-
-  const projectName = (id?: string) => projects.find((p) => p.id === id)?.name;
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto">
