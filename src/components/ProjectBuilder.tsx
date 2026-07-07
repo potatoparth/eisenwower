@@ -322,6 +322,36 @@ export function ProjectBuilder({
           <div className="space-y-0.5">
             {projectTree.map((n) => renderProjectTreeNode(n))}
           </div>
+          <div
+            onDragOver={(e) => {
+              if (!dragProjectId) return;
+              const moving = projectNodeIndex.get(dragProjectId)?.project;
+              if (!moving || moving.parentId == null) return; // already top-level
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              if (dropTargetId !== "__root__") setDropTargetId("__root__");
+            }}
+            onDragLeave={() => { if (dropTargetId === "__root__") setDropTargetId(null); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              const id = dragProjectId ?? e.dataTransfer.getData("text/plain");
+              setDragProjectId(null); setDropTargetId(null);
+              if (!id) return;
+              const moving = projectNodeIndex.get(id)?.project;
+              if (!moving || moving.parentId == null) return;
+              onUpdateProject(id, { parentId: null });
+            }}
+            className={cn(
+              "mt-2 rounded-lg border border-dashed text-[11px] text-muted-foreground py-2 px-3 transition-colors",
+              dropTargetId === "__root__"
+                ? "border-primary/60 bg-primary/10 text-foreground"
+                : dragProjectId
+                  ? "border-border/80 opacity-90"
+                  : "border-transparent opacity-0 h-0 py-0 overflow-hidden",
+            )}
+          >
+            Drop here to make top-level
+          </div>
         </div>
       )}
 
