@@ -235,6 +235,19 @@ const Index = () => {
     return { availableProjectIds: Array.from(ids), hasNoProjectOption: hasNone || activeProjectIds.includes("__none__") };
   }, [tasks, dateFilter, overdueMode, selectedCategories, activeProjectIds]);
 
+  // "View scope" toggle from Settings: default "mine" hides rows owned by other
+  // collaborators from every view EXCEPT the Projects view (which always shows
+  // everything the user can see). Rows without userId (legacy/optimistic) pass through.
+  const viewScope = settings.viewScope ?? "mine";
+  const scopedTasks = useMemo(() => {
+    if (viewScope === "all" || !currentUser) return filteredTasks;
+    return filteredTasks.filter((t) => !t.userId || t.userId === currentUser.id);
+  }, [filteredTasks, viewScope, currentUser]);
+  const scopedNotes = useMemo(() => {
+    if (viewScope === "all" || !currentUser) return filteredNotes;
+    return filteredNotes.filter((n) => !n.userId || n.userId === currentUser.id);
+  }, [filteredNotes, viewScope, currentUser]);
+
   if (!isInitialized) return null;
 
   if (needsSetup || !currentUser) {
