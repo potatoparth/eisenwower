@@ -65,16 +65,14 @@ export function ListView({
   onDeleteAllDone,
   onRescheduleTasks,
 }: ListViewProps) {
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
-      if (categoryFilter !== "all" && task.category !== categoryFilter) return false;
       if (statusFilter !== "all" && task.status !== statusFilter) return false;
       return true;
     });
-  }, [tasks, categoryFilter, statusFilter]);
+  }, [tasks, statusFilter]);
 
   const groupedTasks = useMemo(() => {
     const groups: Record<Quadrant, Task[]> = {
@@ -88,7 +86,6 @@ export function ListView({
   }, [filteredTasks]);
 
   const activeFilters = [
-    categoryFilter !== "all" ? categoryFilter : null,
     statusFilter !== "all" ? (statusFilter === "open" ? "Open" : "Done") : null,
   ].filter(Boolean);
 
@@ -115,22 +112,6 @@ export function ListView({
 
       <div className="flex items-center gap-3 mb-6">
         <Filter className="w-4 h-4 text-muted-foreground" />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="rounded-xl gap-2">Category<ChevronDown className="w-3 h-3" /></Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="min-w-[160px]">
-            <DropdownMenuLabel>Filter by category</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuRadioGroup value={categoryFilter} onValueChange={setCategoryFilter}>
-              <DropdownMenuRadioItem value="all">All categories</DropdownMenuRadioItem>
-              {categories.map((cat) => (
-                <DropdownMenuRadioItem key={cat} value={cat}>{cat}</DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="rounded-xl gap-2">Status<ChevronDown className="w-3 h-3" /></Button>
