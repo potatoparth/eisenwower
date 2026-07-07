@@ -388,15 +388,6 @@ export function NoteComposer(props: ComposerProps) {
             <div className="px-3 py-2.5 bg-muted/40 border-t border-border/60 flex items-center gap-2 rounded-b-2xl">
               <div className="flex items-center gap-1 flex-wrap">
                 <SelectorWithCreate
-                  options={catOptions}
-                  value={category}
-                  onChange={setCategory}
-                  onCreate={props.onCreateCategory}
-                  placeholder="Category"
-                  compact
-                  icon={<Tag className="w-3.5 h-3.5" />}
-                />
-                <SelectorWithCreate
                   options={projectOptions}
                   value={projectId}
                   onChange={setProjectId}
