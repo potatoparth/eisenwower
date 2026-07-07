@@ -467,7 +467,7 @@ export function ProjectBuilder({
                   />
                 </div>
               )}
-              <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+              <div className="lg:flex-1 lg:overflow-y-auto space-y-2 pr-1">
                 {selectedProject.tasks.sort((a, b) => a.order - b.order).map((task, idx) => {
               const dependsOnTask = task.dependsOn.length > 0 ? selectedProject.tasks.find(t => t.id === task.dependsOn[0]) : null;
               return (
@@ -594,7 +594,7 @@ export function ProjectBuilder({
                   <div aria-hidden />
                 </div>
               )}
-              <div className="flex-1 overflow-y-auto pr-1">
+              <div className="lg:flex-1 lg:overflow-y-auto pr-1">
                 {filteredMappedNotes.length > 0 ? (
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
                     {filteredMappedNotes.map(n => (
