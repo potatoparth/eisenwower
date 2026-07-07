@@ -220,6 +220,7 @@
               ]
             },
             "category": {
+              "description": "DEPRECATED. Replaces the task's project with a subproject having this name under the task's current parent (or a new top-level project). Prefer `project_id`/`project_path`.",
               "type": "string"
             },
             "due_date": {
@@ -259,6 +260,17 @@
                   "type": "string",
                   "format": "uuid",
                   "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "project_path": {
+              "description": "Alternative to project_id: '/'-separated project path; missing nodes are created.",
+              "anyOf": [
+                {
+                  "type": "string"
                 },
                 {
                   "type": "null"

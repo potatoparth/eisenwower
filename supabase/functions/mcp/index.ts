@@ -201,22 +201,51 @@ var update_task_default = defineTool3({
       "not-important-urgent",
       "not-important-not-urgent"
     ]).optional().describe("Move task to a different Eisenhower quadrant."),
-    category: z4.string().optional(),
+    category: z4.string().optional().describe("DEPRECATED. Replaces the task's project with a subproject having this name under the task's current parent (or a new top-level project). Prefer `project_id`/`project_path`."),
     due_date: z4.string().nullable().optional().describe("YYYY-MM-DD, or null to clear."),
     due_time: z4.string().nullable().optional().describe("HH:MM (24h), or null to clear."),
     status: z4.enum(["open", "done"]).optional().describe("Set to 'done' to complete, 'open' to reopen."),
     project_id: z4.string().uuid().nullable().optional().describe("Associate with a project, or null to detach."),
+    project_path: z4.string().nullable().optional().describe("Alternative to project_id: '/'-separated project path; missing nodes are created."),
     attachments: z4.array(attachmentSchema).optional().describe("Attachments to add or replace. Use kind='link' with URL, or kind='file' with an existing storage path."),
     attachments_mode: z4.enum(["append", "replace"]).optional().describe("How to apply `attachments`: 'append' (default) adds to existing, 'replace' overwrites the full list.")
   },
   annotations: { readOnlyHint: false, idempotentHint: true },
-  handler: async ({ task_id, attachments, attachments_mode, ...fields }, ctx) => {
+  handler: async ({ task_id, attachments, attachments_mode, project_path, category, ...fields }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
     const patch = {};
     for (const [k, v] of Object.entries(fields)) {
       if (v !== void 0) patch[k] = v;
     }
     const sb = supabaseForUser(ctx);
+    if (project_path !== void 0) {
+      if (project_path === null || project_path === "") {
+        patch.project_id = null;
+      } else {
+        const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, true);
+        patch.project_id = projectId;
+      }
+    } else if (category !== void 0) {
+      const { data: current } = await sb.from("tasks").select("project_id").eq("id", task_id).single();
+      const currentProjectId = current?.project_id ?? null;
+      let parentId = null;
+      if (currentProjectId) {
+        const { data: cp } = await sb.from("project_templates").select("parent_id").eq("id", currentProjectId).single();
+        parentId = cp?.parent_id ?? null;
+      }
+      if (!category || category === "General") {
+        patch.project_id = parentId;
+      } else {
+        const { data: all } = await sb.from("project_templates").select("id,name,parent_id").eq("user_id", ctx.getUserId());
+        const existing = (all ?? []).find((p) => (p.parent_id ?? null) === parentId && p.name.toLowerCase() === category.toLowerCase());
+        if (existing) patch.project_id = existing.id;
+        else {
+          const { data: created, error: cErr } = await sb.from("project_templates").insert({ user_id: ctx.getUserId(), name: category, parent_id: parentId }).select("id").single();
+          if (cErr) return toErr(cErr.message);
+          patch.project_id = created.id;
+        }
+      }
+    }
     if (attachments !== void 0) {
       const normalized = normalizeAttachments(attachments);
       if ((attachments_mode ?? "append") === "replace") {
