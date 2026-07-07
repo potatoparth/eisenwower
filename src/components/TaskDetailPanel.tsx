@@ -11,6 +11,7 @@ import { DateTimePicker } from "@/components/DateTimePicker";
 import { RecurrenceField } from "@/components/RecurrenceField";
 import { TaskDescription } from "@/components/TaskDescription";
 import { SelectorWithCreate } from "@/components/SelectorWithCreate";
+import { ProjectTreePicker } from "@/components/ProjectTreePicker";
 import { TaskAttachments } from "@/components/TaskAttachments";
 import { RecentChipStrip } from "@/components/RecentChipStrip";
 
@@ -29,7 +30,7 @@ interface TaskDetailPanelProps {
   onToggleStatus?: (id: string) => void;
   onSwitchToDialog?: () => void;
   onCreateCategory?: (name: string) => string;
-  onCreateProject?: (name: string) => string;
+  onCreateProject?: (name: string, parentId?: string | null) => string;
   recentCategories?: string[];
   recentProjectIds?: string[];
 }
@@ -286,21 +287,16 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
             <FolderKanban className="w-3.5 h-3.5" />
             Project
           </label>
-          <SelectorWithCreate
-            options={[
-              { value: "__none__", label: "No project" },
-              ...projects.map((p) => ({ value: p.id, label: p.name })),
-            ]}
-            value={projectId ?? "__none__"}
-            onChange={(v) => {
-              const next = v === "__none__" ? undefined : v;
+          <ProjectTreePicker
+            projects={projects}
+            value={projectId ?? null}
+            onChange={(id) => {
+              const next = id ?? undefined;
               setProjectId(next);
               onUpdate(task.id, { projectId: next });
             }}
             onCreate={onCreateProject}
             placeholder="No project"
-            searchPlaceholder="Search projects…"
-            createPlaceholder="New project name…"
           />
           {recentProjectIds.length > 0 && (
             <RecentChipStrip

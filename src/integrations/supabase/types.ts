@@ -154,7 +154,6 @@ export type Database = {
       notes: {
         Row: {
           attachments: Json
-          category: string
           color: string | null
           content: string
           created_at: string
@@ -168,7 +167,6 @@ export type Database = {
         }
         Insert: {
           attachments?: Json
-          category?: string
           color?: string | null
           content?: string
           created_at?: string
@@ -182,7 +180,6 @@ export type Database = {
         }
         Update: {
           attachments?: Json
-          category?: string
           color?: string | null
           content?: string
           created_at?: string
@@ -194,7 +191,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -444,6 +449,8 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          parent_id: string | null
+          sort_order: number
           updated_at: string
           user_id: string
         }
@@ -452,6 +459,8 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          parent_id?: string | null
+          sort_order?: number
           updated_at?: string
           user_id: string
         }
@@ -460,10 +469,20 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          parent_id?: string | null
+          sort_order?: number
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "project_templates_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "project_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sprint_preferences: {
         Row: {
@@ -590,7 +609,6 @@ export type Database = {
       tasks: {
         Row: {
           attachments: Json
-          category: string
           created_at: string
           deadline_threshold_override: number | null
           description: string | null
@@ -613,7 +631,6 @@ export type Database = {
         }
         Insert: {
           attachments?: Json
-          category?: string
           created_at?: string
           deadline_threshold_override?: number | null
           description?: string | null
@@ -636,7 +653,6 @@ export type Database = {
         }
         Update: {
           attachments?: Json
-          category?: string
           created_at?: string
           deadline_threshold_override?: number | null
           description?: string | null
@@ -657,7 +673,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -736,10 +760,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      project_ancestors: { Args: { _node: string }; Returns: string[] }
+      project_descendants: { Args: { _root: string }; Returns: string[] }
       project_role: {
         Args: { _project_id: string; _user_id: string }
         Returns: string
       }
+      project_root: { Args: { _node: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user"

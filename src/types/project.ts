@@ -23,6 +23,10 @@ export interface ProjectTemplate {
   createdAt: string;
   updatedAt: string;
   userId?: string;
+  /** Parent project id (null/undefined = top-level root project). */
+  parentId?: string | null;
+  /** Ordering among siblings sharing the same parent. */
+  sortOrder?: number;
 }
 
 /** A reusable, prefilled set of tasks that can seed a new project. */

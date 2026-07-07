@@ -47,8 +47,18 @@
                 "not-important-not-urgent"
               ]
             },
+            "project_id": {
+              "description": "Filter to tasks under this project id (includes tasks on all descendant subprojects).",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "project_path": {
+              "description": "Alternative to project_id: '/'-separated project path.",
+              "type": "string"
+            },
             "category": {
-              "description": "Filter by category name.",
+              "description": "DEPRECATED. Filters tasks whose immediate project has this leaf name.",
               "type": "string"
             },
             "limit": {
@@ -93,7 +103,7 @@
               "description": "Eisenhower quadrant."
             },
             "category": {
-              "description": "Category name (default 'General').",
+              "description": "DEPRECATED. Treated as a leaf subproject under `project_id` (or as a new top-level project if none). Prefer `project_path`.",
               "type": "string"
             },
             "due_date": {
@@ -105,10 +115,14 @@
               "type": "string"
             },
             "project_id": {
-              "description": "Associate the task with a project (project_templates.id).",
+              "description": "Associate the task with a specific project id (project_templates.id).",
               "type": "string",
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "project_path": {
+              "description": "Alternative to project_id: '/'-separated project path like 'Work/Q4/Launch'. Any missing intermediate projects are auto-created for the user.",
+              "type": "string"
             },
             "status": {
               "description": "Initial status (default 'open'). Pass 'done' to create it already completed.",
@@ -216,6 +230,7 @@
               ]
             },
             "category": {
+              "description": "DEPRECATED. Replaces the task's project with a subproject having this name under the task's current parent (or a new top-level project). Prefer `project_id`/`project_path`.",
               "type": "string"
             },
             "due_date": {
@@ -255,6 +270,17 @@
                   "type": "string",
                   "format": "uuid",
                   "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "project_path": {
+              "description": "Alternative to project_id: '/'-separated project path; missing nodes are created.",
+              "anyOf": [
+                {
+                  "type": "string"
                 },
                 {
                   "type": "null"
@@ -391,8 +417,18 @@
           "$schema": "http://json-schema.org/draft-07/schema#",
           "type": "object",
           "properties": {
+            "project_id": {
+              "description": "Filter by project id (includes descendants).",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "project_path": {
+              "description": "Alternative to project_id: '/'-separated project path.",
+              "type": "string"
+            },
             "category": {
-              "description": "Filter by category.",
+              "description": "DEPRECATED. Filters notes whose immediate project leaf name matches.",
               "type": "string"
             },
             "limit": {
@@ -426,7 +462,17 @@
               "type": "string"
             },
             "category": {
-              "description": "Category (default 'General').",
+              "description": "DEPRECATED. Treated as subproject-name under `project_path`/`project_id`.",
+              "type": "string"
+            },
+            "project_id": {
+              "description": "Attach to a specific project id.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "project_path": {
+              "description": "Alternative to project_id: '/'-separated project path; missing nodes are created.",
               "type": "string"
             },
             "pinned": {
@@ -443,7 +489,7 @@
       {
         "name": "list_projects",
         "title": "List projects",
-        "description": "List the signed-in user's projects (project templates). Includes projects owned by the user.",
+        "description": "List the signed-in user's projects (project templates). Each row includes `parent_id` and a computed breadcrumb `path` (root-first, '/'-joined). Projects form a tree — a project with `parent_id` set is a subproject of that parent.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -480,6 +526,23 @@
               "description": "Project name."
             },
             "description": {
+              "type": "string"
+            },
+            "parent_id": {
+              "description": "Parent project id — creates a subproject under it. Omit for a top-level project.",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "parent_path": {
+              "description": "Alternative to parent_id: '/'-separated path to the parent project; missing nodes are auto-created.",
               "type": "string"
             }
           },

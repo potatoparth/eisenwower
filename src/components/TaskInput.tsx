@@ -5,6 +5,7 @@ import { ProjectTemplate } from "@/types/project";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SelectorWithCreate } from "@/components/SelectorWithCreate";
+import { ProjectTreePicker } from "@/components/ProjectTreePicker";
 import {
   Select,
   SelectContent,
@@ -56,7 +57,7 @@ interface TaskInputProps {
   defaultProjectId?: string;
   defaultCategory?: string;
   onCreateCategory?: (name: string) => string;
-  onCreateProject?: (name: string) => string;
+  onCreateProject?: (name: string, parentId?: string | null) => string;
   /** Category names ordered most-recent first; rendered as a scrollable chip strip. */
   recentCategories?: string[];
   /** Project ids ordered most-recent first; rendered as a scrollable chip strip. */
@@ -113,13 +114,7 @@ export function TaskInput({
       .map((c) => ({ value: c, label: c }));
   }, [categories]);
 
-  const projectOptions = useMemo(
-    () => [
-      { value: NO_PROJECT, label: "No project" },
-      ...projects.map((p) => ({ value: p.id, label: p.name })),
-    ],
-    [projects]
-  );
+  // (Project selection now uses ProjectTreePicker.)
 
   const canComplete =
     Boolean(name.trim()) && Boolean(selectedQuadrant || defaultQuadrant);
@@ -454,17 +449,19 @@ export function TaskInput({
                       ariaLabel="Recent categories"
                     />
                   )}
-                  <SelectorWithCreate
-                    icon={<FolderKanban className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
-                    options={projectOptions}
-                    value={projectId}
-                    onChange={setProjectId}
-                    onCreate={onCreateProject}
-                    placeholder="Select project"
-                    searchPlaceholder="Search projects…"
-                    createPlaceholder="New project name…"
-                    compact
-                  />
+                  <div className="flex items-center gap-1.5">
+                    <FolderKanban className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                    <ProjectTreePicker
+                      projects={projects}
+                      value={projectId && projectId !== NO_PROJECT ? projectId : null}
+                      onChange={(id) => setProjectId(id ?? NO_PROJECT)}
+                      onCreate={onCreateProject}
+                      placeholder="No project"
+                      compact
+                      showIcon={false}
+                      className="flex-1 min-w-0"
+                    />
+                  </div>
                   {recentProjectIds.length > 0 && (
                     <ChipStrip
                       items={recentProjectIds

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTasks } from "@/hooks/useTasks";
 import { useSettings } from "@/hooks/useSettings";
@@ -27,6 +27,13 @@ import { LoginPage } from "@/components/LoginPage";
 import { ViewMode } from "@/components/ViewToggle";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { Task, getQuadrants, getQuadrantMap } from "@/types/task";
+import {
+  buildProjectTree,
+  indexProjectNodes,
+  getDescendantIds,
+  getProjectLeafName,
+  getProjectPath,
+} from "@/lib/projectTree";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -70,21 +77,38 @@ const Index = () => {
   useEffect(() => { localStorage.setItem("compactMode", compactMode ? "1" : "0"); }, [compactMode]);
 
   const {
-    tasks, addTask, updateTask, deleteTask, moveTask, toggleStatus, getCategories, setTasks,
+    tasks: rawTasks, addTask, updateTask: rawUpdateTask, deleteTask, moveTask, toggleStatus, getCategories, setTasks,
   } = useTasks(currentUser?.id);
 
   const kanban = useKanbanBoards(currentUser?.id);
 
   const {
     projects, addProject, updateProject, deleteProject,
-    addTaskToProject, updateProjectTask, deleteProjectTask, getProjectRole,
+    addTaskToProject, updateProjectTask, deleteProjectTask, getProjectRole, reparentProject,
   } = useProjects(currentUser?.id);
 
   const {
     presets: templatePresets, addPreset, updatePreset, deletePreset,
   } = useProjectTemplatePresets(currentUser?.id);
 
-  const { notes, addNote, updateNote, deleteNote } = useNotes(currentUser?.id);
+  const { notes: rawNotes, addNote, updateNote: rawUpdateNote, deleteNote } = useNotes(currentUser?.id);
+
+  // Project tree — used everywhere for breadcrumbs, filtering, derived category.
+  const projectTree = useMemo(() => buildProjectTree(projects), [projects]);
+  const projectNodeIndex = useMemo(() => indexProjectNodes(projectTree), [projectTree]);
+
+  // Enrich raw hook data: category = leaf project name (fallback "General").
+  const enrichedTasks = useMemo(() => rawTasks.map((t) => ({
+    ...t,
+    category: t.projectId ? getProjectLeafName(projectNodeIndex, t.projectId) || "General" : "General",
+  })), [rawTasks, projectNodeIndex]);
+  const notes = useMemo(() => rawNotes.map((n) => ({
+    ...n,
+    category: n.projectId ? getProjectLeafName(projectNodeIndex, n.projectId) || "General" : "General",
+  })), [rawNotes, projectNodeIndex]);
+
+  // Expose enriched tasks under the `tasks` name so downstream code keeps working.
+  const tasks = enrichedTasks;
 
   const filteredNotes = useMemo(() => {
     return notes.filter((n) => {
@@ -92,13 +116,15 @@ const Index = () => {
       if (activeProjectIds.length > 0) {
         const wantsNone = activeProjectIds.includes("__none__");
         const real = activeProjectIds.filter((id) => id !== "__none__");
+        const allowedIds = new Set<string>();
+        real.forEach((id) => getDescendantIds(projectNodeIndex, id).forEach((d) => allowedIds.add(d)));
         const isNone = !n.projectId;
-        const matches = (isNone && wantsNone) || (n.projectId && real.includes(n.projectId));
+        const matches = (isNone && wantsNone) || (n.projectId && allowedIds.has(n.projectId));
         if (!matches) return false;
       }
       return true;
     });
-  }, [notes, selectedCategories, activeProjectIds]);
+  }, [notes, selectedCategories, activeProjectIds, projectNodeIndex]);
 
   useEffect(() => {
     setViewMode(settings.defaultView as ViewMode);
@@ -177,20 +203,25 @@ const Index = () => {
   }, [taskCategories, settings.categoryColors, addCategoryColor]);
 
   // Cascade: each filter's option list is computed against tasks that pass all OTHER active filters.
+  // Project filter expands to include descendants — filtering by a parent shows all children too.
+  const expandProjectIds = useCallback(
+    (ids: string[]) => ids.flatMap((id) => getDescendantIds(projectNodeIndex, id)),
+    [projectNodeIndex],
+  );
   const filters = { dateFilter, overdueMode, selectedCategories, activeProjectIds };
   const filteredTasks = useMemo(
-    () => applyTaskFilters(tasks, filters),
+    () => applyTaskFilters(tasks, filters, { expandProjectIds }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [tasks, dateFilter, overdueMode, selectedCategories, activeProjectIds]
+    [tasks, dateFilter, overdueMode, selectedCategories, activeProjectIds, expandProjectIds]
   );
   const cascadedCategoryOptions = useMemo(() => {
-    const pool = applyTaskFilters(tasks, { dateFilter, overdueMode, activeProjectIds });
+    const pool = applyTaskFilters(tasks, { dateFilter, overdueMode, activeProjectIds }, { expandProjectIds });
     const names = new Set<string>();
     pool.forEach((t) => { if (t.category?.trim()) names.add(t.category.trim()); });
     // Always keep the user's current selections visible even if they no longer match.
     selectedCategories.forEach((c) => names.add(c));
     return Array.from(names).sort((a, b) => a.localeCompare(b));
-  }, [tasks, dateFilter, overdueMode, activeProjectIds, selectedCategories]);
+  }, [tasks, dateFilter, overdueMode, activeProjectIds, selectedCategories, expandProjectIds]);
   const cascadedProjectContext = useMemo(() => {
     const pool = applyTaskFilters(tasks, { dateFilter, overdueMode, selectedCategories });
     const ids = new Set<string>();
@@ -232,12 +263,72 @@ const Index = () => {
   const defaultCategory =
     selectedCategories.length === 1 ? selectedCategories[0] : undefined;
 
+  // Translate `category` into a subproject id. Category is derived from leaf project name;
+  // supplying one on a task means "put this task in a subproject with that name under the
+  // chosen parent (or as a new top-level project)".
+  const resolveCategoryToProject = (
+    providedProjectId: string | undefined,
+    category: string | undefined,
+  ): string | undefined => {
+    const parentId = providedProjectId ?? singleActiveProjectId ?? undefined;
+    const trimmed = category?.trim();
+    if (!trimmed || trimmed === "General") return parentId;
+    // If the parent already IS a project with this leaf name, keep as-is.
+    if (parentId) {
+      const parentName = getProjectLeafName(projectNodeIndex, parentId);
+      if (parentName.toLowerCase() === trimmed.toLowerCase()) return parentId;
+    }
+    // Find or create a sibling subproject under parentId (or top-level if none).
+    const siblings = projects.filter((p) => (p.parentId || null) === (parentId ?? null));
+    const existing = siblings.find((p) => p.name.toLowerCase() === trimmed.toLowerCase());
+    if (existing) return existing.id;
+    const created = addProject(trimmed, undefined, parentId ?? null);
+    return created.id;
+  };
+
   const handleAddTask: typeof addTask = (name, quadrant, options) => {
-    // TaskInput always passes category when the user completed the details step.
-    const projectId = options?.category
-      ? options.projectId
-      : options?.projectId ?? singleActiveProjectId;
-    return addTask(name, quadrant, { ...options, projectId });
+    const effectiveProjectId = resolveCategoryToProject(options?.projectId, options?.category);
+    return addTask(name, quadrant, { ...options, projectId: effectiveProjectId, category: undefined });
+  };
+
+  // Wrapped updateTask: translates any `category` update into a projectId change.
+  const updateTask: typeof rawUpdateTask = (id, updates) => {
+    if (updates.category !== undefined) {
+      const current = tasks.find((t) => t.id === id);
+      // "General" (or empty) means: clear categorization but keep the parent project.
+      const currentParent = current?.projectId
+        ? projects.find((p) => p.id === current.projectId)?.parentId ?? null
+        : null;
+      const trimmed = updates.category?.trim();
+      let nextProjectId: string | undefined;
+      if (!trimmed || trimmed === "General") {
+        nextProjectId = currentParent ?? undefined;
+      } else {
+        nextProjectId = resolveCategoryToProject(currentParent ?? undefined, trimmed);
+      }
+      const { category: _c, ...rest } = updates;
+      return rawUpdateTask(id, { ...rest, projectId: nextProjectId });
+    }
+    return rawUpdateTask(id, updates);
+  };
+
+  const updateNote: typeof rawUpdateNote = (id, updates) => {
+    if (updates.category !== undefined) {
+      const current = notes.find((n) => n.id === id);
+      const currentParent = current?.projectId
+        ? projects.find((p) => p.id === current.projectId)?.parentId ?? null
+        : null;
+      const trimmed = updates.category?.trim();
+      let nextProjectId: string | undefined;
+      if (!trimmed || trimmed === "General") {
+        nextProjectId = currentParent ?? undefined;
+      } else {
+        nextProjectId = resolveCategoryToProject(currentParent ?? undefined, trimmed);
+      }
+      const { category: _c, ...rest } = updates;
+      return rawUpdateNote(id, { ...rest, projectId: nextProjectId });
+    }
+    return rawUpdateNote(id, updates);
   };
 
   const handleDeleteTask = (id: string) => {
@@ -264,7 +355,7 @@ const Index = () => {
     return name;
   };
 
-  const handleCreateProject = (name: string) => addProject(name).id;
+  const handleCreateProject = (name: string, parentId?: string | null) => addProject(name, undefined, parentId ?? null).id;
 
   const handleRescheduleTasks = (ids: string[], newDueDate: string) => {
     ids.forEach((id) => updateTask(id, { dueDate: newDueDate }));
@@ -551,6 +642,7 @@ const Index = () => {
         categories={taskCategories}
         projects={projects}
         onCreateCategory={handleCreateCategory}
+        onCreateProject={handleCreateProject}
         onAddToSprint={(ids) => {
           const map = new Map(tasks.map((t) => [t.id, t] as const));
           const seeds: SprintSeedTask[] = ids

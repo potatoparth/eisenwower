@@ -47,6 +47,55 @@ function toErr(message) {
   return { content: [{ type: "text", text: message }], isError: true };
 }
 
+// src/lib/mcp/projectResolver.ts
+async function resolveProjectPath(sb, userId, path, create = false) {
+  if (!path?.trim()) return { projectId: null, created: [] };
+  const parts = path.split("/").map((s) => s.trim()).filter(Boolean);
+  if (parts.length === 0) return { projectId: null, created: [] };
+  const { data, error } = await sb.from("project_templates").select("id,name,parent_id").eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  const all = data ?? [];
+  const created = [];
+  let currentParent = null;
+  let currentId = null;
+  for (const part of parts) {
+    const match = all.find(
+      (p) => (p.parent_id ?? null) === currentParent && p.name.toLowerCase() === part.toLowerCase()
+    );
+    if (match) {
+      currentId = match.id;
+      currentParent = match.id;
+      continue;
+    }
+    if (!create) return { projectId: null, created };
+    const { data: inserted, error: insErr } = await sb.from("project_templates").insert({ user_id: userId, name: part, parent_id: currentParent }).select("id,name,parent_id").single();
+    if (insErr) throw new Error(insErr.message);
+    all.push(inserted);
+    created.push(inserted.id);
+    currentId = inserted.id;
+    currentParent = inserted.id;
+  }
+  return { projectId: currentId, created };
+}
+async function descendantProjectIds(sb, userId, rootId) {
+  const { data, error } = await sb.from("project_templates").select("id,parent_id").eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  const rows = data ?? [];
+  const childrenBy = /* @__PURE__ */ new Map();
+  rows.forEach((r) => {
+    const k = r.parent_id ?? null;
+    if (!childrenBy.has(k)) childrenBy.set(k, []);
+    childrenBy.get(k).push(r.id);
+  });
+  const out = [];
+  const walk = (id) => {
+    out.push(id);
+    (childrenBy.get(id) ?? []).forEach(walk);
+  };
+  walk(rootId);
+  return out;
+}
+
 // src/lib/mcp/tools/list-tasks.ts
 var list_tasks_default = defineTool({
   name: "list_tasks",
@@ -60,23 +109,41 @@ var list_tasks_default = defineTool({
       "not-important-urgent",
       "not-important-not-urgent"
     ]).optional().describe("Filter by Eisenhower quadrant."),
-    category: z2.string().optional().describe("Filter by category name."),
+    project_id: z2.string().uuid().optional().describe("Filter to tasks under this project id (includes tasks on all descendant subprojects)."),
+    project_path: z2.string().optional().describe("Alternative to project_id: '/'-separated project path."),
+    category: z2.string().optional().describe("DEPRECATED. Filters tasks whose immediate project has this leaf name."),
     limit: z2.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ status, quadrant, category, limit }, ctx) => {
+  handler: async ({ status, quadrant, project_id, project_path, category, limit }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
-    let q = supabaseForUser(ctx).from("tasks").select(
-      "id,name,description,category,quadrant,due_date,due_time,status,project_id,attachments,kanban_column,recurrence,recurrence_days,recurrence_time,is_recurring_instance,recurring_template_id,deadline_threshold_override,sort_order,created_at,updated_at"
+    const sb = supabaseForUser(ctx);
+    let q = sb.from("tasks").select(
+      "id,name,description,quadrant,due_date,due_time,status,project_id,attachments,kanban_column,recurrence,recurrence_days,recurrence_time,is_recurring_instance,recurring_template_id,deadline_threshold_override,sort_order,created_at,updated_at"
     ).order("created_at", { ascending: false }).limit(limit ?? 50);
     if (status) q = q.eq("status", status);
     if (quadrant) q = q.eq("quadrant", quadrant);
-    if (category) q = q.eq("category", category);
+    let filterProjectId = project_id ?? null;
+    if (!filterProjectId && project_path) {
+      const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, false);
+      filterProjectId = projectId;
+    }
+    if (filterProjectId) {
+      const ids = await descendantProjectIds(sb, ctx.getUserId(), filterProjectId);
+      q = q.in("project_id", ids);
+    }
     const { data, error } = await q;
     if (error) return toErr(error.message);
+    let rows = data ?? [];
+    if (category) {
+      const { data: projs } = await sb.from("project_templates").select("id,name").eq("user_id", ctx.getUserId());
+      const nameById = new Map((projs ?? []).map((p) => [p.id, p.name.toLowerCase()]));
+      const wanted = category.toLowerCase();
+      rows = rows.filter((t) => t.project_id && nameById.get(t.project_id) === wanted);
+    }
     return {
-      content: [{ type: "text", text: JSON.stringify(data ?? []) }],
-      structuredContent: { tasks: data ?? [] }
+      content: [{ type: "text", text: JSON.stringify(rows) }],
+      structuredContent: { tasks: rows }
     };
   }
 });
@@ -97,26 +164,50 @@ var create_task_default = defineTool2({
       "not-important-urgent",
       "not-important-not-urgent"
     ]).describe("Eisenhower quadrant."),
-    category: z3.string().optional().describe("Category name (default 'General')."),
+    category: z3.string().optional().describe(
+      "DEPRECATED. Treated as a leaf subproject under `project_id` (or as a new top-level project if none). Prefer `project_path`."
+    ),
     due_date: z3.string().optional().describe("Due date YYYY-MM-DD."),
     due_time: z3.string().optional().describe("Due time HH:MM (24h)."),
-    project_id: z3.string().uuid().optional().describe("Associate the task with a project (project_templates.id)."),
+    project_id: z3.string().uuid().optional().describe("Associate the task with a specific project id (project_templates.id)."),
+    project_path: z3.string().optional().describe(
+      "Alternative to project_id: '/'-separated project path like 'Work/Q4/Launch'. Any missing intermediate projects are auto-created for the user."
+    ),
     status: z3.enum(["open", "done"]).optional().describe("Initial status (default 'open'). Pass 'done' to create it already completed."),
     attachments: z3.array(attachmentSchema).optional().describe("Attachments to add. Use kind='link' with a URL, or kind='file' with an existing storage path in the task-attachments bucket.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false },
-  handler: async ({ name, description, quadrant, category, due_date, due_time, project_id, status, attachments }, ctx) => {
+  handler: async ({ name, description, quadrant, category, due_date, due_time, project_id, project_path, status, attachments }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
-    const { data, error } = await supabaseForUser(ctx).from("tasks").insert({
+    const sb = supabaseForUser(ctx);
+    let effectiveProjectId = project_id ?? null;
+    if (!effectiveProjectId && project_path) {
+      const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, true);
+      effectiveProjectId = projectId;
+    }
+    if (category && category !== "General") {
+      const cur = effectiveProjectId;
+      const { data: allProjects } = await sb.from("project_templates").select("id,name,parent_id").eq("user_id", ctx.getUserId());
+      const existing = (allProjects ?? []).find(
+        (p) => (p.parent_id ?? null) === cur && p.name.toLowerCase() === category.toLowerCase()
+      );
+      if (existing) {
+        effectiveProjectId = existing.id;
+      } else {
+        const { data: created, error: cErr } = await sb.from("project_templates").insert({ user_id: ctx.getUserId(), name: category, parent_id: cur }).select("id").single();
+        if (cErr) return toErr(cErr.message);
+        effectiveProjectId = created.id;
+      }
+    }
+    const { data, error } = await sb.from("tasks").insert({
       user_id: ctx.getUserId(),
       name,
       description: description ?? null,
       quadrant,
-      category: category ?? "General",
       due_date: due_date ?? null,
       due_time: due_time ?? null,
       status: status ?? "open",
-      project_id: project_id ?? null,
+      project_id: effectiveProjectId,
       attachments: attachments ? normalizeAttachments(attachments) : []
     }).select().single();
     if (error) return toErr(error.message);
@@ -144,22 +235,51 @@ var update_task_default = defineTool3({
       "not-important-urgent",
       "not-important-not-urgent"
     ]).optional().describe("Move task to a different Eisenhower quadrant."),
-    category: z4.string().optional(),
+    category: z4.string().optional().describe("DEPRECATED. Replaces the task's project with a subproject having this name under the task's current parent (or a new top-level project). Prefer `project_id`/`project_path`."),
     due_date: z4.string().nullable().optional().describe("YYYY-MM-DD, or null to clear."),
     due_time: z4.string().nullable().optional().describe("HH:MM (24h), or null to clear."),
     status: z4.enum(["open", "done"]).optional().describe("Set to 'done' to complete, 'open' to reopen."),
     project_id: z4.string().uuid().nullable().optional().describe("Associate with a project, or null to detach."),
+    project_path: z4.string().nullable().optional().describe("Alternative to project_id: '/'-separated project path; missing nodes are created."),
     attachments: z4.array(attachmentSchema).optional().describe("Attachments to add or replace. Use kind='link' with URL, or kind='file' with an existing storage path."),
     attachments_mode: z4.enum(["append", "replace"]).optional().describe("How to apply `attachments`: 'append' (default) adds to existing, 'replace' overwrites the full list.")
   },
   annotations: { readOnlyHint: false, idempotentHint: true },
-  handler: async ({ task_id, attachments, attachments_mode, ...fields }, ctx) => {
+  handler: async ({ task_id, attachments, attachments_mode, project_path, category, ...fields }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
     const patch = {};
     for (const [k, v] of Object.entries(fields)) {
       if (v !== void 0) patch[k] = v;
     }
     const sb = supabaseForUser(ctx);
+    if (project_path !== void 0) {
+      if (project_path === null || project_path === "") {
+        patch.project_id = null;
+      } else {
+        const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, true);
+        patch.project_id = projectId;
+      }
+    } else if (category !== void 0) {
+      const { data: current } = await sb.from("tasks").select("project_id").eq("id", task_id).single();
+      const currentProjectId = current?.project_id ?? null;
+      let parentId = null;
+      if (currentProjectId) {
+        const { data: cp } = await sb.from("project_templates").select("parent_id").eq("id", currentProjectId).single();
+        parentId = cp?.parent_id ?? null;
+      }
+      if (!category || category === "General") {
+        patch.project_id = parentId;
+      } else {
+        const { data: all } = await sb.from("project_templates").select("id,name,parent_id").eq("user_id", ctx.getUserId());
+        const existing = (all ?? []).find((p) => (p.parent_id ?? null) === parentId && p.name.toLowerCase() === category.toLowerCase());
+        if (existing) patch.project_id = existing.id;
+        else {
+          const { data: created, error: cErr } = await sb.from("project_templates").insert({ user_id: ctx.getUserId(), name: category, parent_id: parentId }).select("id").single();
+          if (cErr) return toErr(cErr.message);
+          patch.project_id = created.id;
+        }
+      }
+    }
     if (attachments !== void 0) {
       const normalized = normalizeAttachments(attachments);
       if ((attachments_mode ?? "append") === "replace") {
@@ -231,19 +351,37 @@ var list_notes_default = defineTool6({
   title: "List notes",
   description: "List the signed-in user's notes.",
   inputSchema: {
-    category: z7.string().optional().describe("Filter by category."),
+    project_id: z7.string().uuid().optional().describe("Filter by project id (includes descendants)."),
+    project_path: z7.string().optional().describe("Alternative to project_id: '/'-separated project path."),
+    category: z7.string().optional().describe("DEPRECATED. Filters notes whose immediate project leaf name matches."),
     limit: z7.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ category, limit }, ctx) => {
+  handler: async ({ project_id, project_path, category, limit }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
-    let q = supabaseForUser(ctx).from("notes").select("id,title,content,category,pinned,color,created_at,updated_at").order("updated_at", { ascending: false }).limit(limit ?? 50);
-    if (category) q = q.eq("category", category);
+    const sb = supabaseForUser(ctx);
+    let q = sb.from("notes").select("id,title,content,project_id,pinned,color,created_at,updated_at").order("updated_at", { ascending: false }).limit(limit ?? 50);
+    let filterProjectId = project_id ?? null;
+    if (!filterProjectId && project_path) {
+      const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, false);
+      filterProjectId = projectId;
+    }
+    if (filterProjectId) {
+      const ids = await descendantProjectIds(sb, ctx.getUserId(), filterProjectId);
+      q = q.in("project_id", ids);
+    }
     const { data, error } = await q;
     if (error) return toErr(error.message);
+    let rows = data ?? [];
+    if (category) {
+      const { data: projs } = await sb.from("project_templates").select("id,name").eq("user_id", ctx.getUserId());
+      const nameById = new Map((projs ?? []).map((p) => [p.id, p.name.toLowerCase()]));
+      const wanted = category.toLowerCase();
+      rows = rows.filter((n) => n.project_id && nameById.get(n.project_id) === wanted);
+    }
     return {
-      content: [{ type: "text", text: JSON.stringify(data ?? []) }],
-      structuredContent: { notes: data ?? [] }
+      content: [{ type: "text", text: JSON.stringify(rows) }],
+      structuredContent: { notes: rows }
     };
   }
 });
@@ -258,17 +396,38 @@ var create_note_default = defineTool7({
   inputSchema: {
     title: z8.string().trim().min(1).describe("Note title."),
     content: z8.string().optional().describe("Markdown / plain text body."),
-    category: z8.string().optional().describe("Category (default 'General')."),
+    category: z8.string().optional().describe("DEPRECATED. Treated as subproject-name under `project_path`/`project_id`."),
+    project_id: z8.string().uuid().optional().describe("Attach to a specific project id."),
+    project_path: z8.string().optional().describe("Alternative to project_id: '/'-separated project path; missing nodes are created."),
     pinned: z8.boolean().optional().describe("Pin to the top.")
   },
   annotations: { readOnlyHint: false },
-  handler: async ({ title, content, category, pinned }, ctx) => {
+  handler: async ({ title, content, category, project_id, project_path, pinned }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
-    const { data, error } = await supabaseForUser(ctx).from("notes").insert({
+    const sb = supabaseForUser(ctx);
+    let effectiveProjectId = project_id ?? null;
+    if (!effectiveProjectId && project_path) {
+      const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, true);
+      effectiveProjectId = projectId;
+    }
+    if (category && category !== "General") {
+      const cur = effectiveProjectId;
+      const { data: all } = await sb.from("project_templates").select("id,name,parent_id").eq("user_id", ctx.getUserId());
+      const existing = (all ?? []).find(
+        (p) => (p.parent_id ?? null) === cur && p.name.toLowerCase() === category.toLowerCase()
+      );
+      if (existing) effectiveProjectId = existing.id;
+      else {
+        const { data: created, error: cErr } = await sb.from("project_templates").insert({ user_id: ctx.getUserId(), name: category, parent_id: cur }).select("id").single();
+        if (cErr) return toErr(cErr.message);
+        effectiveProjectId = created.id;
+      }
+    }
+    const { data, error } = await sb.from("notes").insert({
       user_id: ctx.getUserId(),
       title,
       content: content ?? "",
-      category: category ?? "General",
+      project_id: effectiveProjectId,
       pinned: pinned ?? false
     }).select().single();
     if (error) return toErr(error.message);
@@ -285,18 +444,33 @@ import { z as z9 } from "npm:zod@^4.4.3";
 var list_projects_default = defineTool8({
   name: "list_projects",
   title: "List projects",
-  description: "List the signed-in user's projects (project templates). Includes projects owned by the user.",
+  description: "List the signed-in user's projects (project templates). Each row includes `parent_id` and a computed breadcrumb `path` (root-first, '/'-joined). Projects form a tree \u2014 a project with `parent_id` set is a subproject of that parent.",
   inputSchema: {
     limit: z9.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ limit }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
-    const { data, error } = await supabaseForUser(ctx).from("project_templates").select("id,name,description,created_at,updated_at").order("updated_at", { ascending: false }).limit(limit ?? 50);
+    const { data, error } = await supabaseForUser(ctx).from("project_templates").select("id,name,description,parent_id,sort_order,created_at,updated_at").order("updated_at", { ascending: false }).limit(limit ?? 50);
     if (error) return toErr(error.message);
+    const rows = data ?? [];
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    const withPath = rows.map((r) => {
+      const chain = [];
+      let cur = r.id;
+      const seen = /* @__PURE__ */ new Set();
+      while (cur && !seen.has(cur)) {
+        seen.add(cur);
+        const row = byId.get(cur);
+        if (!row) break;
+        chain.unshift(row.name);
+        cur = row.parent_id;
+      }
+      return { ...r, path: chain.join(" / ") };
+    });
     return {
-      content: [{ type: "text", text: JSON.stringify(data ?? []) }],
-      structuredContent: { projects: data ?? [] }
+      content: [{ type: "text", text: JSON.stringify(withPath) }],
+      structuredContent: { projects: withPath }
     };
   }
 });
@@ -310,15 +484,24 @@ var create_project_default = defineTool9({
   description: "Create a new project for the signed-in user.",
   inputSchema: {
     name: z10.string().trim().min(1).describe("Project name."),
-    description: z10.string().optional()
+    description: z10.string().optional(),
+    parent_id: z10.string().uuid().nullable().optional().describe("Parent project id \u2014 creates a subproject under it. Omit for a top-level project."),
+    parent_path: z10.string().optional().describe("Alternative to parent_id: '/'-separated path to the parent project; missing nodes are auto-created.")
   },
   annotations: { readOnlyHint: false },
-  handler: async ({ name, description }, ctx) => {
+  handler: async ({ name, description, parent_id, parent_path }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
-    const { data, error } = await supabaseForUser(ctx).from("project_templates").insert({
+    const sb = supabaseForUser(ctx);
+    let effectiveParentId = parent_id ?? null;
+    if (!effectiveParentId && parent_path) {
+      const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), parent_path, true);
+      effectiveParentId = projectId;
+    }
+    const { data, error } = await sb.from("project_templates").insert({
       user_id: ctx.getUserId(),
       name,
-      description: description ?? null
+      description: description ?? null,
+      parent_id: effectiveParentId
     }).select().single();
     if (error) return toErr(error.message);
     return {
