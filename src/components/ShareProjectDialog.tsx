@@ -259,6 +259,15 @@ export function ShareProjectDialog({ open, onOpenChange, project, matrixTasks, n
                       <p className="text-[11px] text-muted-foreground truncate">
                         {c.email} · {c.scope === "all" ? "all items" : "selected items"}
                       </p>
+                      {c.role === "editor" && (
+                        <label className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
+                          <Switch
+                            checked={!!c.can_create_subprojects}
+                            onCheckedChange={(v) => changeCanCreateSubprojects(c.user_id, v)}
+                          />
+                          Can create sub-projects
+                        </label>
+                      )}
                     </div>
                     <Select value={c.role} onValueChange={(v) => changeRole(c.user_id, v as Role)}>
                       <SelectTrigger className="w-24 h-7 text-xs"><SelectValue /></SelectTrigger>
