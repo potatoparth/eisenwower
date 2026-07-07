@@ -14,6 +14,7 @@ import { toast } from "@/hooks/use-toast";
 import { ProjectTemplate, ProjectTask } from "@/types/project";
 import { Task } from "@/types/task";
 import { Note } from "@/types/note";
+import { Switch } from "@/components/ui/switch";
 
 type Role = "editor" | "viewer";
 type Scope = "all" | "selected";
@@ -23,6 +24,7 @@ interface Collaborator {
   user_id: string;
   role: string;
   scope: string;
+  can_create_subprojects: boolean;
   display_name: string | null;
   email: string | null;
 }
@@ -51,10 +53,11 @@ export function ShareProjectDialog({ open, onOpenChange, project, matrixTasks, n
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [loadingCollab, setLoadingCollab] = useState(false);
+  const [canCreateSubprojects, setCanCreateSubprojects] = useState(true);
 
   const reset = useCallback(() => {
     setRole("editor"); setScope("all"); setSelectedTasks(new Set());
-    setSelectedNotes(new Set()); setInviteUrl(null);
+    setSelectedNotes(new Set()); setInviteUrl(null); setCanCreateSubprojects(true);
   }, []);
 
   const loadCollaborators = useCallback(async () => {
@@ -101,6 +104,7 @@ export function ShareProjectDialog({ open, onOpenChange, project, matrixTasks, n
     if (!user) { setCreating(false); toast({ title: "Sign in required" }); return; }
     const { error } = await supabase.from("project_invites").insert({
       token, project_id: project.id, role, scope, item_ids, created_by: user.id,
+      can_create_subprojects: role === "editor" ? canCreateSubprojects : false,
     });
     setCreating(false);
     if (error) { toast({ title: "Could not create invite", description: error.message }); return; }
@@ -125,6 +129,15 @@ export function ShareProjectDialog({ open, onOpenChange, project, matrixTasks, n
 
   const changeRole = async (userId: string, next: Role) => {
     await supabase.from("project_collaborators").update({ role: next }).eq("project_id", project.id).eq("user_id", userId);
+    loadCollaborators();
+  };
+
+  const changeCanCreateSubprojects = async (userId: string, value: boolean) => {
+    await supabase
+      .from("project_collaborators")
+      .update({ can_create_subprojects: value })
+      .eq("project_id", project.id)
+      .eq("user_id", userId);
     loadCollaborators();
   };
 
