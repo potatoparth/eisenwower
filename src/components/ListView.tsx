@@ -132,7 +132,7 @@ export function ListView({
             {activeFilters.map((filter) => (
               <span key={filter} className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">{filter}</span>
             ))}
-            <button onClick={() => { setCategoryFilter("all"); setStatusFilter("all"); }} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Clear</button>
+            <button onClick={() => { setStatusFilter("all"); }} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Clear</button>
           </div>
         )}
         <span className="text-sm text-muted-foreground ml-auto">{filteredTasks.length} task{filteredTasks.length !== 1 ? "s" : ""}</span>
