@@ -507,21 +507,15 @@ function NoteCard(props: CardProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 mt-3 text-[11px]">
-          <span
-            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 border"
-            style={{
-              borderColor: catColor ? `${catColor}66` : undefined,
-              backgroundColor: catColor ? `${catColor}22` : undefined,
-              color: catColor,
-            }}
-          >
-            <Tag className="w-3 h-3" />
-            {note.category}
-          </span>
-          {props.projectName && (
+          {props.projectName ? (
             <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 border border-border/60 text-muted-foreground">
               <FolderKanban className="w-3 h-3" />
               {props.projectName}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 border border-border/40 text-muted-foreground/60">
+              <FolderKanban className="w-3 h-3" />
+              Unassigned
             </span>
           )}
         </div>
