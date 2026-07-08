@@ -324,10 +324,9 @@ export function TaskInput({
       <Dialog
         open={step === "quadrant" || step === "details"}
         onOpenChange={(o) => {
-          if (!o) {
-            if (step === "details" && canComplete) handleComplete();
-            else reset();
-          }
+          // Closing the dialog (X button, overlay click, Esc) should always
+          // cancel — never silently save. Use the explicit "Add task" button.
+          if (!o) reset();
         }}
       >
         <DialogContent className="p-0 gap-0 border border-border/60 bg-card rounded-2xl max-w-lg overflow-hidden">
@@ -347,10 +346,10 @@ export function TaskInput({
                 size="sm"
                 onClick={handleComplete}
                 disabled={!canComplete}
-                className="h-7 rounded-full text-xs gap-1 flex-shrink-0"
+                className="h-8 rounded-full text-xs gap-1.5 flex-shrink-0 px-3"
                 title="Add task now with current details (⏎)"
               >
-                <Zap className="w-3 h-3" /> Quick add
+                <Zap className="w-3.5 h-3.5" /> Add task
               </Button>
             )}
           </div>
@@ -430,17 +429,21 @@ export function TaskInput({
                     />
                   </div>
                   {recentProjectIds.length > 0 && (
-                    <ChipStrip
-                      items={recentProjectIds
-                        .map((id) => {
-                          const p = projects.find((x) => x.id === id);
-                          return p ? { value: p.id, label: p.name } : null;
-                        })
-                        .filter((x): x is { value: string; label: string } => !!x)}
-                      value={projectId}
-                      onSelect={setProjectId}
-                      ariaLabel="Recent projects"
-                    />
+                    <div className="relative -mx-1">
+                      <ChipStrip
+                        items={recentProjectIds
+                          .map((id) => {
+                            const p = projects.find((x) => x.id === id);
+                            return p ? { value: p.id, label: p.name } : null;
+                          })
+                          .filter((x): x is { value: string; label: string } => !!x)}
+                        value={projectId}
+                        onSelect={setProjectId}
+                        ariaLabel="Recent projects"
+                      />
+                      {/* Fade edge so users see the row is horizontally scrollable */}
+                      <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-card to-transparent" />
+                    </div>
                   )}
                 </div>
                 <div className="flex justify-end gap-1.5 pt-1">
