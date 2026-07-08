@@ -592,6 +592,8 @@ const Index = () => {
                 onDeleteProject={deleteProject} onAddTask={addTaskToProject}
                 onUpdateTask={updateProjectTask} onDeleteTask={deleteProjectTask}
                 onAddMatrixTask={handleAddTask}
+                onToggleMatrixTask={toggleStatus}
+                onDeleteMatrixTask={(id) => deleteTask(id)}
                 quadrants={quadrants}
                 categories={taskCategories}
                 onCreateCategory={handleCreateCategory}
