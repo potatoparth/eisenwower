@@ -18,7 +18,7 @@ interface Props {
  *   - CheckCheck               → "select all visible"
  */
 export function SelectionToolbar({ getAllIds, compact, className }: Props) {
-  const { selectMode, toggleSelectMode, setSelectMode, selectMany, clear, count } = useSelection();
+  const { selectMode, toggleSelectMode, setSelectMode, selectMany, clear, count, has } = useSelection();
   const size = compact ? "h-8 w-8" : "h-9 w-9";
 
   const handleSelectAll = () => {
@@ -26,7 +26,7 @@ export function SelectionToolbar({ getAllIds, compact, className }: Props) {
     if (!selectMode) setSelectMode(true);
     if (ids.length === 0) return;
     // If everything visible is already selected, treat the button as "clear".
-    const allSelected = ids.every((id) => count > 0) && ids.length === count;
+    const allSelected = ids.every((id) => has(id));
     if (allSelected) clear();
     else selectMany(ids);
   };
