@@ -73,6 +73,7 @@ export function ProjectBuilder({
   const sel = useSelectionOptional();
   const isSelectMode = !!sel?.selectMode;
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [directOnly, setDirectOnly] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDesc, setNewProjectDesc] = useState("");
   const [newProjectPresetId, setNewProjectPresetId] = useState<string>("__none__");
@@ -99,6 +100,26 @@ export function ProjectBuilder({
   // from every subproject too.
   const projectTree = useMemo(() => buildProjectTree(projects), [projects]);
   const projectNodeIndex = useMemo(() => indexProjectNodes(projectTree), [projectTree]);
+  // Direct (own) count per project — inline project_tasks + matrix tasks + notes assigned to that project id only.
+  const directCountByProject = useMemo(() => {
+    const m = new Map<string, number>();
+    projects.forEach((p) => m.set(p.id, p.tasks.length));
+    allTasks.forEach((t) => { if (t.projectId) m.set(t.projectId, (m.get(t.projectId) ?? 0) + 1); });
+    allNotes.forEach((n) => { if (n.projectId) m.set(n.projectId, (m.get(n.projectId) ?? 0) + 1); });
+    return m;
+  }, [projects, allTasks, allNotes]);
+  // Rollup count per project — direct + all descendants.
+  const totalCountByProject = useMemo(() => {
+    const m = new Map<string, number>();
+    const walk = (node: ReturnType<typeof buildProjectTree>[number]): number => {
+      let sum = directCountByProject.get(node.project.id) ?? 0;
+      node.children.forEach((c) => { sum += walk(c); });
+      m.set(node.project.id, sum);
+      return sum;
+    };
+    projectTree.forEach(walk);
+    return m;
+  }, [projectTree, directCountByProject]);
   const allParentIds = useMemo(
     () => flattenProjectTree(projectTree).filter((n) => n.children.length > 0).map((n) => n.project.id),
     [projectTree],
@@ -112,9 +133,17 @@ export function ProjectBuilder({
   const collapseAllProjects = () => setCollapsedProjectIds(new Set(allParentIds));
   const expandAllProjects = () => setCollapsedProjectIds(new Set());
   const descendantIds = useMemo(
-    () => selectedProject ? new Set(getDescendantIds(projectNodeIndex, selectedProject.id)) : new Set<string>(),
-    [projectNodeIndex, selectedProject],
+    () => {
+      if (!selectedProject) return new Set<string>();
+      if (directOnly) return new Set([selectedProject.id]);
+      return new Set(getDescendantIds(projectNodeIndex, selectedProject.id));
+    },
+    [projectNodeIndex, selectedProject, directOnly],
   );
+  const selectProject = (id: string, opts?: { directOnly?: boolean }) => {
+    setSelectedProjectId(id);
+    setDirectOnly(!!opts?.directOnly);
+  };
   const mappedTasks = selectedProject ? allTasks.filter(t => t.projectId && descendantIds.has(t.projectId)) : [];
   const mappedNotes = selectedProject ? allNotes.filter(n => n.projectId && descendantIds.has(n.projectId)) : [];
   const filteredMappedNotes = useMemo(() => {
@@ -166,13 +195,13 @@ export function ProjectBuilder({
 
   const renderProjectTreeNode = (n: ReturnType<typeof buildProjectTree>[number]): JSX.Element => {
     const p = n.project;
-    const active = selectedProjectId === p.id;
+    const active = selectedProjectId === p.id && !directOnly;
     const hasChildren = n.children.length > 0;
     const isCollapsed = collapsedProjectIds.has(p.id);
-    const count =
-      p.tasks.length +
-      allTasks.filter((t) => t.projectId === p.id).length +
-      allNotes.filter((n2) => n2.projectId === p.id).length;
+    const count = totalCountByProject.get(p.id) ?? 0;
+    const directCount = directCountByProject.get(p.id) ?? 0;
+    const showDirectRow = hasChildren && directCount > 0;
+    const directActive = selectedProjectId === p.id && directOnly;
     const canEditThis = (getProjectRole?.(p.id) ?? "owner") !== "viewer";
     const isDragTarget = dropTargetId === p.id;
     const invalidDrop =
@@ -243,7 +272,7 @@ export function ProjectBuilder({
           )}
           <button
             type="button"
-            onClick={() => setSelectedProjectId(p.id)}
+            onClick={() => selectProject(p.id)}
             className={cn(
               "flex-1 min-w-0 text-left truncate px-1.5 py-0.5 rounded-md",
               active && "font-semibold text-foreground",
@@ -276,6 +305,37 @@ export function ProjectBuilder({
           >
             <div className="absolute top-0 bottom-1 left-0 w-px bg-border/60" />
             <div className="pl-0">
+              {showDirectRow && (
+                <div style={{ marginLeft: -(n.depth * 16 + 12) }}>
+                  <button
+                    type="button"
+                    onClick={() => selectProject(p.id, { directOnly: true })}
+                    className={cn(
+                      "w-full flex items-center gap-1 rounded-lg pr-1 py-1 text-sm transition-colors",
+                      directActive
+                        ? "bg-primary/15 text-foreground"
+                        : "hover:bg-secondary/60 text-muted-foreground",
+                    )}
+                    style={{ paddingLeft: (n.depth + 1) * 16 + 4 }}
+                    title="Tasks & notes in this project, not in any subproject"
+                  >
+                    <span className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                      <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                    </span>
+                    <span className={cn("flex-1 min-w-0 text-left truncate px-1.5 py-0.5 rounded-md italic", directActive && "font-semibold text-foreground")}>
+                      No subproject
+                    </span>
+                    <span
+                      className={cn(
+                        "text-[11px] tabular-nums px-1.5 py-0.5 rounded-md flex-shrink-0",
+                        directActive ? "bg-primary/25 text-foreground" : "bg-secondary/60 text-muted-foreground",
+                      )}
+                    >
+                      {directCount}
+                    </span>
+                  </button>
+                </div>
+              )}
               {n.children.map((c) => (
                 <div key={c.project.id} style={{ marginLeft: -(n.depth * 16 + 12) }}>
                   {renderProjectTreeNode(c)}
@@ -296,12 +356,12 @@ export function ProjectBuilder({
 
   const renderSearchResult = (n: ReturnType<typeof buildProjectTree>[number]): JSX.Element => {
     const p = n.project;
-    const active = selectedProjectId === p.id;
+    const active = selectedProjectId === p.id && !directOnly;
     return (
       <button
         key={p.id}
         type="button"
-        onClick={() => { setSelectedProjectId(p.id); setMobileRailOpen(false); }}
+        onClick={() => { selectProject(p.id); setMobileRailOpen(false); }}
         className={cn(
           "w-full text-left flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors",
           active ? "bg-primary/15 text-foreground" : "hover:bg-secondary/60 text-muted-foreground",
@@ -520,6 +580,11 @@ export function ProjectBuilder({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-xl tracking-tight">{selectedProject.name}</h3>
+                {directOnly && (
+                  <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-secondary text-muted-foreground italic">
+                    no subproject
+                  </span>
+                )}
                 {!isOwner && (
                   <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-secondary text-muted-foreground flex items-center gap-1">
                     {selectedRole === "viewer" ? <><Eye className="w-2.5 h-2.5" /> viewer</> : <>shared · editor</>}
