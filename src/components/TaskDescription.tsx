@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface LinkDialogState {
   idx: number;
@@ -208,6 +209,7 @@ function DescriptionEditor({
   onCollapse,
   stickyToolbar,
 }: EditorProps) {
+  const { toast } = useToast();
   const lines = useMemo<Line[]>(() => {
     const parsed = parse(value);
     return parsed.length > 0 ? parsed : [{ type: "text", indent: 0, text: "" }];
@@ -257,6 +259,26 @@ function DescriptionEditor({
     idx: number
   ) => {
     const line = lines[idx];
+    // Cmd/Ctrl+A: first press selects the current line (default behavior).
+    // If the current line is ALREADY fully selected, treat as "select all"
+    // across the whole description and copy it to the clipboard — textareas
+    // can't share a native selection, so this is the practical equivalent.
+    if ((e.metaKey || e.ctrlKey) && (e.key === "a" || e.key === "A")) {
+      const el = e.currentTarget;
+      const fullySelected =
+        el.selectionStart === 0 && el.selectionEnd === el.value.length && el.value.length > 0;
+      if (fullySelected || lines.length === 1) {
+        e.preventDefault();
+        const full = serialize(lines);
+        navigator.clipboard?.writeText(full).then(
+          () => toast({ description: "Description copied to clipboard" }),
+          () => toast({ description: "Couldn't copy description", variant: "destructive" })
+        );
+        return;
+      }
+      // Otherwise let the browser's default Ctrl+A select this textarea.
+      return;
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       // Enter on an empty structured item → downgrade to plain text
