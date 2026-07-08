@@ -501,13 +501,24 @@ interface CardProps {
 function NoteCard(props: CardProps) {
   const { note, dark } = props;
   const bg = noteColorFor(note.color, dark ? "dark" : "light");
+  const sel = useSelectionOptional();
+  const isSelectMode = !!sel?.selectMode;
+  const isSelected = !!sel?.has(note.id);
   return (
     <motion.div
       layout
       initial={false}
-      className="mb-3 break-inside-avoid rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow group cursor-pointer"
+      className={cn(
+        "mb-3 break-inside-avoid rounded-2xl border shadow-sm hover:shadow-md transition-shadow group cursor-pointer",
+        isSelectMode && isSelected ? "border-primary ring-2 ring-primary" : "border-border"
+      )}
       style={{ backgroundColor: bg, ["--note-bg" as any]: bg }}
       onClick={(e) => {
+        if (isSelectMode) {
+          e.stopPropagation();
+          sel?.toggle(note.id);
+          return;
+        }
         const el = e.target as HTMLElement;
         if (el.closest("button, a, input, textarea, [role='dialog'], [data-radix-popper-content-wrapper]")) return;
         props.onEdit(note.id);
@@ -515,6 +526,17 @@ function NoteCard(props: CardProps) {
     >
       <div className="p-3">
         <div className="flex items-start gap-2">
+          {isSelectMode && (
+            <span
+              aria-hidden
+              className={cn(
+                "mt-0.5 flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors",
+                isSelected ? "bg-primary border-primary" : "border-muted-foreground/50 bg-transparent"
+              )}
+            >
+              {isSelected && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+            </span>
+          )}
           <div className="flex-1 min-w-0">
             <div>
               {note.title && (
