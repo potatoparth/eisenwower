@@ -645,7 +645,7 @@ const Index = () => {
 
       <footer className="flex-shrink-0 h-10 border-t border-border/50" aria-hidden />
 
-      <BulkActionBar
+      {viewMode !== "notes" && <BulkActionBar
         onBulkReschedule={handleBulkReschedule}
         onBulkDelete={(ids) => ids.forEach((id) => deleteTask(id))}
         onBulkSetCategory={(ids, category) =>
@@ -682,7 +682,7 @@ const Index = () => {
           await kanban.assignTasks(boardId, columnKey, ids);
           setViewMode("kanban");
         }}
-      />
+      />}
 
       {selectedTask && useSidebarDetail && (
         <TaskDetailPanel

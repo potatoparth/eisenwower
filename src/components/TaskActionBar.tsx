@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, useEffect } from "react";
-import { SquarePen, Search, Recycle, X, CalendarClock, AlertCircle, CheckSquare } from "lucide-react";
+import { SquarePen, Search, Recycle, X, CalendarClock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
@@ -15,6 +15,7 @@ import { isOverdue } from "@/lib/sort";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
+import { SelectionToolbar } from "@/components/SelectionToolbar";
 import { useSelectionOptional } from "@/hooks/useSelection";
 
 interface Props {
@@ -126,21 +127,9 @@ export function TaskActionBar({
   );
 
   return (
-    <div className="grid w-full grid-cols-[2.5rem_minmax(0,1fr)_2.5rem_2.5rem] items-center gap-2">
+    <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_2.5rem_2.5rem] items-center gap-2">
       {selection ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "h-10 w-10 rounded-full",
-            selection.selectMode && "text-primary bg-primary/10 hover:text-primary"
-          )}
-          onClick={() => selection.toggleSelectMode()}
-          title={selection.selectMode ? "Exit select mode" : "Select tasks"}
-          aria-pressed={selection.selectMode}
-        >
-          <CheckSquare className="w-4 h-4" />
-        </Button>
+        <SelectionToolbar getAllIds={() => tasks.map((t) => t.id)} />
       ) : (
         <span />
       )}
