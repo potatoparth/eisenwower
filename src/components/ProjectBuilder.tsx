@@ -64,12 +64,14 @@ export function ProjectBuilder({
   projects, allTasks = [], allNotes = [], onAddNote, onUpdateNote, onDeleteNote,
   onAddProject, onUpdateProject, onDeleteProject,
   onAddTask, onUpdateTask, onDeleteTask,
-  onAddMatrixTask, quadrants, categories = [], onCreateCategory, onCreateProject,
+  onAddMatrixTask, onToggleMatrixTask, onDeleteMatrixTask, quadrants, categories = [], onCreateCategory, onCreateProject,
   recentCategories, recentProjectIds,
   onSelectTask, onDeleteAllDone, onRescheduleTasks,
   getProjectRole,
   templatePresets = [], onAddPreset, onUpdatePreset, onDeletePreset,
 }: ProjectBuilderProps) {
+  const sel = useSelectionOptional();
+  const isSelectMode = !!sel?.selectMode;
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDesc, setNewProjectDesc] = useState("");
