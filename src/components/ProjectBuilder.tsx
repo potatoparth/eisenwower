@@ -333,6 +333,7 @@ export function ProjectBuilder({
                     >
                       {directCount}
                     </span>
+                    <span className="w-6 flex-shrink-0" aria-hidden />
                   </button>
                 </div>
               )}
