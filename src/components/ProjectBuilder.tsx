@@ -621,23 +621,71 @@ export function ProjectBuilder({
               );
                 })}
 
-                {mappedTasks.map(t => (
-                  <button
-                    key={t.id}
-                    onClick={() => onSelectTask?.(t)}
-                    className="w-full text-left flex items-center gap-3 bg-card rounded-xl border border-border p-3 hover:border-primary/50 transition-colors"
-                  >
-                    <div className={cn("w-2 h-2 rounded-full flex-shrink-0", t.status === "done" ? "bg-emerald-500" : "bg-primary")} />
-                    <div className="flex-1 min-w-0">
-                      <p className={cn("text-sm font-medium truncate", t.status === "done" && "line-through text-muted-foreground")}>{t.name}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span className="capitalize">{t.quadrant.replace(/-/g, " ")}</span>
-                        {t.category && <span>• {t.category}</span>}
-                        {t.dueDate && <span>• due {t.dueDate}</span>}
+                {mappedTasks.map(t => {
+                  const qInfo = (quadrants?.find(q => q.id === t.quadrant)) ?? QUADRANT_MAP[t.quadrant];
+                  const isDone = t.status === "done";
+                  const isSelected = !!sel?.has(t.id);
+                  return (
+                    <div
+                      key={t.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        if (isSelectMode) { sel?.toggle(t.id); return; }
+                        if ((e.target as HTMLElement).closest("button")) return;
+                        onSelectTask?.(t);
+                      }}
+                      className={cn(
+                        "w-full text-left flex items-center gap-3 bg-card rounded-xl border border-border p-3 hover:border-primary/50 transition-colors cursor-pointer",
+                        isSelectMode && isSelected && "ring-2 ring-primary bg-primary/5"
+                      )}
+                    >
+                      {isSelectMode && (
+                        <span
+                          aria-hidden
+                          className={cn(
+                            "flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors",
+                            isSelected ? "bg-primary border-primary" : "border-muted-foreground/50"
+                          )}
+                        >
+                          {isSelected && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onToggleMatrixTask?.(t.id); }}
+                        className={cn(
+                          "w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0",
+                          isDone && "bg-current"
+                        )}
+                        style={{
+                          borderColor: `hsl(var(--quadrant-${qInfo.color}))`,
+                          color: `hsl(var(--quadrant-${qInfo.color}))`,
+                        }}
+                        aria-label={isDone ? "Mark as open" : "Mark as done"}
+                      >
+                        {isDone && <Check className="w-2.5 h-2.5 text-background" />}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn("text-sm font-medium truncate", isDone && "line-through text-muted-foreground")}>{t.name}</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="capitalize">{qInfo.title}</span>
+                          {t.dueDate && <span>• due {t.dueDate}</span>}
+                        </div>
                       </div>
+                      {canEdit && onDeleteMatrixTask && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="w-6 h-6 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"
+                          onClick={(e) => { e.stopPropagation(); onDeleteMatrixTask(t.id); }}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
                     </div>
-                  </button>
-                ))}
+                  );
+                })}
 
                 {selectedProject.tasks.length === 0 && mappedTasks.length === 0 && (
                   <div className="text-center py-10 text-muted-foreground">
