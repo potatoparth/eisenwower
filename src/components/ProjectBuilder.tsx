@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, ChevronRight, ChevronDown, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate, ChevronsDownUp, ChevronsUpDown, PanelLeft } from "lucide-react";
+import { Plus, Trash2, ChevronRight, ChevronDown, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate, ChevronsDownUp, ChevronsUpDown, PanelLeft, CornerLeftUp } from "lucide-react";
 import { ProjectTemplate, ProjectTask, ProjectTemplatePreset, PresetTask } from "@/types/project";
 import { buildProjectTree, flattenProjectTree, indexProjectNodes, getDescendantIds, wouldCreateCycle, searchProjectTree } from "@/lib/projectTree";
 import { ShareProjectDialog } from "@/components/ShareProjectDialog";
@@ -296,6 +296,18 @@ export function ProjectBuilder({
           >
             <Plus className="w-3.5 h-3.5" />
           </button>
+          {canEditThis && p.parentId != null && (
+            <button
+              title="Move to top level"
+              onClick={(e) => {
+                e.stopPropagation();
+                onUpdateProject(p.id, { parentId: null });
+              }}
+              className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-foreground rounded flex-shrink-0"
+            >
+              <CornerLeftUp className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
         {hasChildren && !isCollapsed && (
           <div
