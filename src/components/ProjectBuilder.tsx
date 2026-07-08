@@ -6,6 +6,8 @@ import { buildProjectTree, flattenProjectTree, indexProjectNodes, getDescendantI
 import { ShareProjectDialog } from "@/components/ShareProjectDialog";
 import { ProjectTemplatesDialog } from "@/components/ProjectTemplatesDialog";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
+import { QUADRANT_MAP } from "@/types/task";
+import { useSelectionOptional } from "@/hooks/useSelection";
 import { Note, noteColorFor } from "@/types/note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +43,8 @@ interface ProjectBuilderProps {
   onDeleteTask: (projectId: string, taskId: string) => void;
   // Matrix-style task creation (creates a real Task tied to this project).
   onAddMatrixTask?: (name: string, quadrant: Quadrant, options?: TaskAddOptions) => void;
+  onToggleMatrixTask?: (id: string) => void;
+  onDeleteMatrixTask?: (id: string) => void;
   quadrants?: QuadrantInfo[];
   categories?: string[];
   onCreateCategory?: TaskInputPickerProps["onCreateCategory"];
