@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pin, PinOff, Trash2, Palette, FolderKanban, ListChecks, Search, X, StickyNote } from "lucide-react";
+import { Pin, PinOff, Trash2, Palette, FolderKanban, ListChecks, Search, X, StickyNote, Check } from "lucide-react";
 import { Note, NOTE_COLORS, noteColorFor } from "@/types/note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,8 @@ import { Paperclip } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ProjectTemplate } from "@/types/project";
 import { cn } from "@/lib/utils";
+import { SelectionToolbar } from "@/components/SelectionToolbar";
+import { useSelectionOptional } from "@/hooks/useSelection";
 
 interface NotesViewProps {
   notes: Note[];
@@ -57,6 +59,8 @@ export function NotesView(props: NotesViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [composing, setComposing] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const selection = useSelectionOptional();
+  const isSelectMode = !!selection?.selectMode;
   const editingNote = useMemo(
     () => (editingId ? notes.find((n) => n.id === editingId) ?? null : null),
     [editingId, notes]
@@ -93,7 +97,7 @@ export function NotesView(props: NotesViewProps) {
   return (
     <div className="flex-1 min-h-0 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-1 pb-8">
-        <div ref={composerWrapRef} className="pt-4 pb-2 flex justify-center">
+        <div ref={composerWrapRef} className="pt-4 pb-2 flex justify-center items-center gap-2">
           {composing || editingNote ? (
             <div className="w-full max-w-xl [&>div]:pt-0 [&>div]:pb-0">
               <NoteComposer
@@ -112,6 +116,7 @@ export function NotesView(props: NotesViewProps) {
               />
             </div>
           ) : (
+            <>
             <div className="relative flex h-12 w-full max-w-xl items-center rounded-full border border-border/60 bg-secondary/40 px-5">
               {searchOpen ? (
                 <Input
@@ -147,8 +152,42 @@ export function NotesView(props: NotesViewProps) {
                 </Button>
               </div>
             </div>
+            {selection && (
+              <SelectionToolbar
+                compact
+                getAllIds={() => filteredNotes.map((n) => n.id)}
+              />
+            )}
+            </>
           )}
         </div>
+
+        {isSelectMode && selection && selection.count > 0 && (
+          <div className="flex items-center justify-center gap-3 py-2 text-xs">
+            <span className="text-muted-foreground">
+              {selection.count} note{selection.count === 1 ? "" : "s"} selected
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs text-destructive hover:text-destructive"
+              onClick={() => {
+                Array.from(selection.selectedIds).forEach((id) => onDeleteNote(id));
+                selection.clear();
+              }}
+            >
+              <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete selected
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs"
+              onClick={() => selection.clear()}
+            >
+              Clear
+            </Button>
+          </div>
+        )}
 
         {pinned.length > 0 && (
           <>
