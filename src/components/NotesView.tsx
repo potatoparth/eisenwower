@@ -285,6 +285,10 @@ export function NoteComposer(props: ComposerProps) {
         // are portaled to document.body.
         const el = target as HTMLElement;
         if (el.closest?.("[data-radix-popper-content-wrapper], [role='dialog']")) return;
+        // Ignore clicks on the browser/page scrollbar — dragging the scrollbar
+        // shouldn't dismiss the composer.
+        const doc = document.documentElement;
+        if (e.clientX >= doc.clientWidth || e.clientY >= doc.clientHeight) return;
         commit();
       }
     };
