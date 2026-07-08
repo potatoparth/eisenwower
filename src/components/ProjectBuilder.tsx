@@ -580,6 +580,11 @@ export function ProjectBuilder({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-xl tracking-tight">{selectedProject.name}</h3>
+                {directOnly && (
+                  <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-secondary text-muted-foreground italic">
+                    no subproject
+                  </span>
+                )}
                 {!isOwner && (
                   <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-secondary text-muted-foreground flex items-center gap-1">
                     {selectedRole === "viewer" ? <><Eye className="w-2.5 h-2.5" /> viewer</> : <>shared · editor</>}
