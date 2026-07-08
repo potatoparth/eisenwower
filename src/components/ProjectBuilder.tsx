@@ -91,6 +91,8 @@ export function ProjectBuilder({
   const [dropTargetId, setDropTargetId] = useState<string | "__root__" | null>(null);
   const [treeQuery, setTreeQuery] = useState("");
   const [mobileRailOpen, setMobileRailOpen] = useState(false);
+  const [editingProjectName, setEditingProjectName] = useState(false);
+  const [projectNameDraft, setProjectNameDraft] = useState("");
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const selectedRole = selectedProject ? (getProjectRole?.(selectedProject.id) ?? "owner") : undefined;
@@ -592,7 +594,37 @@ export function ProjectBuilder({
           <div className="flex items-start justify-between gap-4 pb-4 border-b border-border/50">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-xl tracking-tight">{selectedProject.name}</h3>
+                {editingProjectName && canEdit ? (
+                  <Input
+                    autoFocus
+                    value={projectNameDraft}
+                    onChange={(e) => setProjectNameDraft(e.target.value)}
+                    onBlur={() => {
+                      const v = projectNameDraft.trim();
+                      if (v && v !== selectedProject.name) onUpdateProject(selectedProject.id, { name: v });
+                      setEditingProjectName(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") { e.preventDefault(); (e.currentTarget as HTMLInputElement).blur(); }
+                      if (e.key === "Escape") { e.preventDefault(); setEditingProjectName(false); }
+                    }}
+                    className="h-9 text-xl font-bold tracking-tight w-[min(28rem,60vw)]"
+                  />
+                ) : (
+                  <>
+                    {canEdit && (
+                      <button
+                        type="button"
+                        title="Rename project"
+                        onClick={() => { setProjectNameDraft(selectedProject.name); setEditingProjectName(true); }}
+                        className="w-7 h-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    <h3 className="font-bold text-xl tracking-tight">{selectedProject.name}</h3>
+                  </>
+                )}
                 {directOnly && (
                   <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-secondary text-muted-foreground italic">
                     no subproject
