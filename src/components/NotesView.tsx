@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SelectorWithCreate } from "@/components/SelectorWithCreate";
+import { ProjectTreePicker } from "@/components/ProjectTreePicker";
 import { TaskDescription } from "@/components/TaskDescription";
 import { TaskAttachments } from "@/components/TaskAttachments";
 import { TaskAttachment } from "@/types/task";
@@ -21,7 +22,7 @@ interface NotesViewProps {
   defaultCategory?: string;
   defaultProjectId?: string;
   onCreateCategory?: (name: string) => string;
-  onCreateProject?: (name: string) => string;
+  onCreateProject?: (name: string, parentId?: string | null) => string;
   onAddNote: (options?: Partial<Note>) => Note | null;
   onUpdateNote: (id: string, updates: Partial<Note>) => void;
   onDeleteNote: (id: string) => void;
@@ -237,7 +238,7 @@ interface ComposerProps {
   defaultCategory?: string;
   defaultProjectId?: string;
   onCreateCategory?: (name: string) => string;
-  onCreateProject?: (name: string) => string;
+  onCreateProject?: (name: string, parentId?: string | null) => string;
   onAddNote: (options?: Partial<Note>) => Note | null;
   onUpdateNote: (id: string, updates: Partial<Note>) => void;
   editingNote?: Note | null;
@@ -332,7 +333,6 @@ export function NoteComposer(props: ComposerProps) {
   };
 
   const bg = noteColorFor(color, props.dark ? "dark" : "light");
-  const projectOptions = [{ value: "", label: "No project" }, ...props.projects.map((p) => ({ value: p.id, label: p.name }))];
 
   return (
     <div className="pt-4 pb-2 flex justify-center">
@@ -389,14 +389,13 @@ export function NoteComposer(props: ComposerProps) {
             {/* Footer bar */}
             <div className="px-3 py-2.5 bg-muted/40 border-t border-border/60 flex items-center gap-2 rounded-b-2xl">
               <div className="flex items-center gap-1 flex-wrap">
-                <SelectorWithCreate
-                  options={projectOptions}
-                  value={projectId}
-                  onChange={setProjectId}
+                <ProjectTreePicker
+                  projects={props.projects}
+                  value={projectId || null}
+                  onChange={(id) => setProjectId(id || "")}
                   onCreate={props.onCreateProject}
                   placeholder="No project"
                   compact
-                  icon={<FolderKanban className="w-3.5 h-3.5" />}
                 />
                 <span className="w-px h-5 bg-border mx-1" />
                 <ColorPicker value={color} onChange={setColor} dark={props.dark} />
