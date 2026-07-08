@@ -9,6 +9,7 @@ import { TaskInput, type TaskInputPickerProps, type TaskAddOptions } from "@/com
 import { Task, Quadrant } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { useSelectionOptional } from "@/hooks/useSelection";
+import { SelectionToolbar } from "@/components/SelectionToolbar";
 
 interface CalendarViewProps {
   tasks: Task[];
@@ -244,6 +245,7 @@ export function CalendarView({
             onChange={(next) => setCheckedCats(next)}
             getCategoryColor={getCategoryColor}
           />
+          <SelectionToolbar compact getAllIds={() => visibleTasks.map((t) => t.id)} />
         </div>
       </div>
 
