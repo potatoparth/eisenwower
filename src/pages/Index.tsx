@@ -485,7 +485,7 @@ const Index = () => {
                 onCreateCategory={handleCreateCategory}
                 onCreateProject={handleCreateProject}
                 onSelectTask={setSelectedTask}
-                onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
+                onArchiveAllDone={archiveDoneTasks} archivedTasks={archivedTasks} onUnarchiveTask={unarchiveTask} onDeleteArchivedTask={(id) => deleteTask(id)}
                 onRescheduleTasks={handleRescheduleTasks}
                 allTasks={tasks}
                 recentCategories={recentCategories}
@@ -507,7 +507,7 @@ const Index = () => {
                 onCreateCategory={handleCreateCategory}
                 onCreateProject={handleCreateProject}
                 onSelectTask={setSelectedTask}
-                onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
+                onArchiveAllDone={archiveDoneTasks} archivedTasks={archivedTasks} onUnarchiveTask={unarchiveTask} onDeleteArchivedTask={(id) => deleteTask(id)}
                 onRescheduleTasks={handleRescheduleTasks}
                 allTasks={tasks}
                 recentCategories={recentCategories}
@@ -607,7 +607,7 @@ const Index = () => {
                 onAddNote={(opts) => addNote(opts)}
                 onUpdateNote={updateNote}
                 onDeleteNote={deleteNote}
-                onDeleteAllDone={() => tasks.filter(t => t.status === "done").forEach(t => deleteTask(t.id))}
+                onArchiveAllDone={archiveDoneTasks} archivedTasks={archivedTasks} onUnarchiveTask={unarchiveTask} onDeleteArchivedTask={(id) => deleteTask(id)}
                 onRescheduleTasks={handleRescheduleTasks}
                 getProjectRole={getProjectRole}
                 templatePresets={templatePresets}
