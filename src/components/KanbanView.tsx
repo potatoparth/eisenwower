@@ -218,6 +218,11 @@ export function KanbanView({
               <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{colTasks.length}</span>
             </button>
             <div className="flex items-center gap-0.5">
+              <SelectionToolbar
+                compact
+                className="mr-0.5"
+                getAllIds={() => colTasks.map((t) => t.id)}
+              />
               {onQuickAdd && (
                 <Button
                   size="icon"
