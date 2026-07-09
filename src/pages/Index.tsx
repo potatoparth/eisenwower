@@ -77,7 +77,8 @@ const Index = () => {
   useEffect(() => { localStorage.setItem("compactMode", compactMode ? "1" : "0"); }, [compactMode]);
 
   const {
-    tasks: rawTasks, addTask, updateTask: rawUpdateTask, deleteTask, moveTask, toggleStatus, getCategories, setTasks,
+    tasks: rawTasks, archivedTasks: rawArchivedTasks, addTask, updateTask: rawUpdateTask,
+    deleteTask, archiveDoneTasks, unarchiveTask, moveTask, toggleStatus, getCategories, setTasks,
   } = useTasks(currentUser?.id);
 
   const kanban = useKanbanBoards(currentUser?.id);
@@ -102,6 +103,10 @@ const Index = () => {
     ...t,
     category: t.projectId ? getProjectLeafName(projectNodeIndex, t.projectId) || "General" : "General",
   })), [rawTasks, projectNodeIndex]);
+  const archivedTasks = useMemo(() => (rawArchivedTasks || []).map((t) => ({
+    ...t,
+    category: t.projectId ? getProjectLeafName(projectNodeIndex, t.projectId) || "General" : "General",
+  })), [rawArchivedTasks, projectNodeIndex]);
   const notes = useMemo(() => rawNotes.map((n) => ({
     ...n,
     category: n.projectId ? getProjectLeafName(projectNodeIndex, n.projectId) || "General" : "General",
