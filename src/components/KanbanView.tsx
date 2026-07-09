@@ -62,8 +62,10 @@ function defaultColumnForTask(t: Task): string {
   if (t.dueDate) {
     const d = parseISO(t.dueDate);
     if (isPast(d) && !isToday(d)) return "overdue";
+    if (isToday(d)) return "todo";
+    return "upcoming";
   }
-  return "todo";
+  return "upcoming";
 }
 
 function DroppableColumn({ column, children, taskCount }: { column: KanbanColumn; children: React.ReactNode; taskCount: number }) {
