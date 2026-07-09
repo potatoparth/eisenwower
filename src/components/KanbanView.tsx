@@ -399,6 +399,9 @@ export function KanbanView({
                   <DialogTitle className="flex items-center gap-2">
                     {col.title}
                     <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{colTasks.length}</span>
+                    <span className="ml-auto">
+                      <SelectionToolbar compact getAllIds={() => colTasks.map((t) => t.id)} />
+                    </span>
                   </DialogTitle>
                 </DialogHeader>
                 <div className="flex-1 overflow-y-auto space-y-2 mt-2">
