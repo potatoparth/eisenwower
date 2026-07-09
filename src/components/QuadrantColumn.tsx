@@ -11,6 +11,7 @@ import type { TaskAddOptions, TaskInputPickerProps } from "@/components/TaskInpu
 import { TaskCard } from "./TaskCard";
 import { TaskInput } from "./TaskInput";
 import { cn } from "@/lib/utils";
+import { SelectionToolbar } from "@/components/SelectionToolbar";
 
 interface QuadrantColumnProps {
   quadrant: QuadrantInfo;
@@ -130,6 +131,12 @@ export function QuadrantColumn({
           >
             {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
+          <span
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex"
+          >
+            <SelectionToolbar compact getAllIds={() => tasks.map((t) => t.id)} />
+          </span>
           {onExpand && (
             <button
               onClick={(e) => {

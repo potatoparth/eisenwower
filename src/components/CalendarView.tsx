@@ -245,7 +245,6 @@ export function CalendarView({
             onChange={(next) => setCheckedCats(next)}
             getCategoryColor={getCategoryColor}
           />
-          <SelectionToolbar compact getAllIds={() => visibleTasks.map((t) => t.id)} />
         </div>
       </div>
 
@@ -441,6 +440,9 @@ function DaySection({
             <Plus className="w-3.5 h-3.5" />
           </button>
         )}
+        <span onClick={(e) => e.stopPropagation()} className="inline-flex">
+          <SelectionToolbar compact getAllIds={() => items.map((t) => t.id)} />
+        </span>
       </div>
       {adding && onAddTask && (
         <div className="p-2 border-b border-border/60 bg-secondary/20">

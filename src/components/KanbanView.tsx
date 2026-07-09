@@ -218,6 +218,11 @@ export function KanbanView({
               <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{colTasks.length}</span>
             </button>
             <div className="flex items-center gap-0.5">
+              <SelectionToolbar
+                compact
+                className="mr-0.5"
+                getAllIds={() => colTasks.map((t) => t.id)}
+              />
               {onQuickAdd && (
                 <Button
                   size="icon"
@@ -338,16 +343,6 @@ export function KanbanView({
             </Button>
           </>
         )}
-        <div className="ml-auto shrink-0">
-          <SelectionToolbar
-            compact
-            getAllIds={() => {
-              const ids = new Set<string>();
-              Object.values(tasksByColumn).forEach((arr) => arr.forEach((t) => ids.add(t.id)));
-              return Array.from(ids);
-            }}
-          />
-        </div>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -404,6 +399,9 @@ export function KanbanView({
                   <DialogTitle className="flex items-center gap-2">
                     {col.title}
                     <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{colTasks.length}</span>
+                    <span className="ml-auto">
+                      <SelectionToolbar compact getAllIds={() => colTasks.map((t) => t.id)} />
+                    </span>
                   </DialogTitle>
                 </DialogHeader>
                 <div className="flex-1 overflow-y-auto space-y-2 mt-2">
