@@ -299,7 +299,7 @@ export function ProjectBuilder({
           >
             <Plus className="w-3.5 h-3.5" />
           </button>
-          {canEditThis && p.parentId != null && (
+          {canEditThis && p.parentId != null ? (
             <button
               title="Move to top level"
               onClick={(e) => {
@@ -310,6 +310,8 @@ export function ProjectBuilder({
             >
               <CornerLeftUp className="w-3.5 h-3.5" />
             </button>
+          ) : (
+            <span className="w-6 flex-shrink-0" aria-hidden />
           )}
         </div>
         {hasChildren && !isCollapsed && (
@@ -348,6 +350,7 @@ export function ProjectBuilder({
                     >
                       {directCount}
                     </span>
+                    <span className="w-6 flex-shrink-0" aria-hidden />
                     <span className="w-6 flex-shrink-0" aria-hidden />
                   </button>
                 </div>
