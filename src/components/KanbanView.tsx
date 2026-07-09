@@ -343,16 +343,6 @@ export function KanbanView({
             </Button>
           </>
         )}
-        <div className="ml-auto shrink-0">
-          <SelectionToolbar
-            compact
-            getAllIds={() => {
-              const ids = new Set<string>();
-              Object.values(tasksByColumn).forEach((arr) => arr.forEach((t) => ids.add(t.id)));
-              return Array.from(ids);
-            }}
-          />
-        </div>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
