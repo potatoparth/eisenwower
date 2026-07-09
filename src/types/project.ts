@@ -80,7 +80,8 @@ export const DEFAULT_BOARD_ID = "__default__";
 export const DEFAULT_BOARD_COLUMNS: KanbanColumn[] = [
   { id: "todo", title: "To Do", order: 0 },
   { id: "overdue", title: "Overdue", order: 1 },
-  { id: "done", title: "Done", order: 2 },
+  { id: "upcoming", title: "Upcoming", order: 2 },
+  { id: "done", title: "Done", order: 3 },
 ];
 export const MAX_KANBAN_BOARDS = 10;
 export const MAX_KANBAN_COLUMNS_PER_BOARD = 6;
