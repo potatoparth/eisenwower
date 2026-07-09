@@ -52,8 +52,11 @@ interface ProjectBuilderProps {
   recentCategories?: TaskInputPickerProps["recentCategories"];
   recentProjectIds?: TaskInputPickerProps["recentProjectIds"];
   onSelectTask?: (task: Task) => void;
-  onDeleteAllDone?: () => void;
+  onArchiveAllDone?: () => void;
   onRescheduleTasks?: (ids: string[], newDueDate: string) => void;
+  archivedTasks?: Task[];
+  onUnarchiveTask?: (id: string) => void;
+  onDeleteArchivedTask?: (id: string) => void;
   templatePresets?: ProjectTemplatePreset[];
   onAddPreset?: (name: string, description?: string, tasks?: PresetTask[]) => Promise<ProjectTemplatePreset | null> | ProjectTemplatePreset | null;
   onUpdatePreset?: (id: string, updates: Partial<Omit<ProjectTemplatePreset, "id" | "createdAt">>) => void;
@@ -66,7 +69,8 @@ export function ProjectBuilder({
   onAddTask, onUpdateTask, onDeleteTask,
   onAddMatrixTask, onToggleMatrixTask, onDeleteMatrixTask, quadrants, categories = [], onCreateCategory, onCreateProject,
   recentCategories, recentProjectIds,
-  onSelectTask, onDeleteAllDone, onRescheduleTasks,
+  onSelectTask, onArchiveAllDone, onRescheduleTasks,
+  archivedTasks, onUnarchiveTask, onDeleteArchivedTask,
   getProjectRole,
   templatePresets = [], onAddPreset, onUpdatePreset, onDeletePreset,
 }: ProjectBuilderProps) {
@@ -666,8 +670,11 @@ export function ProjectBuilder({
                   <TaskActionBar
                     tasks={mappedTasks}
                     onSelectTask={(t) => onSelectTask?.(t)}
-                    onDeleteAllDone={() => onDeleteAllDone?.()}
+                    onArchiveAllDone={() => onArchiveAllDone?.()}
                     onRescheduleTasks={onRescheduleTasks}
+                    archivedTasks={archivedTasks}
+                    onUnarchiveTask={onUnarchiveTask}
+                    onDeleteArchivedTask={onDeleteArchivedTask}
                     onAddTask={handleAddMatrixTask}
                     quadrants={quadrants ?? []}
                     categories={categories}
