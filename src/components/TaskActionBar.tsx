@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, useEffect } from "react";
-import { SquarePen, Search, Recycle, X, CalendarClock, AlertCircle } from "lucide-react";
+import { SquarePen, Search, Archive, X, CalendarClock, AlertCircle, ArchiveRestore, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
@@ -14,15 +14,18 @@ import type { TaskAddOptions, TaskInputPickerProps } from "@/components/TaskInpu
 import { isOverdue } from "@/lib/sort";
 import { DateTimePicker } from "@/components/DateTimePicker";
 import { cn } from "@/lib/utils";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, formatDistanceToNow } from "date-fns";
 import { SelectionToolbar } from "@/components/SelectionToolbar";
 import { useSelectionOptional } from "@/hooks/useSelection";
 
 interface Props {
   tasks: Task[];
   onSelectTask: (task: Task) => void;
-  onDeleteAllDone: () => void;
+  onArchiveAllDone: () => void;
   onRescheduleTasks?: (ids: string[], newDueDate: string) => void;
+  archivedTasks?: Task[];
+  onUnarchiveTask?: (id: string) => void;
+  onDeleteArchivedTask?: (id: string) => void;
   // TaskInput passthrough
   onAddTask: (name: string, quadrant: Quadrant, options?: TaskAddOptions) => void;
   quadrants: QuadrantInfo[];
@@ -37,7 +40,8 @@ interface Props {
 }
 
 export function TaskActionBar({
-  tasks, onSelectTask, onDeleteAllDone, onRescheduleTasks,
+  tasks, onSelectTask, onArchiveAllDone, onRescheduleTasks,
+  archivedTasks = [], onUnarchiveTask, onDeleteArchivedTask,
   onAddTask, quadrants, categories, projects,
   defaultProjectId, defaultCategory, onCreateCategory, onCreateProject,
   recentCategories, recentProjectIds,
@@ -46,6 +50,7 @@ export function TaskActionBar({
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [archiveListOpen, setArchiveListOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [newDate, setNewDate] = useState<string | undefined>(undefined);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -67,6 +72,7 @@ export function TaskActionBar({
   }, [tasks, query]);
 
   const doneCount = tasks.filter(t => t.status === "done").length;
+  const archivedCount = archivedTasks.length;
   const overdueTasks = useMemo(
     () => tasks.filter((t) => t.status !== "done" && isOverdue(t)),
     [tasks]
@@ -127,7 +133,7 @@ export function TaskActionBar({
   );
 
   return (
-    <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_2.5rem_2.5rem] items-center gap-2">
+    <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_2.5rem_2.5rem_2.5rem] items-center gap-2">
       {selection ? (
         <SelectionToolbar getAllIds={() => tasks.map((t) => t.id)} />
       ) : (
@@ -326,25 +332,107 @@ export function TaskActionBar({
             variant="ghost"
             size="icon"
             className="h-10 w-10 rounded-full"
-            title="Delete all completed tasks"
+            title="Archive all completed tasks"
             disabled={doneCount === 0}
           >
-            <Recycle className="w-4 h-4" />
+            <Archive className="w-4 h-4" />
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete all completed tasks?</AlertDialogTitle>
+            <AlertDialogTitle>Archive all completed tasks?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove {doneCount} completed {doneCount === 1 ? "task" : "tasks"}. This cannot be undone.
+              This will move {doneCount} completed {doneCount === 1 ? "task" : "tasks"} to the archive.
+              You can restore them anytime from the archive.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onDeleteAllDone}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={onArchiveAllDone}>Archive</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Archived tasks list */}
+      <Popover open={archiveListOpen} onOpenChange={setArchiveListOpen}>
+        <PopoverAnchor asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 rounded-full relative"
+            title={archivedCount === 0 ? "No archived tasks" : `View ${archivedCount} archived ${archivedCount === 1 ? "task" : "tasks"}`}
+            onClick={() => setArchiveListOpen(true)}
+            disabled={archivedCount === 0}
+          >
+            <ArchiveRestore className="w-4 h-4" />
+            {archivedCount > 0 && (
+              <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-1 rounded-full bg-secondary text-[9px] font-semibold text-foreground/80 flex items-center justify-center border border-border">
+                {archivedCount > 99 ? "99+" : archivedCount}
+              </span>
+            )}
+          </Button>
+        </PopoverAnchor>
+        <PopoverContent align="end" className="w-[min(24rem,92vw)] p-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5 text-sm font-semibold">
+              <Archive className="w-3.5 h-3.5 text-muted-foreground" />
+              Archived tasks
+            </div>
+            <span className="text-[11px] text-muted-foreground">{archivedCount}</span>
+          </div>
+          <div className="max-h-72 overflow-y-auto -mx-1 px-1 space-y-1">
+            {archivedTasks.length === 0 ? (
+              <div className="text-xs text-muted-foreground/70 py-6 text-center">
+                No archived tasks yet.
+              </div>
+            ) : (
+              archivedTasks.map((t) => (
+                <div
+                  key={t.id}
+                  className="group w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-secondary"
+                >
+                  <button
+                    type="button"
+                    onClick={() => { onSelectTask(t); setArchiveListOpen(false); }}
+                    className="flex-1 min-w-0 text-left"
+                  >
+                    <span className="block text-xs font-medium truncate line-through opacity-70">
+                      {t.name}
+                    </span>
+                    <span className="block text-[10px] text-muted-foreground">
+                      archived {t.archivedAt ? formatDistanceToNow(parseISO(t.archivedAt), { addSuffix: true }) : ""}
+                    </span>
+                  </button>
+                  <div className="flex items-center gap-0.5 opacity-70 group-hover:opacity-100">
+                    {onUnarchiveTask && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-md"
+                        title="Restore task"
+                        onClick={() => onUnarchiveTask(t.id)}
+                      >
+                        <ArchiveRestore className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                    {onDeleteArchivedTask && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-md text-destructive hover:text-destructive"
+                        title="Delete permanently"
+                        onClick={() => onDeleteArchivedTask(t.id)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
