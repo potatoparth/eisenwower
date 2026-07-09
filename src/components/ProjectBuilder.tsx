@@ -102,14 +102,15 @@ export function ProjectBuilder({
   // from every subproject too.
   const projectTree = useMemo(() => buildProjectTree(projects), [projects]);
   const projectNodeIndex = useMemo(() => indexProjectNodes(projectTree), [projectTree]);
-  // Direct (own) count per project — inline project_tasks + matrix tasks + notes assigned to that project id only.
+  // Direct (own) task count per project — inline project_tasks + matrix tasks
+  // assigned to that project id only. Sidebar counts intentionally exclude
+  // notes; note counts are surfaced inside the project detail pane instead.
   const directCountByProject = useMemo(() => {
     const m = new Map<string, number>();
     projects.forEach((p) => m.set(p.id, p.tasks.length));
     allTasks.forEach((t) => { if (t.projectId) m.set(t.projectId, (m.get(t.projectId) ?? 0) + 1); });
-    allNotes.forEach((n) => { if (n.projectId) m.set(n.projectId, (m.get(n.projectId) ?? 0) + 1); });
     return m;
-  }, [projects, allTasks, allNotes]);
+  }, [projects, allTasks]);
   // Rollup count per project — direct + all descendants.
   const totalCountByProject = useMemo(() => {
     const m = new Map<string, number>();
