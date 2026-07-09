@@ -44,6 +44,8 @@ export interface Task {
   attachments?: TaskAttachment[];
   /** Ordering value used by the agenda/calendar for within-day drag reorder. */
   sortOrder?: number;
+  /** When set, the task is archived and hidden from all default views. */
+  archivedAt?: string;
 }
 
 export interface QuadrantInfo {

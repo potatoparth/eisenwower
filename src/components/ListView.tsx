@@ -38,8 +38,11 @@ interface ListViewProps {
   quadrantMap: Record<Quadrant, QuadrantInfo>;
   allTasks: Task[];
   onSelectTask: (task: Task) => void;
-  onDeleteAllDone: () => void;
+  onArchiveAllDone: () => void;
   onRescheduleTasks?: (ids: string[], newDueDate: string) => void;
+  archivedTasks?: Task[];
+  onUnarchiveTask?: (id: string) => void;
+  onDeleteArchivedTask?: (id: string) => void;
 }
 
 export function ListView({
@@ -62,8 +65,11 @@ export function ListView({
   recentProjectIds,
   allTasks,
   onSelectTask,
-  onDeleteAllDone,
+  onArchiveAllDone,
   onRescheduleTasks,
+  archivedTasks,
+  onUnarchiveTask,
+  onDeleteArchivedTask,
 }: ListViewProps) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -95,8 +101,11 @@ export function ListView({
         <TaskActionBar
           tasks={allTasks}
           onSelectTask={onSelectTask}
-          onDeleteAllDone={onDeleteAllDone}
+          onArchiveAllDone={onArchiveAllDone}
           onRescheduleTasks={onRescheduleTasks}
+          archivedTasks={archivedTasks}
+          onUnarchiveTask={onUnarchiveTask}
+          onDeleteArchivedTask={onDeleteArchivedTask}
           onAddTask={onAddTask}
           quadrants={quadrants}
           categories={categories}

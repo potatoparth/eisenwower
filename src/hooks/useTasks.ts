@@ -41,6 +41,7 @@ type TaskRow = {
   is_recurring_instance: boolean | null;
   recurring_template_id: string | null;
   attachments: unknown;
+  archived_at: string | null;
 };
 
 const fromRow = (row: TaskRow): Task => ({
@@ -66,6 +67,7 @@ const fromRow = (row: TaskRow): Task => ({
   recurringTemplateId: row.recurring_template_id || undefined,
   attachments: Array.isArray(row.attachments) ? (row.attachments as TaskAttachment[]) : [],
   sortOrder: typeof (row as unknown as { sort_order?: number }).sort_order === "number" ? (row as unknown as { sort_order: number }).sort_order : undefined,
+  archivedAt: row.archived_at || undefined,
 });
 
 const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => ({
@@ -89,12 +91,19 @@ const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => ({
 
 export function useTasks(userId?: string) {
   const [tasks, setTasksState] = useState<Task[]>([]);
+  const [archivedTasks, setArchivedTasks] = useState<Task[]>([]);
 
   const loadTasks = useCallback(async () => {
-    if (!userId) { setTasksState([]); return; }
+    if (!userId) { setTasksState([]); setArchivedTasks([]); return; }
     // RLS returns own tasks + tasks on shared projects the user can see.
     const { data } = await supabase.from("tasks").select("*").order("sort_order", { ascending: true }).order("created_at", { ascending: false });
-    setTasksState(((data || []) as unknown as TaskRow[]).map(fromRow));
+    const rows = ((data || []) as unknown as TaskRow[]).map(fromRow);
+    setTasksState(rows.filter((t) => !t.archivedAt));
+    setArchivedTasks(
+      rows
+        .filter((t) => t.archivedAt)
+        .sort((a, b) => (b.archivedAt || "").localeCompare(a.archivedAt || ""))
+    );
   }, [userId]);
 
   useEffect(() => { loadTasks(); }, [loadTasks]);
@@ -197,8 +206,43 @@ export function useTasks(userId?: string) {
       });
     }
     setTasksState(prev => prev.filter(task => !ids.includes(task.id)));
+    setArchivedTasks(prev => prev.filter(task => !ids.includes(task.id)));
     if (userId) supabase.from("tasks").delete().in("id", ids).then(({ error }) => { if (error) loadTasks(); });
   }, [userId, tasks, loadTasks]);
+
+  const archiveTask = useCallback((id: string) => {
+    const now = new Date().toISOString();
+    let moved: Task | undefined;
+    setTasksState(prev => {
+      moved = prev.find(t => t.id === id);
+      return prev.filter(t => t.id !== id);
+    });
+    if (moved) setArchivedTasks(prev => [{ ...moved!, archivedAt: now }, ...prev]);
+    if (userId) supabase.from("tasks").update({ archived_at: now }).eq("id", id).then(({ error }) => { if (error) loadTasks(); });
+  }, [userId, loadTasks]);
+
+  const archiveDoneTasks = useCallback(() => {
+    const ids = tasks.filter(t => t.status === "done").map(t => t.id);
+    if (!ids.length) return;
+    const now = new Date().toISOString();
+    const moving: Task[] = [];
+    setTasksState(prev => prev.filter(t => {
+      if (ids.includes(t.id)) { moving.push({ ...t, archivedAt: now }); return false; }
+      return true;
+    }));
+    setArchivedTasks(prev => [...moving, ...prev]);
+    if (userId) supabase.from("tasks").update({ archived_at: now }).in("id", ids).then(({ error }) => { if (error) loadTasks(); });
+  }, [tasks, userId, loadTasks]);
+
+  const unarchiveTask = useCallback((id: string) => {
+    let moved: Task | undefined;
+    setArchivedTasks(prev => {
+      moved = prev.find(t => t.id === id);
+      return prev.filter(t => t.id !== id);
+    });
+    if (moved) setTasksState(prev => [{ ...moved!, archivedAt: undefined }, ...prev]);
+    if (userId) supabase.from("tasks").update({ archived_at: null }).eq("id", id).then(({ error }) => { if (error) loadTasks(); });
+  }, [userId, loadTasks]);
 
   const setTasks = useCallback((reordered: Task[]) => {
     setTasksState(reordered);
@@ -245,5 +289,5 @@ export function useTasks(userId?: string) {
   const getCategories = useCallback(() => Array.from(new Set(tasks.map(t => t.category).filter(Boolean))).sort(), [tasks]);
   const filterTasks = useCallback((filters: { category?: string; status?: TaskStatus }) => tasks.filter(task => (!filters.category || task.category === filters.category) && (!filters.status || task.status === filters.status)), [tasks]);
 
-  return { tasks, setTasks, addTask, updateTask, deleteTask, moveTask, toggleStatus, getCategories, filterTasks };
+  return { tasks, archivedTasks, setTasks, addTask, updateTask, deleteTask, archiveTask, archiveDoneTasks, unarchiveTask, moveTask, toggleStatus, getCategories, filterTasks };
 }
