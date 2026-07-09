@@ -50,8 +50,11 @@ interface MatrixViewProps {
   quadrantMap: Record<Quadrant, QuadrantInfo>;
   allTasks: Task[];
   onSelectTask: (task: Task) => void;
-  onDeleteAllDone: () => void;
+  onArchiveAllDone: () => void;
   onRescheduleTasks?: (ids: string[], newDueDate: string) => void;
+  archivedTasks?: Task[];
+  onUnarchiveTask?: (id: string) => void;
+  onDeleteArchivedTask?: (id: string) => void;
 }
 
 export function MatrixView({
@@ -81,8 +84,11 @@ export function MatrixView({
   recentProjectIds,
   allTasks,
   onSelectTask,
-  onDeleteAllDone,
+  onArchiveAllDone,
   onRescheduleTasks,
+  archivedTasks,
+  onUnarchiveTask,
+  onDeleteArchivedTask,
 }: MatrixViewProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [expandedQuadrant, setExpandedQuadrant] = useState<QuadrantInfo | null>(null);
@@ -173,8 +179,11 @@ export function MatrixView({
         <TaskActionBar
           tasks={allTasks}
           onSelectTask={onSelectTask}
-          onDeleteAllDone={onDeleteAllDone}
+          onArchiveAllDone={onArchiveAllDone}
           onRescheduleTasks={onRescheduleTasks}
+          archivedTasks={archivedTasks}
+          onUnarchiveTask={onUnarchiveTask}
+          onDeleteArchivedTask={onDeleteArchivedTask}
           onAddTask={onAddTask}
           quadrants={quadrants}
           categories={categories}
