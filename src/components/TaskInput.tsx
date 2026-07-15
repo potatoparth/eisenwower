@@ -329,12 +329,12 @@ export function TaskInput({
           if (!o) reset();
         }}
       >
-        <DialogContent className="p-0 gap-0 border border-border/60 bg-card rounded-2xl max-w-lg overflow-hidden">
+        <DialogContent className="p-0 gap-0 border border-border/60 bg-card rounded-2xl w-[calc(100vw-1.5rem)] max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
           <VisuallyHidden>
             <DialogTitle>New task</DialogTitle>
           </VisuallyHidden>
           {/* Task name preview + Quick add shortcut */}
-          <div className="flex items-start gap-2 px-4 pt-4 pb-2 pr-14">
+          <div className="flex items-start gap-2 px-4 pt-4 pb-2 pr-14 flex-shrink-0 border-b border-border/40">
             <div className="min-w-0 flex-1">
               <p className="text-[11px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">
                 New task
@@ -355,7 +355,7 @@ export function TaskInput({
           </div>
 
           {step === "quadrant" && (
-            <div className="px-3 pb-3 space-y-2">
+            <div className="px-3 py-3 space-y-2 overflow-y-auto">
                 <p className="text-xs text-muted-foreground font-medium">
                   Select quadrant
                 </p>
@@ -377,7 +377,8 @@ export function TaskInput({
           )}
 
           {step === "details" && (
-            <div className="px-3 pb-3 space-y-2">
+            <>
+              <div className="px-3 py-3 space-y-2 overflow-y-auto flex-1 min-h-0">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="font-medium">Details</span>
                   <span className="text-[10px] opacity-60">optional</span>
@@ -446,25 +447,26 @@ export function TaskInput({
                     </div>
                   )}
                 </div>
-                <div className="flex justify-end gap-1.5 pt-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={reset}
-                    className="rounded-lg h-7 text-xs"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleComplete}
-                    disabled={!canComplete}
-                    className="rounded-lg h-7 text-xs"
-                  >
-                    Add
-                  </Button>
-                </div>
-            </div>
+              </div>
+              <div className="flex justify-end gap-1.5 px-3 py-2.5 border-t border-border/40 bg-card flex-shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={reset}
+                  className="rounded-lg h-8 text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleComplete}
+                  disabled={!canComplete}
+                  className="rounded-lg h-8 text-xs gap-1.5"
+                >
+                  <Zap className="w-3.5 h-3.5" /> Add task
+                </Button>
+              </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
