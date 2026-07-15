@@ -721,9 +721,9 @@ export type Database = {
       accept_project_invite: {
         Args: { _token: string }
         Returns: {
-          project_id: string
-          role: string
-          scope: string
+          out_project_id: string
+          out_role: string
+          out_scope: string
         }[]
       }
       can_edit_project: {
