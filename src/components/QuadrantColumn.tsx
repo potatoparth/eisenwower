@@ -144,7 +144,8 @@ export function QuadrantColumn({
           <div
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
-            className="mx-1 hidden min-w-[12rem] max-w-[22rem] flex-1 lg:block"
+            className="mx-1 hidden min-w-[12rem] max-w-[22rem] flex-1 lg:block rounded-full"
+            style={{ boxShadow: `inset 0 0 0 1px ${accentVar}` }}
           >
             {addTaskInput}
           </div>
@@ -186,8 +187,15 @@ export function QuadrantColumn({
       </div>
 
       {/* Task Input - inline in the header on desktop, below only on smaller screens */}
-      <div className="px-2 sm:px-3 pb-2 flex-shrink-0 lg:hidden">
-        {addTaskInput}
+      <div
+        className="px-2 sm:px-3 pb-2 flex-shrink-0 lg:hidden"
+      >
+        <div
+          className="rounded-full"
+          style={{ boxShadow: `inset 0 0 0 1px ${accentVar}` }}
+        >
+          {addTaskInput}
+        </div>
       </div>
 
       {/* Tasks */}
