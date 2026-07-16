@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { Note } from "@/types/note";
 import { TaskAttachment } from "@/types/task";
+import { toast } from "@/hooks/use-toast";
 
 type NoteRow = {
   id: string; user_id: string; title: string; content: string;
@@ -85,7 +86,12 @@ export function useNotes(userId?: string) {
       pinned: optimistic.pinned,
       sort_order: optimistic.sortOrder,
       attachments: (optimistic.attachments ?? []) as never,
-    }).then(({ error }) => { if (error) load(); });
+    }).then(({ error }) => {
+      if (error) {
+        toast({ title: "Couldn't save note", description: error.message, variant: "destructive" });
+        load();
+      }
+    });
     return optimistic;
   }, [userId, load]);
 
@@ -106,12 +112,22 @@ export function useNotes(userId?: string) {
     if (updates.sortOrder !== undefined) payload.sort_order = updates.sortOrder;
     if (updates.attachments !== undefined) payload.attachments = JSON.parse(JSON.stringify(updates.attachments)) as Json;
     if (updates.assignedTo !== undefined) (payload as Record<string, unknown>).assigned_to = updates.assignedTo || null;
-    supabase.from("notes").update(payload).eq("id", id).then(({ error }) => { if (error) load(); });
+    supabase.from("notes").update(payload).eq("id", id).then(({ error }) => {
+      if (error) {
+        toast({ title: "Couldn't update note", description: error.message, variant: "destructive" });
+        load();
+      }
+    });
   }, [userId, load]);
 
   const deleteNote = useCallback((id: string) => {
     setNotes((prev) => prev.filter((n) => n.id !== id));
-    if (userId) supabase.from("notes").delete().eq("id", id).then(({ error }) => { if (error) load(); });
+    if (userId) supabase.from("notes").delete().eq("id", id).then(({ error }) => {
+      if (error) {
+        toast({ title: "Couldn't delete note", description: error.message, variant: "destructive" });
+        load();
+      }
+    });
   }, [userId, load]);
 
   return { notes, addNote, updateNote, deleteNote };
