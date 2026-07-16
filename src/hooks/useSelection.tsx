@@ -15,7 +15,8 @@ interface SelectionCtx {
 const Ctx = createContext<SelectionCtx | null>(null);
 
 export function SelectionProvider({ children }: { children: React.ReactNode }) {
-  const [selectMode, setSelectModeState] = useState(false);
+  // Select mode is on by default so per-card select checkboxes are always visible.
+  const [selectMode, setSelectModeState] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const setSelectMode = useCallback((v: boolean) => {
