@@ -78,7 +78,7 @@ const Index = () => {
 
   const {
     tasks: rawTasks, archivedTasks: rawArchivedTasks, addTask, updateTask: rawUpdateTask,
-    deleteTask, archiveDoneTasks, unarchiveTask, moveTask, toggleStatus, getCategories, setTasks,
+    deleteTask, archiveTask, archiveDoneTasks, unarchiveTask, moveTask, toggleStatus, getCategories, setTasks,
   } = useTasks(currentUser?.id);
 
   const kanban = useKanbanBoards(currentUser?.id);
@@ -653,6 +653,7 @@ const Index = () => {
       {viewMode !== "notes" && <BulkActionBar
         onBulkReschedule={handleBulkReschedule}
         onBulkDelete={(ids) => ids.forEach((id) => deleteTask(id))}
+        onBulkArchive={(ids) => ids.forEach((id) => archiveTask(id))}
         onBulkSetCategory={(ids, category) =>
           ids.forEach((id) => updateTask(id, { category }))
         }

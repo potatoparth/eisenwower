@@ -141,7 +141,7 @@ export function TaskActionBar({
       )}
       <div className="min-w-0">
         {searchMode ? (
-          <Popover open={open && matches.length > 0} onOpenChange={setOpen}>
+          <Popover open={open && query.trim().length > 0} onOpenChange={setOpen}>
             <PopoverAnchor asChild>
               <div className="relative flex h-[50px] w-full items-center rounded-full border border-border/60 bg-secondary/40 px-5">
                 <Input
@@ -163,7 +163,11 @@ export function TaskActionBar({
               className="p-1 w-[min(32rem,90vw)] max-h-80 overflow-y-auto"
               onOpenAutoFocus={(e) => e.preventDefault()}
             >
-              {matches.map((t) => (
+              {matches.length === 0 ? (
+                <div className="px-3 py-4 text-center text-xs text-muted-foreground">
+                  0 results found for “{query.trim()}”
+                </div>
+              ) : matches.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => { onSelectTask(t); exitSearch(); }}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, CalendarClock, Zap, Trash2, LayoutGrid, Plus, ArrowRight } from "lucide-react";
+import { X, CalendarClock, Zap, Trash2, LayoutGrid, Plus, ArrowRight, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -27,6 +27,8 @@ interface Props {
   onAddToSprint?: (ids: string[]) => void;
   /** Permanently delete the selected tasks. */
   onBulkDelete?: (ids: string[]) => void;
+  /** Archive the selected tasks (soft-delete — recoverable from Archived list). */
+  onBulkArchive?: (ids: string[]) => void;
   /** Kanban add flow. */
   boards?: KanbanBoard[];
   columnsByBoard?: Record<string, KanbanColumn[]>;
@@ -47,7 +49,7 @@ interface Props {
  * mode. Currently exposes a single bulk action: Reschedule.
  */
 export function BulkActionBar({
-  onBulkReschedule, onAddToSprint, onBulkDelete,
+  onBulkReschedule, onAddToSprint, onBulkDelete, onBulkArchive,
   boards = [], columnsByBoard = {}, onAddToNewKanban, onAddToExistingKanban,
   onBulkSetCategory, onBulkSetProject,
   categories = [], projects = [], onCreateCategory, onCreateProject,
@@ -181,6 +183,21 @@ export function BulkActionBar({
           />
         </div>
       )}
+      {onBulkArchive && (
+        <Button
+          size="sm"
+          variant="secondary"
+          className="rounded-full gap-1.5 px-2 sm:px-3"
+          title="Archive selected tasks"
+          onClick={() => {
+            onBulkArchive(Array.from(selectedIds));
+            clear();
+          }}
+        >
+          <Archive className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Archive</span>
+        </Button>
+      )}
       {onBulkDelete && (
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -188,6 +205,7 @@ export function BulkActionBar({
               size="sm"
               variant="destructive"
               className="rounded-full gap-1.5 px-2 sm:px-3"
+              title="Delete selected tasks permanently"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Delete</span>
@@ -199,7 +217,7 @@ export function BulkActionBar({
                 Delete {count} task{count === 1 ? "" : "s"}?
               </AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently remove the selected {count === 1 ? "task" : "tasks"}. This cannot be undone.
+                This will permanently remove the selected {count === 1 ? "task" : "tasks"}. This cannot be undone. If you might need them later, use Archive instead.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -208,7 +226,6 @@ export function BulkActionBar({
                 onClick={() => {
                   onBulkDelete(Array.from(selectedIds));
                   clear();
-                  setSelectMode(false);
                 }}
               >
                 Yes, delete
