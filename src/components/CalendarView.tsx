@@ -250,12 +250,6 @@ export function CalendarView({
             <Inbox className="w-3.5 h-3.5" />
             Off-view ({offViewTotal})
           </Button>
-          <CategoryFilter
-            categories={allCategories}
-            checked={activeCats}
-            onChange={(next) => setCheckedCats(next)}
-            getCategoryColor={getCategoryColor}
-          />
         </div>
       </div>
 
