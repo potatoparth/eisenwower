@@ -7,6 +7,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { Plus, X, Edit2, Check, Maximize2, Trash2 } from "lucide-react";
 import { parseISO, isPast, isToday } from "date-fns";
 import { Task } from "@/types/task";
+import { QUADRANT_MAP } from "@/types/task";
 import {
   KanbanBoard, KanbanColumn, KanbanBoardItem,
   DEFAULT_BOARD_ID, DEFAULT_BOARD_COLUMNS,
@@ -140,6 +141,16 @@ export function KanbanView({
         map[it.columnKey].push(t);
       });
     }
+    // Sort each column: matrix quadrant (Do First → Eliminate), then due date (earliest first, undated last).
+    const dueRank = (t: Task) => (t.dueDate ? parseISO(t.dueDate).getTime() : Number.POSITIVE_INFINITY);
+    const quadRank = (t: Task) => QUADRANT_MAP[t.quadrant]?.color ?? 99;
+    Object.keys(map).forEach((k) => {
+      map[k] = [...map[k]].sort((a, b) => {
+        const q = quadRank(a) - quadRank(b);
+        if (q !== 0) return q;
+        return dueRank(a) - dueRank(b);
+      });
+    });
     return map;
   }, [columns, isDefault, tasks, itemsByBoard, activeBoardId]);
 
