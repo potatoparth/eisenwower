@@ -285,11 +285,39 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
 
         {/* Metadata */}
         <div className="pt-4 border-t space-y-2">
+          {/* Assignee */}
+          <div className="pb-3 space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <UserCircle2 className="w-3.5 h-3.5" /> Assigned to
+            </label>
+            <Select
+              value={task.assignedTo ?? "__none__"}
+              onValueChange={(v) => onUpdate(task.id, { assignedTo: v === "__none__" ? undefined : v })}
+            >
+              <SelectTrigger className="h-9 rounded-xl bg-secondary/40 border-0 text-sm">
+                <SelectValue placeholder="Unassigned" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Unassigned</SelectItem>
+                {assignees.map((a) => (
+                  <SelectItem key={a.userId} value={a.userId}>
+                    {a.displayName}
+                    {a.role === "owner" ? " (owner)" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!task.projectId && (
+              <p className="text-[11px] text-muted-foreground">Add this task to a project to assign it to someone.</p>
+            )}
+          </div>
           <p className="text-[11px] text-muted-foreground">
             Created: {format(parseISO(task.createdAt), "MMM d, yyyy 'at' h:mm a")}
+            {task.createdBy && <> · by {displayFor(task.createdBy)}</>}
           </p>
           <p className="text-[11px] text-muted-foreground">
             Updated: {format(parseISO(task.updatedAt), "MMM d, yyyy 'at' h:mm a")}
+            {task.updatedBy && <> · by {displayFor(task.updatedBy)}</>}
           </p>
           <p className="text-[11px] text-muted-foreground">
             Status: {task.status === "done" ? "Done" : "Open"}
