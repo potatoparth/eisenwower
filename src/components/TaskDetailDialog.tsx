@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, FolderKanban, PanelRightOpen, AlertCircle, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
+import { Calendar, FolderKanban, PanelRightOpen, AlertCircle, ChevronLeft, ChevronRight, Check, X, UserCircle2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,14 @@ import { TaskDescription } from "@/components/TaskDescription";
 import { TaskAttachments } from "@/components/TaskAttachments";
 import { ProjectTreePicker } from "@/components/ProjectTreePicker";
 import { RecentChipStrip } from "@/components/RecentChipStrip";
+import { useProjectAssignees, assigneeMap } from "@/hooks/useProjectAssignees";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TaskDetailDialogProps {
   task: Task;
