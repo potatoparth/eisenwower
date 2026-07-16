@@ -75,7 +75,7 @@ export function SprintView({ seedTasks, onSeedConsumed }: Props) {
   // When another view sends over selected tasks, prefill and open the composer.
   useEffect(() => {
     if (!seedTasks || seedTasks.length === 0) return;
-    setSeedForModal(seedTasks.slice(0, 5));
+    setSeedForModal(seedTasks);
     setOpen(true);
     onSeedConsumed?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
