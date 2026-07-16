@@ -878,6 +878,17 @@ export function ProjectBuilder({
                           <Trash2 className="w-3 h-3" />
                         </Button>
                       )}
+                      {canEdit && taskActions?.archiveTask && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="w-6 h-6 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 -mr-1"
+                          onClick={(e) => { e.stopPropagation(); taskActions.archiveTask?.(t.id); }}
+                          title="Archive"
+                        >
+                          <Archive className="w-3 h-3" />
+                        </Button>
+                      )}
                     </div>
                   );
                 })}
