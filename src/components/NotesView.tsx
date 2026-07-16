@@ -434,6 +434,41 @@ export function NoteComposer(props: ComposerProps) {
                   maxTotalBytes={MAX_NOTE_BYTES}
                 />
               )}
+              {isEditing && props.editingNote && (
+                <div className="pt-2 border-t border-border/50 space-y-2">
+                  {projectId && (
+                    <div className="flex items-center gap-2">
+                      <UserCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
+                      <Select
+                        value={assignedTo || "__none__"}
+                        onValueChange={(v) => setAssignedTo(v === "__none__" ? "" : v)}
+                      >
+                        <SelectTrigger className="h-8 flex-1 rounded-lg bg-secondary/40 border-0 text-xs">
+                          <SelectValue placeholder="Unassigned" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">Unassigned</SelectItem>
+                          {assignees.map((a) => (
+                            <SelectItem key={a.userId} value={a.userId}>
+                              {a.displayName}{a.role === "owner" ? " (owner)" : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  <div className="text-[11px] text-muted-foreground space-y-0.5">
+                    <div>
+                      Created {format(parseISO(props.editingNote.createdAt), "MMM d, yyyy 'at' h:mm a")}
+                      {props.editingNote.createdBy && <> · by {displayFor(props.editingNote.createdBy)}</>}
+                    </div>
+                    <div>
+                      Updated {format(parseISO(props.editingNote.updatedAt), "MMM d, yyyy 'at' h:mm a")}
+                      {props.editingNote.updatedBy && <> · by {displayFor(props.editingNote.updatedBy)}</>}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Footer bar */}
