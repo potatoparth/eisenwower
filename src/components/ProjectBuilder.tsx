@@ -391,6 +391,8 @@ export function ProjectBuilder({
   const renderSearchResult = (n: ReturnType<typeof buildProjectTree>[number]): JSX.Element => {
     const p = n.project;
     const active = selectedProjectId === p.id && !directOnly;
+    const roleThis = getProjectRole?.(p.id);
+    const sharedWithMe = roleThis === "editor" || roleThis === "viewer";
     return (
       <button
         key={p.id}
@@ -411,6 +413,9 @@ export function ProjectBuilder({
             </span>
           )}
         </span>
+        {sharedWithMe && (
+          <Users2 className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground/80" aria-label="Shared" />
+        )}
       </button>
     );
   };
