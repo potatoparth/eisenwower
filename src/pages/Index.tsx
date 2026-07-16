@@ -122,6 +122,18 @@ const Index = () => {
   // Expose enriched tasks under the `tasks` name so downstream code keeps working.
   const tasks = enrichedTasks;
 
+  // Resolve display names for anyone currently assigned to a task.
+  const assigneeIds = useMemo(() => {
+    const s = new Set<string>();
+    tasks.forEach((t) => { if (t.assignedTo) s.add(t.assignedTo); });
+    return Array.from(s);
+  }, [tasks]);
+  const assigneeNameMap = useUserNames(assigneeIds);
+  const getAssigneeName = useCallback((id: string) => {
+    if (currentUser?.id === id) return "You";
+    return assigneeNameMap.get(id) || users.find((u) => u.id === id)?.username;
+  }, [assigneeNameMap, currentUser?.id, users]);
+
   const filteredNotes = useMemo(() => {
     return notes.filter((n) => {
       if (selectedCategories.length > 0 && !selectedCategories.includes(n.category)) return false;
