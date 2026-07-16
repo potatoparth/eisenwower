@@ -187,18 +187,6 @@ export function TaskCard({
             <GripVertical className="w-3 h-3" />
           </span>
 
-          {/* Delete Button */}
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
-            className={cn(
-              "p-0.5 rounded text-muted-foreground hover:text-destructive transition-all",
-              isHovered ? "opacity-100" : "opacity-0"
-            )}
-            title="Delete"
-          >
-            <Trash2 className="w-3 h-3" />
-          </button>
-
           {/* Archive Button */}
           {taskActions?.archiveTask && (
             <button
@@ -212,6 +200,18 @@ export function TaskCard({
               <Archive className="w-3 h-3" />
             </button>
           )}
+
+          {/* Delete Button */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
+            className={cn(
+              "p-0.5 rounded text-destructive hover:text-destructive hover:bg-destructive/10 transition-all",
+              isHovered ? "opacity-100" : "opacity-0"
+            )}
+            title="Delete"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
         </div>
       </div>
     </div>
