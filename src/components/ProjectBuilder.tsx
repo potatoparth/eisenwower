@@ -306,6 +306,14 @@ export function ProjectBuilder({
               <Users2 className="w-3.5 h-3.5" />
             </span>
           )}
+          {sharedWithMe && p.userId && p.userId !== currentUserId && (
+            <UserBadge
+              userId={p.userId}
+              name={getUserName?.(p.userId)}
+              size="xs"
+              title={`Owned by ${getUserName?.(p.userId) ?? "someone"}`}
+            />
+          )}
           <span
             className={cn(
               "text-[11px] tabular-nums px-1.5 py-0.5 rounded-md flex-shrink-0",
