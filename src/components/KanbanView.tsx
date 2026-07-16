@@ -418,9 +418,11 @@ export function KanbanView({
                       onToggleStatus={onToggleStatus}
                       onDelete={isDefault ? onDeleteTask : (id) => onRemoveItem(activeBoardId, id)}
                       onTaskClick={(t) => { setExpandedColumnKey(null); onTaskClick?.(t); }}
-                      showQuadrantBadge
                       getCategoryColor={getCategoryColor}
                       deadlineThresholdDays={deadlineThresholdDays}
+                      variant="stacked"
+                      getProjectName={getProjectName}
+                      getAssigneeName={getAssigneeName}
                     />
                   ))}
                 </div>
