@@ -39,6 +39,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { TaskActionsProvider } from "@/hooks/useTaskActions";
+import { useUserNames } from "@/hooks/useUserNames";
 
 const Index = () => {
   const {
@@ -98,6 +99,11 @@ const Index = () => {
   // Project tree — used everywhere for breadcrumbs, filtering, derived category.
   const projectTree = useMemo(() => buildProjectTree(projects), [projects]);
   const projectNodeIndex = useMemo(() => indexProjectNodes(projectTree), [projectTree]);
+
+  const getProjectName = useCallback(
+    (id: string) => getProjectLeafName(projectNodeIndex, id),
+    [projectNodeIndex],
+  );
 
   // Enrich raw hook data: category = leaf project name (fallback "General").
   const enrichedTasks = useMemo(() => rawTasks.map((t) => ({
