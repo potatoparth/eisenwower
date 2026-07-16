@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Check, Trash2, GripVertical, Repeat, Archive, FolderKanban, UserCircle2 } from "lucide-react";
@@ -8,6 +8,7 @@ import { format, isToday, isTomorrow, isPast, parseISO } from "date-fns";
 import { useSelectionOptional } from "@/hooks/useSelection";
 import { useTaskActionsOptional } from "@/hooks/useTaskActions";
 import { UserBadge } from "@/components/UserBadge";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TaskCardProps {
   task: Task;
@@ -45,6 +46,21 @@ export function TaskCard({
   currentUserId,
 }: TaskCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  // Fallback: if the parent didn't thread currentUserId, resolve it from the
+  // active auth session so the "owned by someone else" badge still works.
+  const [fallbackUid, setFallbackUid] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (currentUserId) return;
+    let mounted = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (mounted) setFallbackUid(data.user?.id);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      if (mounted) setFallbackUid(s?.user?.id);
+    });
+    return () => { mounted = false; sub.subscription.unsubscribe(); };
+  }, [currentUserId]);
+  const viewerId = currentUserId ?? fallbackUid;
   const sel = useSelectionOptional();
   const taskActions = useTaskActionsOptional();
   const isSelectMode = !!sel?.selectMode;
@@ -200,7 +216,7 @@ export function TaskCard({
               (visible when "view all tasks" is on for shared projects). */}
           {(() => {
             const ownerId = task.userId ?? task.createdBy;
-            if (!ownerId || !currentUserId || ownerId === currentUserId) return null;
+            if (!ownerId || !viewerId || ownerId === viewerId) return null;
             return (
               <UserBadge
                 userId={ownerId}
