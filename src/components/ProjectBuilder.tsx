@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, ChevronRight, ChevronDown, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate, ChevronsDownUp, ChevronsUpDown, PanelLeft, PanelLeftClose, CornerLeftUp, Users2 } from "lucide-react";
+import { Plus, Trash2, Archive, ChevronRight, ChevronDown, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate, ChevronsDownUp, ChevronsUpDown, PanelLeft, PanelLeftClose, CornerLeftUp, Users2 } from "lucide-react";
 import { UserBadge } from "@/components/UserBadge";
 import { ProjectTemplate, ProjectTask, ProjectTemplatePreset, PresetTask } from "@/types/project";
 import { buildProjectTree, flattenProjectTree, indexProjectNodes, getDescendantIds, wouldCreateCycle, searchProjectTree } from "@/lib/projectTree";
@@ -9,6 +9,7 @@ import { ProjectTemplatesDialog } from "@/components/ProjectTemplatesDialog";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { QUADRANT_MAP } from "@/types/task";
 import { useSelectionOptional } from "@/hooks/useSelection";
+import { useTaskActionsOptional } from "@/hooks/useTaskActions";
 import { Note, noteColorFor } from "@/types/note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,6 +82,7 @@ export function ProjectBuilder({
   getUserName, currentUserId,
 }: ProjectBuilderProps) {
   const sel = useSelectionOptional();
+  const taskActions = useTaskActionsOptional();
   const isSelectMode = !!sel?.selectMode;
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [directOnly, setDirectOnly] = useState(false);
@@ -865,6 +867,17 @@ export function ProjectBuilder({
                           size="sm"
                           title={`Created by ${getUserName?.(t.createdBy) ?? "someone"}`}
                         />
+                      )}
+                      {canEdit && taskActions?.archiveTask && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="w-6 h-6 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100"
+                          onClick={(e) => { e.stopPropagation(); taskActions.archiveTask?.(t.id); }}
+                          title="Archive"
+                        >
+                          <Archive className="w-3 h-3" />
+                        </Button>
                       )}
                       {canEdit && onDeleteMatrixTask && (
                         <Button
