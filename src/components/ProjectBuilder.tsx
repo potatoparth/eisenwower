@@ -604,6 +604,20 @@ export function ProjectBuilder({
           </span>
         )}
       </div>
+      {/* Desktop: reopen the sidebar when hidden. */}
+      {railHidden && (
+        <div className="hidden lg:flex items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 rounded-lg gap-2"
+            onClick={() => setRailHidden(false)}
+            title="Show projects sidebar"
+          >
+            <PanelLeft className="w-3.5 h-3.5" /> Show projects
+          </Button>
+        </div>
+      )}
       {/* New project form */}
       <AnimatePresence>
         {showNewProject && (
