@@ -149,7 +149,7 @@ export function SettingsPanel({
 
         <div className="flex-1 overflow-y-auto p-5 space-y-3">
           {/* Profile badge */}
-          <Section icon={Sparkles} title="Profile badge" defaultOpen>
+          <Section icon={Sparkles} title="Profile badge">
             <div className="flex items-center gap-3">
               {currentUser && (
                 <UserBadge
@@ -216,7 +216,7 @@ export function SettingsPanel({
                         key={c}
                         onClick={() => onUpdateBadgeAppearance?.({ badgeColor: c, badgeGradient: null })}
                         className={cn(
-                          "w-7 h-7 rounded-full border-2 transition-all",
+                          "w-5 h-5 rounded-full border-2 transition-all",
                           currentUser?.badgeColor?.toLowerCase() === c.toLowerCase() && !currentUser?.badgeGradient
                             ? "border-foreground scale-110"
                             : "border-transparent hover:scale-110"
@@ -245,7 +245,7 @@ export function SettingsPanel({
                 </>
               ) : (
                 <>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-6 gap-2">
                     {BADGE_GRADIENT_PRESETS.map((g, i) => {
                       const active = currentUser?.badgeGradient?.from === g.from && currentUser?.badgeGradient?.to === g.to;
                       return (
@@ -253,7 +253,7 @@ export function SettingsPanel({
                           key={i}
                           onClick={() => onUpdateBadgeAppearance?.({ badgeGradient: g, badgeColor: null })}
                           className={cn(
-                            "h-10 rounded-lg border-2 transition-all",
+                            "w-6 h-6 rounded-full border-2 transition-all",
                             active ? "border-foreground scale-105" : "border-transparent hover:scale-105"
                           )}
                           style={{ background: `linear-gradient(${g.angle ?? 135}deg, ${g.from}, ${g.to})` }}
@@ -314,7 +314,7 @@ export function SettingsPanel({
           </Section>
 
           {/* Global color */}
-          <Section icon={Palette} title="Global color" defaultOpen>
+          <Section icon={Palette} title="Global color">
             <p className="text-[11px] text-muted-foreground">
               Used across buttons, links, and highlights.
             </p>
@@ -331,13 +331,13 @@ export function SettingsPanel({
                 className="h-9 rounded-lg font-mono text-xs w-32"
               />
             </div>
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-8 gap-2">
               {GLOBAL_COLOR_PRESETS.map((c) => (
                 <button
                   key={c}
                   onClick={() => onUpdateSettings({ primaryColor: c })}
                   className={cn(
-                    "w-8 h-8 rounded-lg border-2 transition-all",
+                    "w-5 h-5 rounded-full border-2 transition-all",
                     primaryColor.toLowerCase() === c.toLowerCase()
                       ? "border-foreground scale-110"
                       : "border-transparent hover:scale-105"
