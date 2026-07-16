@@ -67,6 +67,9 @@ export function BulkActionBar({
   const [catQuery, setCatQuery] = useState("");
   const [projOpen, setProjOpen] = useState(false);
   const [projQuery, setProjQuery] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [projMoveOpen, setProjMoveOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (!selectMode || count === 0) return null;
 
@@ -100,10 +103,6 @@ export function BulkActionBar({
     clear();
     setSelectMode(false);
   };
-
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [projMoveOpen, setProjMoveOpen] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   type ActionItem = {
     key: string;
