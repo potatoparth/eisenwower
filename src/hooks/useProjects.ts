@@ -52,18 +52,31 @@ export function useProjects(userId?: string) {
       }
       return cur ?? id;
     };
-    // Determine role at each root: owner (row.user_id) wins, else collaborator role.
+    const ancestorsOf = (id: string): string[] => {
+      const chain: string[] = [];
+      let cur: string | null = id;
+      const seen = new Set<string>();
+      while (cur && !seen.has(cur)) {
+        seen.add(cur);
+        chain.push(cur);
+        cur = parentOf.get(cur) ?? null;
+      }
+      return chain;
+    };
+    // Determine role at each root: owner (root row.user_id) wins, otherwise the
+    // nearest share on this project or any ancestor applies to the subtree.
     const rootRole: Record<string, ProjectRole> = {};
     rows.forEach((row) => {
       if (row.parent_id === null && row.user_id === userId) rootRole[row.id] = "owner";
     });
-    ((collabRows || []) as Array<{ project_id: string; role: string }>).forEach((r) => {
-      if (!rootRole[r.project_id]) rootRole[r.project_id] = r.role as ProjectRole;
-    });
+    const collaboratorRoleByProject = new Map(
+      ((collabRows || []) as Array<{ project_id: string; role: string }>).map((r) => [r.project_id, r.role as ProjectRole]),
+    );
     // Propagate root role to every descendant in the tree.
     const roleByProject: Record<string, ProjectRole> = {};
     rows.forEach((row) => {
-      const role = rootRole[rootOf(row.id)];
+      const rootRoleForRow = rootRole[rootOf(row.id)];
+      const role = rootRoleForRow ?? ancestorsOf(row.id).map((id) => collaboratorRoleByProject.get(id)).find(Boolean);
       if (role) roleByProject[row.id] = role;
     });
     setRoles(roleByProject);

@@ -52,7 +52,7 @@ async function resolveProjectPath(sb, userId, path, create = false) {
   if (!path?.trim()) return { projectId: null, created: [] };
   const parts = path.split("/").map((s) => s.trim()).filter(Boolean);
   if (parts.length === 0) return { projectId: null, created: [] };
-  const { data, error } = await sb.from("project_templates").select("id,name,parent_id").eq("user_id", userId);
+  const { data, error } = await sb.from("project_templates").select("id,name,parent_id");
   if (error) throw new Error(error.message);
   const all = data ?? [];
   const created = [];
@@ -78,7 +78,7 @@ async function resolveProjectPath(sb, userId, path, create = false) {
   return { projectId: currentId, created };
 }
 async function descendantProjectIds(sb, userId, rootId) {
-  const { data, error } = await sb.from("project_templates").select("id,parent_id").eq("user_id", userId);
+  const { data, error } = await sb.from("project_templates").select("id,parent_id");
   if (error) throw new Error(error.message);
   const rows = data ?? [];
   const childrenBy = /* @__PURE__ */ new Map();
@@ -404,8 +404,19 @@ var list_projects_default = defineTool8({
     if (error) return toErr(error.message);
     const rows = data ?? [];
     const { data: collabs } = await sb.from("project_collaborators").select("project_id,role").eq("user_id", uid);
-    const roleByProject = new Map((collabs ?? []).map((c) => [c.project_id, c.role]));
+    const collaboratorRoleByProject = new Map((collabs ?? []).map((c) => [c.project_id, c.role]));
     const byId = new Map(rows.map((r) => [r.id, r]));
+    const ancestorsOf = (id) => {
+      const chain = [];
+      let cur = id;
+      const seen = /* @__PURE__ */ new Set();
+      while (cur && !seen.has(cur)) {
+        seen.add(cur);
+        chain.push(cur);
+        cur = byId.get(cur)?.parent_id;
+      }
+      return chain;
+    };
     const withPath = rows.map((r) => {
       const chain = [];
       let cur = r.id;
@@ -417,7 +428,8 @@ var list_projects_default = defineTool8({
         chain.unshift(row.name);
         cur = row.parent_id;
       }
-      const access = r.user_id === uid ? "owner" : roleByProject.get(r.id) ?? "viewer";
+      const root = chain.length ? rows.find((row) => row.name === chain[0] && row.parent_id === null) : void 0;
+      const access = root?.user_id === uid || r.user_id === uid ? "owner" : ancestorsOf(r.id).map((id) => collaboratorRoleByProject.get(id)).find(Boolean) ?? "viewer";
       return { ...r, path: chain.join(" / "), access };
     });
     return {

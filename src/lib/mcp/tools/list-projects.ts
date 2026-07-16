@@ -26,8 +26,19 @@ export default defineTool({
       .from("project_collaborators")
       .select("project_id,role")
       .eq("user_id", uid);
-    const roleByProject = new Map((collabs ?? []).map((c) => [c.project_id as string, c.role as string]));
+    const collaboratorRoleByProject = new Map((collabs ?? []).map((c) => [c.project_id as string, c.role as string]));
     const byId = new Map(rows.map((r) => [r.id, r] as const));
+    const ancestorsOf = (id: string): string[] => {
+      const chain: string[] = [];
+      let cur: string | null | undefined = id;
+      const seen = new Set<string>();
+      while (cur && !seen.has(cur)) {
+        seen.add(cur);
+        chain.push(cur);
+        cur = byId.get(cur)?.parent_id;
+      }
+      return chain;
+    };
     const withPath = rows.map((r) => {
       const chain: string[] = [];
       let cur: string | null | undefined = r.id;
@@ -39,7 +50,10 @@ export default defineTool({
         chain.unshift(row.name);
         cur = row.parent_id;
       }
-      const access = r.user_id === uid ? "owner" : (roleByProject.get(r.id) ?? "viewer");
+      const root = chain.length ? rows.find((row) => row.name === chain[0] && row.parent_id === null) : undefined;
+      const access = root?.user_id === uid || r.user_id === uid
+        ? "owner"
+        : (ancestorsOf(r.id).map((id) => collaboratorRoleByProject.get(id)).find(Boolean) ?? "viewer");
       return { ...(r as object), path: chain.join(" / "), access };
     });
     return {

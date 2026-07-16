@@ -19,8 +19,7 @@ export async function resolveProjectPath(
   if (parts.length === 0) return { projectId: null, created: [] };
   const { data, error } = await sb
     .from("project_templates")
-    .select("id,name,parent_id")
-    .eq("user_id", userId);
+    .select("id,name,parent_id");
   if (error) throw new Error(error.message);
   const all = (data ?? []) as ProjectRow[];
   const created: string[] = [];
@@ -58,8 +57,7 @@ export async function descendantProjectIds(
 ): Promise<string[]> {
   const { data, error } = await sb
     .from("project_templates")
-    .select("id,parent_id")
-    .eq("user_id", userId);
+    .select("id,parent_id");
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as { id: string; parent_id: string | null }[];
   const childrenBy = new Map<string | null, string[]>();
@@ -85,8 +83,7 @@ export async function projectPathString(
 ): Promise<string> {
   const { data } = await sb
     .from("project_templates")
-    .select("id,name,parent_id")
-    .eq("user_id", userId);
+    .select("id,name,parent_id");
   const rows = (data ?? []) as ProjectRow[];
   const byId = new Map(rows.map((r) => [r.id, r] as const));
   const chain: string[] = [];
