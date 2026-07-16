@@ -42,6 +42,9 @@ type TaskRow = {
   recurring_template_id: string | null;
   attachments: unknown;
   archived_at: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  assigned_to: string | null;
 };
 
 const fromRow = (row: TaskRow): Task => ({
@@ -68,6 +71,9 @@ const fromRow = (row: TaskRow): Task => ({
   attachments: Array.isArray(row.attachments) ? (row.attachments as TaskAttachment[]) : [],
   sortOrder: typeof (row as unknown as { sort_order?: number }).sort_order === "number" ? (row as unknown as { sort_order: number }).sort_order : undefined,
   archivedAt: row.archived_at || undefined,
+  createdBy: row.created_by || undefined,
+  updatedBy: row.updated_by || undefined,
+  assignedTo: row.assigned_to || undefined,
 });
 
 // Only include keys the caller explicitly set. Using `?? null` for every field
@@ -90,6 +96,7 @@ const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => {
   if ("recurringTemplateId" in updates) out.recurring_template_id = updates.recurringTemplateId ?? null;
   if ("attachments" in updates) out.attachments = updates.attachments ? JSON.parse(JSON.stringify(updates.attachments)) : [];
   if ("sortOrder" in updates) out.sort_order = updates.sortOrder;
+  if ("assignedTo" in updates) out.assigned_to = updates.assignedTo ?? null;
   return out;
 };
 

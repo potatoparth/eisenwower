@@ -153,42 +153,51 @@ export type Database = {
       }
       notes: {
         Row: {
+          assigned_to: string | null
           attachments: Json
           color: string | null
           content: string
           created_at: string
+          created_by: string | null
           id: string
           pinned: boolean
           project_id: string | null
           sort_order: number
           title: string
           updated_at: string
+          updated_by: string | null
           user_id: string
         }
         Insert: {
+          assigned_to?: string | null
           attachments?: Json
           color?: string | null
           content?: string
           created_at?: string
+          created_by?: string | null
           id?: string
           pinned?: boolean
           project_id?: string | null
           sort_order?: number
           title?: string
           updated_at?: string
+          updated_by?: string | null
           user_id: string
         }
         Update: {
+          assigned_to?: string | null
           attachments?: Json
           color?: string | null
           content?: string
           created_at?: string
+          created_by?: string | null
           id?: string
           pinned?: boolean
           project_id?: string | null
           sort_order?: number
           title?: string
           updated_at?: string
+          updated_by?: string | null
           user_id?: string
         }
         Relationships: [
@@ -615,8 +624,10 @@ export type Database = {
       tasks: {
         Row: {
           archived_at: string | null
+          assigned_to: string | null
           attachments: Json
           created_at: string
+          created_by: string | null
           deadline_threshold_override: number | null
           description: string | null
           due_date: string | null
@@ -634,12 +645,15 @@ export type Database = {
           sort_order: number
           status: string
           updated_at: string
+          updated_by: string | null
           user_id: string
         }
         Insert: {
           archived_at?: string | null
+          assigned_to?: string | null
           attachments?: Json
           created_at?: string
+          created_by?: string | null
           deadline_threshold_override?: number | null
           description?: string | null
           due_date?: string | null
@@ -657,12 +671,15 @@ export type Database = {
           sort_order?: number
           status?: string
           updated_at?: string
+          updated_by?: string | null
           user_id: string
         }
         Update: {
           archived_at?: string | null
+          assigned_to?: string | null
           attachments?: Json
           created_at?: string
+          created_by?: string | null
           deadline_threshold_override?: number | null
           description?: string | null
           due_date?: string | null
@@ -680,6 +697,7 @@ export type Database = {
           sort_order?: number
           status?: string
           updated_at?: string
+          updated_by?: string | null
           user_id?: string
         }
         Relationships: [
@@ -756,6 +774,15 @@ export type Database = {
       is_project_owner: {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
+      }
+      list_project_assignees: {
+        Args: { _project_id: string }
+        Returns: {
+          display_name: string
+          email: string
+          role: string
+          user_id: string
+        }[]
       }
       list_project_collaborators: {
         Args: { _project_id: string }

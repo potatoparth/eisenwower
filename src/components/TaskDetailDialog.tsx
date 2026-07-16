@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, FolderKanban, PanelRightOpen, AlertCircle, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
+import { Calendar, FolderKanban, PanelRightOpen, AlertCircle, ChevronLeft, ChevronRight, Check, X, UserCircle2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,14 @@ import { TaskDescription } from "@/components/TaskDescription";
 import { TaskAttachments } from "@/components/TaskAttachments";
 import { ProjectTreePicker } from "@/components/ProjectTreePicker";
 import { RecentChipStrip } from "@/components/RecentChipStrip";
+import { useProjectAssignees, assigneeMap } from "@/hooks/useProjectAssignees";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TaskDetailDialogProps {
   task: Task;
@@ -64,6 +72,10 @@ export function TaskDetailDialog({
   const [projectId, setProjectId] = useState<string | undefined>(task.projectId);
   const [recurrence, setRecurrence] = useState<Recurrence>(task.recurrence ?? "none");
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>(task.recurrenceDays ?? []);
+
+  const assignees = useProjectAssignees(task.projectId);
+  const nameMap = assigneeMap(assignees);
+  const displayFor = (uid?: string) => (uid ? (nameMap.get(uid) || "Someone") : "—");
 
   useEffect(() => {
     setName(task.name);
@@ -284,11 +296,37 @@ export function TaskDetailDialog({
           </div>
 
           <div className="pt-2 border-t space-y-1">
+            <div className="pb-2 space-y-1.5">
+              <label className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
+                <UserCircle2 className="w-3.5 h-3.5" /> Assigned to
+              </label>
+              <Select
+                value={task.assignedTo ?? "__none__"}
+                onValueChange={(v) => onUpdate(task.id, { assignedTo: v === "__none__" ? undefined : v })}
+              >
+                <SelectTrigger className="h-8 rounded-lg bg-secondary/40 border-0 text-xs">
+                  <SelectValue placeholder="Unassigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Unassigned</SelectItem>
+                  {assignees.map((a) => (
+                    <SelectItem key={a.userId} value={a.userId}>
+                      {a.displayName}{a.role === "owner" ? " (owner)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!task.projectId && (
+                <p className="text-[11px] text-muted-foreground">Add this task to a project to assign it.</p>
+              )}
+            </div>
             <p className="text-[11px] text-muted-foreground">
               Created: {format(parseISO(task.createdAt), "MMM d, yyyy 'at' h:mm a")}
+              {task.createdBy && <> · by {displayFor(task.createdBy)}</>}
             </p>
             <p className="text-[11px] text-muted-foreground">
               Updated: {format(parseISO(task.updatedAt), "MMM d, yyyy 'at' h:mm a")}
+              {task.updatedBy && <> · by {displayFor(task.updatedBy)}</>}
             </p>
             <p className="text-[11px] text-muted-foreground">
               Status: {task.status === "done" ? "Done" : "Open"}
