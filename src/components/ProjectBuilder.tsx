@@ -564,11 +564,18 @@ export function ProjectBuilder({
   );
 
   return (
-    <div className="flex flex-col lg:grid lg:grid-cols-[320px_1fr] gap-4 lg:h-full lg:min-h-0 pb-24 lg:pb-0">
+    <div
+      className={cn(
+        "flex flex-col gap-4 lg:h-full lg:min-h-0 pb-24 lg:pb-0",
+        railHidden ? "lg:grid lg:grid-cols-[1fr]" : "lg:grid lg:grid-cols-[320px_1fr]",
+      )}
+    >
       {/* Desktop rail */}
-      <aside className="hidden lg:flex flex-col min-h-0 rounded-2xl border border-border/60 bg-card/30 p-3">
-        {railBody}
-      </aside>
+      {!railHidden && (
+        <aside className="hidden lg:flex flex-col min-h-0 rounded-2xl border border-border/60 bg-card/30 p-3">
+          {railBody}
+        </aside>
+      )}
 
       {/* Mobile drawer */}
       <Sheet open={mobileRailOpen} onOpenChange={setMobileRailOpen}>
