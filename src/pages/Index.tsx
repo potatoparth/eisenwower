@@ -122,17 +122,28 @@ const Index = () => {
   // Expose enriched tasks under the `tasks` name so downstream code keeps working.
   const tasks = enrichedTasks;
 
-  // Resolve display names for anyone currently assigned to a task.
-  const assigneeIds = useMemo(() => {
+  // Resolve display names for every user id we render anywhere (assignees,
+  // creators, updaters, project owners). Falls back to the loaded profiles list.
+  const allUserIds = useMemo(() => {
     const s = new Set<string>();
-    tasks.forEach((t) => { if (t.assignedTo) s.add(t.assignedTo); });
+    const add = (id?: string | null) => { if (id) s.add(id); };
+    tasks.forEach((t) => { add(t.assignedTo); add(t.createdBy); add(t.updatedBy); add(t.userId); });
+    archivedTasks.forEach((t) => { add(t.assignedTo); add(t.createdBy); add(t.updatedBy); add(t.userId); });
+    notes.forEach((n) => { add((n as { createdBy?: string }).createdBy); add((n as { updatedBy?: string }).updatedBy); add((n as { userId?: string }).userId); });
+    projects.forEach((p) => { add((p as { userId?: string }).userId); });
     return Array.from(s);
-  }, [tasks]);
-  const assigneeNameMap = useUserNames(assigneeIds);
+  }, [tasks, archivedTasks, notes, projects]);
+  const userNameMap = useUserNames(allUserIds);
+  /** Resolve a display name for any user id in the workspace. */
+  const getUserName = useCallback((id: string): string | undefined => {
+    if (!id) return undefined;
+    return userNameMap.get(id) || users.find((u) => u.id === id)?.username;
+  }, [userNameMap, users]);
   const getAssigneeName = useCallback((id: string) => {
     if (currentUser?.id === id) return "You";
-    return assigneeNameMap.get(id) || users.find((u) => u.id === id)?.username;
-  }, [assigneeNameMap, currentUser?.id, users]);
+    return getUserName(id);
+  }, [getUserName, currentUser?.id]);
+  const currentUserId = currentUser?.id;
 
   const filteredNotes = useMemo(() => {
     return notes.filter((n) => {
@@ -586,6 +597,8 @@ const Index = () => {
                 deadlineThresholdDays={settings.deadlineThresholdDays}
                 getProjectName={getProjectName}
                 getAssigneeName={getAssigneeName}
+                getUserName={getUserName}
+                currentUserId={currentUserId}
               />
             </motion.div>
           )}
@@ -638,6 +651,8 @@ const Index = () => {
                 onDeletePreset={deletePreset}
                 recentCategories={recentCategories}
                 recentProjectIds={recentProjectIds}
+                getUserName={getUserName}
+                currentUserId={currentUserId}
               />
             </motion.div>
           )}
@@ -732,6 +747,8 @@ const Index = () => {
           onSwitchToDialog={() => updateSettings({ taskDetailView: "popup" })}
           onCreateCategory={handleCreateCategory}
           onCreateProject={handleCreateProject}
+          getUserName={getUserName}
+          currentUserId={currentUserId}
         />
       )}
       {selectedTask && !useSidebarDetail && (
@@ -753,6 +770,8 @@ const Index = () => {
           onToggleStatus={(id) => toggleStatus(id)}
           onCreateCategory={handleCreateCategory}
           onCreateProject={handleCreateProject}
+          getUserName={getUserName}
+          currentUserId={currentUserId}
         />
       )}
 

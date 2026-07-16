@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, ChevronRight, ChevronDown, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate, ChevronsDownUp, ChevronsUpDown, PanelLeft, CornerLeftUp, Users2 } from "lucide-react";
+import { Plus, Trash2, ChevronRight, ChevronDown, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate, ChevronsDownUp, ChevronsUpDown, PanelLeft, PanelLeftClose, CornerLeftUp, Users2 } from "lucide-react";
+import { UserBadge } from "@/components/UserBadge";
 import { ProjectTemplate, ProjectTask, ProjectTemplatePreset, PresetTask } from "@/types/project";
 import { buildProjectTree, flattenProjectTree, indexProjectNodes, getDescendantIds, wouldCreateCycle, searchProjectTree } from "@/lib/projectTree";
 import { ShareProjectDialog } from "@/components/ShareProjectDialog";
@@ -61,6 +62,10 @@ interface ProjectBuilderProps {
   onAddPreset?: (name: string, description?: string, tasks?: PresetTask[]) => Promise<ProjectTemplatePreset | null> | ProjectTemplatePreset | null;
   onUpdatePreset?: (id: string, updates: Partial<Omit<ProjectTemplatePreset, "id" | "createdAt">>) => void;
   onDeletePreset?: (id: string) => void;
+  /** Resolves display names for arbitrary user ids (project owners, task creators). */
+  getUserName?: (id: string) => string | undefined;
+  /** Current viewer's user id so we can skip badges for their own rows. */
+  currentUserId?: string;
 }
 
 export function ProjectBuilder({
@@ -73,6 +78,7 @@ export function ProjectBuilder({
   archivedTasks, onUnarchiveTask, onDeleteArchivedTask,
   getProjectRole,
   templatePresets = [], onAddPreset, onUpdatePreset, onDeletePreset,
+  getUserName, currentUserId,
 }: ProjectBuilderProps) {
   const sel = useSelectionOptional();
   const isSelectMode = !!sel?.selectMode;
@@ -95,6 +101,7 @@ export function ProjectBuilder({
   const [dropTargetId, setDropTargetId] = useState<string | "__root__" | null>(null);
   const [treeQuery, setTreeQuery] = useState("");
   const [mobileRailOpen, setMobileRailOpen] = useState(false);
+  const [railHidden, setRailHidden] = useState(false);
   const [editingProjectName, setEditingProjectName] = useState(false);
   const [projectNameDraft, setProjectNameDraft] = useState("");
 
@@ -299,6 +306,14 @@ export function ProjectBuilder({
               <Users2 className="w-3.5 h-3.5" />
             </span>
           )}
+          {sharedWithMe && p.userId && p.userId !== currentUserId && (
+            <UserBadge
+              userId={p.userId}
+              name={getUserName?.(p.userId)}
+              size="xs"
+              title={`Owned by ${getUserName?.(p.userId) ?? "someone"}`}
+            />
+          )}
           <span
             className={cn(
               "text-[11px] tabular-nums px-1.5 py-0.5 rounded-md flex-shrink-0",
@@ -424,15 +439,26 @@ export function ProjectBuilder({
     <div className="flex flex-col lg:min-h-0 gap-3 h-full">
       <div className="flex items-center justify-between gap-2 px-1">
         <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Projects</h2>
-        {onAddPreset && onUpdatePreset && onDeletePreset && (
+        <div className="flex items-center gap-0.5">
+          {onAddPreset && onUpdatePreset && onDeletePreset && (
+            <Button
+              variant="ghost" size="sm"
+              className="h-7 px-2 rounded-lg gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+              onClick={() => setTemplatesOpen(true)}
+            >
+              <LayoutTemplate className="w-3.5 h-3.5" /> Templates
+            </Button>
+          )}
           <Button
-            variant="ghost" size="sm"
-            className="h-7 px-2 rounded-lg gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-            onClick={() => setTemplatesOpen(true)}
+            variant="ghost" size="icon"
+            className="hidden lg:inline-flex h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground"
+            onClick={() => setRailHidden(true)}
+            title="Hide sidebar"
+            aria-label="Hide sidebar"
           >
-            <LayoutTemplate className="w-3.5 h-3.5" /> Templates
+            <PanelLeftClose className="w-3.5 h-3.5" />
           </Button>
-        )}
+        </div>
       </div>
 
       {!showNewProject && (
@@ -538,11 +564,18 @@ export function ProjectBuilder({
   );
 
   return (
-    <div className="flex flex-col lg:grid lg:grid-cols-[320px_1fr] gap-4 lg:h-full lg:min-h-0 pb-24 lg:pb-0">
+    <div
+      className={cn(
+        "flex flex-col gap-4 lg:h-full lg:min-h-0 pb-24 lg:pb-0",
+        railHidden ? "lg:grid lg:grid-cols-[1fr]" : "lg:grid lg:grid-cols-[320px_1fr]",
+      )}
+    >
       {/* Desktop rail */}
-      <aside className="hidden lg:flex flex-col min-h-0 rounded-2xl border border-border/60 bg-card/30 p-3">
-        {railBody}
-      </aside>
+      {!railHidden && (
+        <aside className="hidden lg:flex flex-col min-h-0 rounded-2xl border border-border/60 bg-card/30 p-3">
+          {railBody}
+        </aside>
+      )}
 
       {/* Mobile drawer */}
       <Sheet open={mobileRailOpen} onOpenChange={setMobileRailOpen}>
@@ -571,6 +604,20 @@ export function ProjectBuilder({
           </span>
         )}
       </div>
+      {/* Desktop: reopen the sidebar when hidden. */}
+      {railHidden && (
+        <div className="hidden lg:flex items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 rounded-lg gap-2"
+            onClick={() => setRailHidden(false)}
+            title="Show projects sidebar"
+          >
+            <PanelLeft className="w-3.5 h-3.5" /> Show projects
+          </Button>
+        </div>
+      )}
       {/* New project form */}
       <AnimatePresence>
         {showNewProject && (
@@ -811,6 +858,14 @@ export function ProjectBuilder({
                           {t.dueDate && <span>• due {t.dueDate}</span>}
                         </div>
                       </div>
+                      {t.createdBy && t.createdBy !== currentUserId && (
+                        <UserBadge
+                          userId={t.createdBy}
+                          name={getUserName?.(t.createdBy)}
+                          size="sm"
+                          title={`Created by ${getUserName?.(t.createdBy) ?? "someone"}`}
+                        />
+                      )}
                       {canEdit && onDeleteMatrixTask && (
                         <Button
                           size="icon"
@@ -898,6 +953,21 @@ export function ProjectBuilder({
                       <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-2">
                         {n.category && <span>{n.category}</span>}
                         {n.pinned && <span>• pinned</span>}
+                        {(() => {
+                          const nn = n as unknown as { createdBy?: string; userId?: string };
+                          const owner = nn.createdBy || nn.userId;
+                          if (!owner || owner === currentUserId) return null;
+                          return (
+                            <span className="ml-auto">
+                              <UserBadge
+                                userId={owner}
+                                name={getUserName?.(owner)}
+                                size="xs"
+                                title={`By ${getUserName?.(owner) ?? "someone"}`}
+                              />
+                            </span>
+                          );
+                        })()}
                       </div>
                     </button>
                     ))}
