@@ -100,7 +100,7 @@ async function descendantProjectIds(sb, userId, rootId) {
 var list_tasks_default = defineTool({
   name: "list_tasks",
   title: "List tasks",
-  description: "List the signed-in user's Eisenhower Matrix tasks. Optionally filter by status, quadrant, or category.",
+  description: "List Eisenhower Matrix tasks the signed-in user owns or has access to via shared projects. Filter by status, quadrant, project, assignee, or archived state. Results include authorship metadata (created_by, updated_by, assigned_to) and archived_at.",
   inputSchema: {
     status: z2.enum(["open", "done"]).optional().describe("Filter by status."),
     quadrant: z2.enum([
@@ -111,18 +111,23 @@ var list_tasks_default = defineTool({
     ]).optional().describe("Filter by Eisenhower quadrant."),
     project_id: z2.string().uuid().optional().describe("Filter to tasks under this project id (includes tasks on all descendant subprojects)."),
     project_path: z2.string().optional().describe("Alternative to project_id: '/'-separated project path."),
-    category: z2.string().optional().describe("DEPRECATED. Filters tasks whose immediate project has this leaf name."),
+    assigned_to: z2.string().uuid().optional().describe("Filter to tasks assigned to this user id."),
+    include_archived: z2.boolean().optional().describe("Include archived (completed & recycled) tasks. Default false \u2014 archived tasks are hidden."),
+    only_archived: z2.boolean().optional().describe("Return ONLY archived tasks (archived_at is not null)."),
     limit: z2.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ status, quadrant, project_id, project_path, category, limit }, ctx) => {
+  handler: async ({ status, quadrant, project_id, project_path, assigned_to, include_archived, only_archived, limit }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
     const sb = supabaseForUser(ctx);
     let q = sb.from("tasks").select(
-      "id,name,description,quadrant,due_date,due_time,status,project_id,attachments,kanban_column,recurrence,recurrence_days,recurrence_time,is_recurring_instance,recurring_template_id,deadline_threshold_override,sort_order,created_at,updated_at"
+      "id,user_id,name,description,quadrant,due_date,due_time,status,project_id,attachments,kanban_column,recurrence,recurrence_days,recurrence_time,is_recurring_instance,recurring_template_id,deadline_threshold_override,sort_order,archived_at,assigned_to,created_by,updated_by,created_at,updated_at"
     ).order("created_at", { ascending: false }).limit(limit ?? 50);
     if (status) q = q.eq("status", status);
     if (quadrant) q = q.eq("quadrant", quadrant);
+    if (assigned_to) q = q.eq("assigned_to", assigned_to);
+    if (only_archived) q = q.not("archived_at", "is", null);
+    else if (!include_archived) q = q.is("archived_at", null);
     let filterProjectId = project_id ?? null;
     if (!filterProjectId && project_path) {
       const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, false);
@@ -134,13 +139,7 @@ var list_tasks_default = defineTool({
     }
     const { data, error } = await q;
     if (error) return toErr(error.message);
-    let rows = data ?? [];
-    if (category) {
-      const { data: projs } = await sb.from("project_templates").select("id,name").eq("user_id", ctx.getUserId());
-      const nameById = new Map((projs ?? []).map((p) => [p.id, p.name.toLowerCase()]));
-      const wanted = category.toLowerCase();
-      rows = rows.filter((t) => t.project_id && nameById.get(t.project_id) === wanted);
-    }
+    const rows = data ?? [];
     return {
       content: [{ type: "text", text: JSON.stringify(rows) }],
       structuredContent: { tasks: rows }
@@ -154,7 +153,7 @@ import { z as z3 } from "npm:zod@^4.4.3";
 var create_task_default = defineTool2({
   name: "create_task",
   title: "Create task",
-  description: "Create a task for the signed-in user in a specific Eisenhower quadrant. Supports description, project association, status, and attachments (links or already-uploaded files).",
+  description: "Create a task in a specific Eisenhower quadrant. Supports description, project association (own or shared projects), status, attachments, and assigning to a collaborator on a shared project.",
   inputSchema: {
     name: z3.string().trim().min(1).describe("Task name."),
     description: z3.string().optional().describe("Optional longer description."),
@@ -164,40 +163,24 @@ var create_task_default = defineTool2({
       "not-important-urgent",
       "not-important-not-urgent"
     ]).describe("Eisenhower quadrant."),
-    category: z3.string().optional().describe(
-      "DEPRECATED. Treated as a leaf subproject under `project_id` (or as a new top-level project if none). Prefer `project_path`."
-    ),
     due_date: z3.string().optional().describe("Due date YYYY-MM-DD."),
     due_time: z3.string().optional().describe("Due time HH:MM (24h)."),
-    project_id: z3.string().uuid().optional().describe("Associate the task with a specific project id (project_templates.id)."),
+    project_id: z3.string().uuid().optional().describe("Associate the task with a specific project id (project_templates.id). Projects are hierarchical \u2014 a project's parent_id makes it a subproject."),
     project_path: z3.string().optional().describe(
       "Alternative to project_id: '/'-separated project path like 'Work/Q4/Launch'. Any missing intermediate projects are auto-created for the user."
     ),
-    status: z3.enum(["open", "done"]).optional().describe("Initial status (default 'open'). Pass 'done' to create it already completed."),
+    status: z3.enum(["open", "done"]).optional().describe("Initial status (default 'open')."),
+    assigned_to: z3.string().uuid().optional().describe("User id to assign this task to (must be the owner or a collaborator on the task's project). Defaults to the caller."),
     attachments: z3.array(attachmentSchema).optional().describe("Attachments to add. Use kind='link' with a URL, or kind='file' with an existing storage path in the task-attachments bucket.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false },
-  handler: async ({ name, description, quadrant, category, due_date, due_time, project_id, project_path, status, attachments }, ctx) => {
+  handler: async ({ name, description, quadrant, due_date, due_time, project_id, project_path, status, assigned_to, attachments }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
     const sb = supabaseForUser(ctx);
     let effectiveProjectId = project_id ?? null;
     if (!effectiveProjectId && project_path) {
       const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, true);
       effectiveProjectId = projectId;
-    }
-    if (category && category !== "General") {
-      const cur = effectiveProjectId;
-      const { data: allProjects } = await sb.from("project_templates").select("id,name,parent_id").eq("user_id", ctx.getUserId());
-      const existing = (allProjects ?? []).find(
-        (p) => (p.parent_id ?? null) === cur && p.name.toLowerCase() === category.toLowerCase()
-      );
-      if (existing) {
-        effectiveProjectId = existing.id;
-      } else {
-        const { data: created, error: cErr } = await sb.from("project_templates").insert({ user_id: ctx.getUserId(), name: category, parent_id: cur }).select("id").single();
-        if (cErr) return toErr(cErr.message);
-        effectiveProjectId = created.id;
-      }
     }
     const { data, error } = await sb.from("tasks").insert({
       user_id: ctx.getUserId(),
@@ -208,6 +191,7 @@ var create_task_default = defineTool2({
       due_time: due_time ?? null,
       status: status ?? "open",
       project_id: effectiveProjectId,
+      assigned_to: assigned_to ?? ctx.getUserId(),
       attachments: attachments ? normalizeAttachments(attachments) : []
     }).select().single();
     if (error) return toErr(error.message);
@@ -235,17 +219,17 @@ var update_task_default = defineTool3({
       "not-important-urgent",
       "not-important-not-urgent"
     ]).optional().describe("Move task to a different Eisenhower quadrant."),
-    category: z4.string().optional().describe("DEPRECATED. Replaces the task's project with a subproject having this name under the task's current parent (or a new top-level project). Prefer `project_id`/`project_path`."),
     due_date: z4.string().nullable().optional().describe("YYYY-MM-DD, or null to clear."),
     due_time: z4.string().nullable().optional().describe("HH:MM (24h), or null to clear."),
     status: z4.enum(["open", "done"]).optional().describe("Set to 'done' to complete, 'open' to reopen."),
     project_id: z4.string().uuid().nullable().optional().describe("Associate with a project, or null to detach."),
     project_path: z4.string().nullable().optional().describe("Alternative to project_id: '/'-separated project path; missing nodes are created."),
+    assigned_to: z4.string().uuid().nullable().optional().describe("Reassign the task to a user id (owner or collaborator on the project), or null to unassign."),
     attachments: z4.array(attachmentSchema).optional().describe("Attachments to add or replace. Use kind='link' with URL, or kind='file' with an existing storage path."),
     attachments_mode: z4.enum(["append", "replace"]).optional().describe("How to apply `attachments`: 'append' (default) adds to existing, 'replace' overwrites the full list.")
   },
   annotations: { readOnlyHint: false, idempotentHint: true },
-  handler: async ({ task_id, attachments, attachments_mode, project_path, category, ...fields }, ctx) => {
+  handler: async ({ task_id, attachments, attachments_mode, project_path, ...fields }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
     const patch = {};
     for (const [k, v] of Object.entries(fields)) {
@@ -258,26 +242,6 @@ var update_task_default = defineTool3({
       } else {
         const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, true);
         patch.project_id = projectId;
-      }
-    } else if (category !== void 0) {
-      const { data: current } = await sb.from("tasks").select("project_id").eq("id", task_id).single();
-      const currentProjectId = current?.project_id ?? null;
-      let parentId = null;
-      if (currentProjectId) {
-        const { data: cp } = await sb.from("project_templates").select("parent_id").eq("id", currentProjectId).single();
-        parentId = cp?.parent_id ?? null;
-      }
-      if (!category || category === "General") {
-        patch.project_id = parentId;
-      } else {
-        const { data: all } = await sb.from("project_templates").select("id,name,parent_id").eq("user_id", ctx.getUserId());
-        const existing = (all ?? []).find((p) => (p.parent_id ?? null) === parentId && p.name.toLowerCase() === category.toLowerCase());
-        if (existing) patch.project_id = existing.id;
-        else {
-          const { data: created, error: cErr } = await sb.from("project_templates").insert({ user_id: ctx.getUserId(), name: category, parent_id: parentId }).select("id").single();
-          if (cErr) return toErr(cErr.message);
-          patch.project_id = created.id;
-        }
       }
     }
     if (attachments !== void 0) {
@@ -349,18 +313,18 @@ import { z as z7 } from "npm:zod@^4.4.3";
 var list_notes_default = defineTool6({
   name: "list_notes",
   title: "List notes",
-  description: "List the signed-in user's notes.",
+  description: "List notes the signed-in user owns or has access to via shared projects. Results include authorship metadata (created_by, updated_by, assigned_to).",
   inputSchema: {
     project_id: z7.string().uuid().optional().describe("Filter by project id (includes descendants)."),
     project_path: z7.string().optional().describe("Alternative to project_id: '/'-separated project path."),
-    category: z7.string().optional().describe("DEPRECATED. Filters notes whose immediate project leaf name matches."),
+    assigned_to: z7.string().uuid().optional().describe("Filter to notes assigned to this user id."),
     limit: z7.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ project_id, project_path, category, limit }, ctx) => {
+  handler: async ({ project_id, project_path, assigned_to, limit }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
     const sb = supabaseForUser(ctx);
-    let q = sb.from("notes").select("id,title,content,project_id,pinned,color,created_at,updated_at").order("updated_at", { ascending: false }).limit(limit ?? 50);
+    let q = sb.from("notes").select("id,user_id,title,content,project_id,pinned,color,attachments,assigned_to,created_by,updated_by,created_at,updated_at").order("updated_at", { ascending: false }).limit(limit ?? 50);
     let filterProjectId = project_id ?? null;
     if (!filterProjectId && project_path) {
       const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, false);
@@ -370,15 +334,10 @@ var list_notes_default = defineTool6({
       const ids = await descendantProjectIds(sb, ctx.getUserId(), filterProjectId);
       q = q.in("project_id", ids);
     }
+    if (assigned_to) q = q.eq("assigned_to", assigned_to);
     const { data, error } = await q;
     if (error) return toErr(error.message);
-    let rows = data ?? [];
-    if (category) {
-      const { data: projs } = await sb.from("project_templates").select("id,name").eq("user_id", ctx.getUserId());
-      const nameById = new Map((projs ?? []).map((p) => [p.id, p.name.toLowerCase()]));
-      const wanted = category.toLowerCase();
-      rows = rows.filter((n) => n.project_id && nameById.get(n.project_id) === wanted);
-    }
+    const rows = data ?? [];
     return {
       content: [{ type: "text", text: JSON.stringify(rows) }],
       structuredContent: { notes: rows }
@@ -392,17 +351,17 @@ import { z as z8 } from "npm:zod@^4.4.3";
 var create_note_default = defineTool7({
   name: "create_note",
   title: "Create note",
-  description: "Create a note for the signed-in user.",
+  description: "Create a note. Notes can live inside a project (including shared projects the user can edit) and be assigned to a collaborator.",
   inputSchema: {
     title: z8.string().trim().min(1).describe("Note title."),
     content: z8.string().optional().describe("Markdown / plain text body."),
-    category: z8.string().optional().describe("DEPRECATED. Treated as subproject-name under `project_path`/`project_id`."),
     project_id: z8.string().uuid().optional().describe("Attach to a specific project id."),
     project_path: z8.string().optional().describe("Alternative to project_id: '/'-separated project path; missing nodes are created."),
-    pinned: z8.boolean().optional().describe("Pin to the top.")
+    pinned: z8.boolean().optional().describe("Pin to the top."),
+    assigned_to: z8.string().uuid().optional().describe("Assign the note to a user id (owner or collaborator on the project). Defaults to the caller.")
   },
   annotations: { readOnlyHint: false },
-  handler: async ({ title, content, category, project_id, project_path, pinned }, ctx) => {
+  handler: async ({ title, content, project_id, project_path, pinned, assigned_to }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
     const sb = supabaseForUser(ctx);
     let effectiveProjectId = project_id ?? null;
@@ -410,25 +369,13 @@ var create_note_default = defineTool7({
       const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, true);
       effectiveProjectId = projectId;
     }
-    if (category && category !== "General") {
-      const cur = effectiveProjectId;
-      const { data: all } = await sb.from("project_templates").select("id,name,parent_id").eq("user_id", ctx.getUserId());
-      const existing = (all ?? []).find(
-        (p) => (p.parent_id ?? null) === cur && p.name.toLowerCase() === category.toLowerCase()
-      );
-      if (existing) effectiveProjectId = existing.id;
-      else {
-        const { data: created, error: cErr } = await sb.from("project_templates").insert({ user_id: ctx.getUserId(), name: category, parent_id: cur }).select("id").single();
-        if (cErr) return toErr(cErr.message);
-        effectiveProjectId = created.id;
-      }
-    }
     const { data, error } = await sb.from("notes").insert({
       user_id: ctx.getUserId(),
       title,
       content: content ?? "",
       project_id: effectiveProjectId,
-      pinned: pinned ?? false
+      pinned: pinned ?? false,
+      assigned_to: assigned_to ?? ctx.getUserId()
     }).select().single();
     if (error) return toErr(error.message);
     return {
@@ -444,16 +391,20 @@ import { z as z9 } from "npm:zod@^4.4.3";
 var list_projects_default = defineTool8({
   name: "list_projects",
   title: "List projects",
-  description: "List the signed-in user's projects (project templates). Each row includes `parent_id` and a computed breadcrumb `path` (root-first, '/'-joined). Projects form a tree \u2014 a project with `parent_id` set is a subproject of that parent.",
+  description: "List projects the signed-in user owns AND projects shared with them. Each row includes `parent_id`, a computed breadcrumb `path`, and `access` = 'owner' | 'editor' | 'viewer'. Projects form a tree \u2014 a project with `parent_id` set is a subproject of that parent.",
   inputSchema: {
     limit: z9.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ limit }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
-    const { data, error } = await supabaseForUser(ctx).from("project_templates").select("id,name,description,parent_id,sort_order,created_at,updated_at").order("updated_at", { ascending: false }).limit(limit ?? 50);
+    const sb = supabaseForUser(ctx);
+    const uid = ctx.getUserId();
+    const { data, error } = await sb.from("project_templates").select("id,user_id,name,description,parent_id,sort_order,created_at,updated_at").order("updated_at", { ascending: false }).limit(limit ?? 50);
     if (error) return toErr(error.message);
     const rows = data ?? [];
+    const { data: collabs } = await sb.from("project_collaborators").select("project_id,role").eq("user_id", uid);
+    const roleByProject = new Map((collabs ?? []).map((c) => [c.project_id, c.role]));
     const byId = new Map(rows.map((r) => [r.id, r]));
     const withPath = rows.map((r) => {
       const chain = [];
@@ -466,7 +417,8 @@ var list_projects_default = defineTool8({
         chain.unshift(row.name);
         cur = row.parent_id;
       }
-      return { ...r, path: chain.join(" / ") };
+      const access = r.user_id === uid ? "owner" : roleByProject.get(r.id) ?? "viewer";
+      return { ...r, path: chain.join(" / "), access };
     });
     return {
       content: [{ type: "text", text: JSON.stringify(withPath) }],
@@ -665,13 +617,61 @@ var add_task_to_kanban_default = defineTool14({
   }
 });
 
+// src/lib/mcp/tools/archive-task.ts
+import { defineTool as defineTool15 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z16 } from "npm:zod@^4.4.3";
+var archive_task_default = defineTool15({
+  name: "archive_task",
+  title: "Archive task",
+  description: "Archive or unarchive a task. Archived tasks are hidden from default lists but kept for history (use list_tasks with only_archived=true to see them).",
+  inputSchema: {
+    task_id: z16.string().uuid().describe("Task id."),
+    archived: z16.boolean().optional().describe("true (default) to archive, false to restore.")
+  },
+  annotations: { readOnlyHint: false, idempotentHint: true },
+  handler: async ({ task_id, archived }, ctx) => {
+    if (!ctx.isAuthenticated()) return unauthenticated();
+    const archived_at = archived === false ? null : (/* @__PURE__ */ new Date()).toISOString();
+    const { data, error } = await supabaseForUser(ctx).from("tasks").update({ archived_at }).eq("id", task_id).select().single();
+    if (error) return toErr(error.message);
+    return {
+      content: [{ type: "text", text: archived_at ? `Archived task ${task_id}` : `Restored task ${task_id}` }],
+      structuredContent: { task: data }
+    };
+  }
+});
+
+// src/lib/mcp/tools/list-project-collaborators.ts
+import { defineTool as defineTool16 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z17 } from "npm:zod@^4.4.3";
+var list_project_collaborators_default = defineTool16({
+  name: "list_project_collaborators",
+  title: "List project collaborators",
+  description: "List everyone who can act on a given project (owner plus invited collaborators) with their role. Use the returned user ids as `assigned_to` when creating or updating tasks and notes.",
+  inputSchema: {
+    project_id: z17.string().uuid().describe("Project id (project_templates.id).")
+  },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ project_id }, ctx) => {
+    if (!ctx.isAuthenticated()) return unauthenticated();
+    const { data, error } = await supabaseForUser(ctx).rpc("list_project_assignees", {
+      _project_id: project_id
+    });
+    if (error) return toErr(error.message);
+    return {
+      content: [{ type: "text", text: JSON.stringify(data ?? []) }],
+      structuredContent: { members: data ?? [] }
+    };
+  }
+});
+
 // src/lib/mcp/index.ts
 var projectRef = "bvhwblwojecapnxivqnl";
 var mcp_default = defineMcp({
   name: "weizen-mcp",
   title: "Weizen",
   version: "0.1.0",
-  instructions: "Tools for the Weizen productivity app: read and manage the signed-in user's Eisenhower Matrix tasks and notes. Use list_tasks to see what's on their plate, create_task to add work into a specific quadrant, complete_task to mark items done, and list_notes / create_note for their notes.",
+  instructions: "Tools for the Weizen productivity app. Tasks live in an Eisenhower Matrix (four quadrants) and can be organized under a hierarchical project tree (projects have optional parent_ids and can be shared with collaborators as viewer/editor). Every task and note carries authorship metadata: created_by, updated_by, and assigned_to. Tasks also have an archived_at timestamp \u2014 completed tasks are archived rather than deleted, and list_tasks hides archived rows by default. Use list_projects to see owned + shared projects, list_project_collaborators to discover assignable users, list_tasks / create_task / update_task / complete_task / archive_task / delete_task for tasks, list_notes / create_note for notes, and list_kanban_boards / create_kanban_board / add_task_to_kanban for the user's custom kanban boards.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated"
@@ -690,7 +690,9 @@ var mcp_default = defineMcp({
     create_project_preset_default,
     list_kanban_boards_default,
     create_kanban_board_default,
-    add_task_to_kanban_default
+    add_task_to_kanban_default,
+    archive_task_default,
+    list_project_collaborators_default
   ]
 });
 

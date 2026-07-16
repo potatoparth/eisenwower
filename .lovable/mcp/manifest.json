@@ -19,7 +19,7 @@
       {
         "name": "list_tasks",
         "title": "List tasks",
-        "description": "List the signed-in user's Eisenhower Matrix tasks. Optionally filter by status, quadrant, or category.",
+        "description": "List Eisenhower Matrix tasks the signed-in user owns or has access to via shared projects. Filter by status, quadrant, project, assignee, or archived state. Results include authorship metadata (created_by, updated_by, assigned_to) and archived_at.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -57,9 +57,19 @@
               "description": "Alternative to project_id: '/'-separated project path.",
               "type": "string"
             },
-            "category": {
-              "description": "DEPRECATED. Filters tasks whose immediate project has this leaf name.",
-              "type": "string"
+            "assigned_to": {
+              "description": "Filter to tasks assigned to this user id.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "include_archived": {
+              "description": "Include archived (completed & recycled) tasks. Default false — archived tasks are hidden.",
+              "type": "boolean"
+            },
+            "only_archived": {
+              "description": "Return ONLY archived tasks (archived_at is not null).",
+              "type": "boolean"
             },
             "limit": {
               "description": "Max rows (default 50).",
@@ -74,7 +84,7 @@
       {
         "name": "create_task",
         "title": "Create task",
-        "description": "Create a task for the signed-in user in a specific Eisenhower quadrant. Supports description, project association, status, and attachments (links or already-uploaded files).",
+        "description": "Create a task in a specific Eisenhower quadrant. Supports description, project association (own or shared projects), status, attachments, and assigning to a collaborator on a shared project.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false
@@ -102,10 +112,6 @@
               ],
               "description": "Eisenhower quadrant."
             },
-            "category": {
-              "description": "DEPRECATED. Treated as a leaf subproject under `project_id` (or as a new top-level project if none). Prefer `project_path`.",
-              "type": "string"
-            },
             "due_date": {
               "description": "Due date YYYY-MM-DD.",
               "type": "string"
@@ -115,7 +121,7 @@
               "type": "string"
             },
             "project_id": {
-              "description": "Associate the task with a specific project id (project_templates.id).",
+              "description": "Associate the task with a specific project id (project_templates.id). Projects are hierarchical — a project's parent_id makes it a subproject.",
               "type": "string",
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
@@ -125,12 +131,18 @@
               "type": "string"
             },
             "status": {
-              "description": "Initial status (default 'open'). Pass 'done' to create it already completed.",
+              "description": "Initial status (default 'open').",
               "type": "string",
               "enum": [
                 "open",
                 "done"
               ]
+            },
+            "assigned_to": {
+              "description": "User id to assign this task to (must be the owner or a collaborator on the task's project). Defaults to the caller.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
             "attachments": {
               "description": "Attachments to add. Use kind='link' with a URL, or kind='file' with an existing storage path in the task-attachments bucket.",
@@ -229,10 +241,6 @@
                 "not-important-not-urgent"
               ]
             },
-            "category": {
-              "description": "DEPRECATED. Replaces the task's project with a subproject having this name under the task's current parent (or a new top-level project). Prefer `project_id`/`project_path`.",
-              "type": "string"
-            },
             "due_date": {
               "description": "YYYY-MM-DD, or null to clear.",
               "anyOf": [
@@ -281,6 +289,19 @@
               "anyOf": [
                 {
                   "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "assigned_to": {
+              "description": "Reassign the task to a user id (owner or collaborator on the project), or null to unassign.",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                 },
                 {
                   "type": "null"
@@ -407,7 +428,7 @@
       {
         "name": "list_notes",
         "title": "List notes",
-        "description": "List the signed-in user's notes.",
+        "description": "List notes the signed-in user owns or has access to via shared projects. Results include authorship metadata (created_by, updated_by, assigned_to).",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -427,9 +448,11 @@
               "description": "Alternative to project_id: '/'-separated project path.",
               "type": "string"
             },
-            "category": {
-              "description": "DEPRECATED. Filters notes whose immediate project leaf name matches.",
-              "type": "string"
+            "assigned_to": {
+              "description": "Filter to notes assigned to this user id.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
             "limit": {
               "description": "Max rows (default 50).",
@@ -444,7 +467,7 @@
       {
         "name": "create_note",
         "title": "Create note",
-        "description": "Create a note for the signed-in user.",
+        "description": "Create a note. Notes can live inside a project (including shared projects the user can edit) and be assigned to a collaborator.",
         "annotations": {
           "readOnlyHint": false
         },
@@ -461,10 +484,6 @@
               "description": "Markdown / plain text body.",
               "type": "string"
             },
-            "category": {
-              "description": "DEPRECATED. Treated as subproject-name under `project_path`/`project_id`.",
-              "type": "string"
-            },
             "project_id": {
               "description": "Attach to a specific project id.",
               "type": "string",
@@ -478,6 +497,12 @@
             "pinned": {
               "description": "Pin to the top.",
               "type": "boolean"
+            },
+            "assigned_to": {
+              "description": "Assign the note to a user id (owner or collaborator on the project). Defaults to the caller.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
           },
           "required": [
@@ -489,7 +514,7 @@
       {
         "name": "list_projects",
         "title": "List projects",
-        "description": "List the signed-in user's projects (project templates). Each row includes `parent_id` and a computed breadcrumb `path` (root-first, '/'-joined). Projects form a tree — a project with `parent_id` set is a subproject of that parent.",
+        "description": "List projects the signed-in user owns AND projects shared with them. Each row includes `parent_id`, a computed breadcrumb `path`, and `access` = 'owner' | 'editor' | 'viewer'. Projects form a tree — a project with `parent_id` set is a subproject of that parent.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -712,6 +737,61 @@
             "board_id",
             "task_id",
             "column_key"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "archive_task",
+        "title": "Archive task",
+        "description": "Archive or unarchive a task. Archived tasks are hidden from default lists but kept for history (use list_tasks with only_archived=true to see them).",
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "task_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Task id."
+            },
+            "archived": {
+              "description": "true (default) to archive, false to restore.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "task_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_project_collaborators",
+        "title": "List project collaborators",
+        "description": "List everyone who can act on a given project (owner plus invited collaborators) with their role. Use the returned user ids as `assigned_to` when creating or updating tasks and notes.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "project_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Project id (project_templates.id)."
+            }
+          },
+          "required": [
+            "project_id"
           ]
         },
         "outputSchema": null
