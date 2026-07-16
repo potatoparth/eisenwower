@@ -953,6 +953,21 @@ export function ProjectBuilder({
                       <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-2">
                         {n.category && <span>{n.category}</span>}
                         {n.pinned && <span>• pinned</span>}
+                        {(() => {
+                          const nn = n as unknown as { createdBy?: string; userId?: string };
+                          const owner = nn.createdBy || nn.userId;
+                          if (!owner || owner === currentUserId) return null;
+                          return (
+                            <span className="ml-auto">
+                              <UserBadge
+                                userId={owner}
+                                name={getUserName?.(owner)}
+                                size="xs"
+                                title={`By ${getUserName?.(owner) ?? "someone"}`}
+                              />
+                            </span>
+                          );
+                        })()}
                       </div>
                     </button>
                     ))}
