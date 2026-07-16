@@ -96,6 +96,7 @@ const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => {
   if ("recurringTemplateId" in updates) out.recurring_template_id = updates.recurringTemplateId ?? null;
   if ("attachments" in updates) out.attachments = updates.attachments ? JSON.parse(JSON.stringify(updates.attachments)) : [];
   if ("sortOrder" in updates) out.sort_order = updates.sortOrder;
+  if ("assignedTo" in updates) out.assigned_to = updates.assignedTo ?? null;
   return out;
 };
 
