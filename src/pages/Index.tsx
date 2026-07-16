@@ -38,6 +38,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { TaskActionsProvider } from "@/hooks/useTaskActions";
 
 const Index = () => {
   const {
@@ -414,6 +415,7 @@ const Index = () => {
 
   return (
     <div className={`h-screen bg-background flex flex-col overflow-hidden ${fontSizeClass}`}>
+      <TaskActionsProvider archiveTask={archiveTask}>
       <Header
         viewMode={viewMode}
         onViewModeChange={setViewMode}
