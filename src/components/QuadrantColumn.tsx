@@ -132,7 +132,7 @@ export function QuadrantColumn({
             onPointerDown={(e) => e.stopPropagation()}
             className="quadrant-add-pill w-[18rem] xl:w-[22rem] rounded-full justify-self-center bg-card/30"
             style={{
-              boxShadow: `inset 0 0 0 1px hsl(var(--quadrant-${quadrant.color}) / 0.28)`,
+              boxShadow: `inset 0 0 0 2px hsl(var(--quadrant-${quadrant.color}) / 0.75)`,
             }}
           >
             {addTaskInput}
@@ -223,7 +223,7 @@ export function QuadrantColumn({
         <div
           className="quadrant-add-pill rounded-full bg-card/30"
           style={{
-            boxShadow: `inset 0 0 0 1px hsl(var(--quadrant-${quadrant.color}) / 0.28)`,
+            boxShadow: `inset 0 0 0 2px hsl(var(--quadrant-${quadrant.color}) / 0.75)`,
           }}
         >
           {addTaskInput}
