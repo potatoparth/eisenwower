@@ -521,6 +521,8 @@ const Index = () => {
                 allTasks={tasks}
                 recentCategories={recentCategories}
                 recentProjectIds={recentProjectIds}
+                getUserName={getUserName}
+                currentUserId={currentUserId}
               />
             </motion.div>
           )}
