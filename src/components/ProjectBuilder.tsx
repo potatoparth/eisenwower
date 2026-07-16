@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, ChevronRight, ChevronDown, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate, ChevronsDownUp, ChevronsUpDown, PanelLeft, CornerLeftUp } from "lucide-react";
+import { Plus, Trash2, ChevronRight, ChevronDown, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate, ChevronsDownUp, ChevronsUpDown, PanelLeft, CornerLeftUp, Users2 } from "lucide-react";
 import { ProjectTemplate, ProjectTask, ProjectTemplatePreset, PresetTask } from "@/types/project";
 import { buildProjectTree, flattenProjectTree, indexProjectNodes, getDescendantIds, wouldCreateCycle, searchProjectTree } from "@/lib/projectTree";
 import { ShareProjectDialog } from "@/components/ShareProjectDialog";
@@ -210,6 +210,8 @@ export function ProjectBuilder({
     const showDirectRow = hasChildren && directCount > 0;
     const directActive = selectedProjectId === p.id && directOnly;
     const canEditThis = (getProjectRole?.(p.id) ?? "owner") !== "viewer";
+    const roleThis = getProjectRole?.(p.id);
+    const sharedWithMe = roleThis === "editor" || roleThis === "viewer";
     const isDragTarget = dropTargetId === p.id;
     const invalidDrop =
       dragProjectId != null &&
@@ -288,6 +290,15 @@ export function ProjectBuilder({
           >
             {p.name}
           </button>
+          {sharedWithMe && (
+            <span
+              className="flex-shrink-0 text-muted-foreground/80"
+              title={`Shared with you · ${roleThis}`}
+              aria-label="Shared project"
+            >
+              <Users2 className="w-3.5 h-3.5" />
+            </span>
+          )}
           <span
             className={cn(
               "text-[11px] tabular-nums px-1.5 py-0.5 rounded-md flex-shrink-0",
@@ -380,6 +391,8 @@ export function ProjectBuilder({
   const renderSearchResult = (n: ReturnType<typeof buildProjectTree>[number]): JSX.Element => {
     const p = n.project;
     const active = selectedProjectId === p.id && !directOnly;
+    const roleThis = getProjectRole?.(p.id);
+    const sharedWithMe = roleThis === "editor" || roleThis === "viewer";
     return (
       <button
         key={p.id}
@@ -400,6 +413,9 @@ export function ProjectBuilder({
             </span>
           )}
         </span>
+        {sharedWithMe && (
+          <Users2 className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground/80" aria-label="Shared" />
+        )}
       </button>
     );
   };
