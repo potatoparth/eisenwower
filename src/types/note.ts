@@ -14,6 +14,9 @@ export interface Note {
   attachments?: TaskAttachment[];
   /** Owner of the row. Used to filter "mine" vs "all" on shared projects. */
   userId?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  assignedTo?: string;
 }
 
 /** Google-Keep-ish palette. First value is "default" (no tint). */
