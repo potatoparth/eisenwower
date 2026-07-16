@@ -133,9 +133,9 @@ export function TaskActionBar({
   );
 
   return (
-    <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:justify-center md:gap-2">
+    <div className="flex w-full flex-col gap-2 md:grid md:grid-cols-[auto_minmax(18rem,42rem)_auto] md:items-center md:gap-2">
       {/* Input: centered on desktop, full width on mobile */}
-      <div className="w-full md:flex-1 md:max-w-2xl min-w-0">
+      <div className="order-1 w-full min-w-0 md:order-none md:col-start-2 md:row-start-1 md:justify-self-center">
         {searchMode ? (
           <Popover open={open && query.trim().length > 0} onOpenChange={setOpen}>
             <PopoverAnchor asChild>
@@ -195,16 +195,16 @@ export function TaskActionBar({
           />
         )}
       </div>
-      {/* Selection + actions: below on mobile, inline on desktop */}
-      <div className="flex w-full md:w-auto items-center justify-between md:justify-end gap-1">
-        <div className="min-w-0">
+      {/* Selection + actions: below on mobile, split left/right on desktop */}
+      <div className="order-2 flex w-full items-center justify-between gap-2 md:contents">
+        <div className="min-w-0 md:col-start-1 md:row-start-1 md:justify-self-start">
           {selection ? (
             <SelectionToolbar getAllIds={() => tasks.map((t) => t.id)} />
           ) : (
             <span />
           )}
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 md:col-start-3 md:row-start-1 md:justify-self-end">
 
       {/* Reschedule overdue */}
       <Popover open={rescheduleOpen} onOpenChange={setRescheduleOpen}>
