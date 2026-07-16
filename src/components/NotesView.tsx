@@ -18,6 +18,7 @@ import { SelectionToolbar } from "@/components/SelectionToolbar";
 import { useSelectionOptional } from "@/hooks/useSelection";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProjectAssignees, assigneeMap } from "@/hooks/useProjectAssignees";
+import { useAuth } from "@/hooks/useAuth";
 import { format, parseISO } from "date-fns";
 
 interface NotesViewProps {
