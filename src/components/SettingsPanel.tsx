@@ -157,6 +157,7 @@ export function SettingsPanel({
                   name={currentUser.username}
                   size="md"
                   className="!w-14 !h-14 !text-xl"
+                  showSelf
                 />
               )}
               <div className="flex flex-col gap-1.5">
