@@ -133,10 +133,9 @@ export function TaskActionBar({
   );
 
   return (
-    <div className="flex w-full flex-col gap-2">
-      {/* Row 1: centered add-task / search input */}
-      <div className="w-full flex justify-center">
-        <div className="w-full max-w-2xl min-w-0">
+    <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:justify-center md:gap-2">
+      {/* Input: centered on desktop, full width on mobile */}
+      <div className="w-full md:flex-1 md:max-w-2xl min-w-0">
         {searchMode ? (
           <Popover open={open && query.trim().length > 0} onOpenChange={setOpen}>
             <PopoverAnchor asChild>
@@ -195,10 +194,9 @@ export function TaskActionBar({
             recentProjectIds={recentProjectIds}
           />
         )}
-        </div>
       </div>
-      {/* Row 2: selection toolbar (left) + action buttons (right) */}
-      <div className="flex w-full items-center justify-between gap-2">
+      {/* Selection + actions: below on mobile, inline on desktop */}
+      <div className="flex w-full md:w-auto items-center justify-between md:justify-end gap-1">
         <div className="min-w-0">
           {selection ? (
             <SelectionToolbar getAllIds={() => tasks.map((t) => t.id)} />
