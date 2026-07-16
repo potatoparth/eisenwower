@@ -92,6 +92,17 @@ export function CalendarView({
 
   const unscheduledTasks = buckets.get(UNSCHEDULED) ?? [];
 
+  // Tasks with a due date that falls outside the currently visible 3-day window.
+  // Without this, they'd silently vanish from the calendar — visible neither in a
+  // day column nor in the "Unscheduled" popup. We surface them in the same popup.
+  const outsideWindowTasks = useMemo(() => {
+    const daySet = new Set(dayKeys);
+    return visibleTasks
+      .filter((t) => t.dueDate && !daySet.has(t.dueDate))
+      .sort((a, b) => (a.dueDate! < b.dueDate! ? -1 : a.dueDate! > b.dueDate! ? 1 : a.name.localeCompare(b.name)));
+  }, [visibleTasks, dayKeys]);
+  const offViewTotal = unscheduledTasks.length + outsideWindowTasks.length;
+
   // Options for the "move to…" quick action (works on mobile where HTML5 DnD is unavailable).
   const moveOptions = useMemo(() => {
     const opts: { key: string; label: string }[] = dayDates.map((d, i) => ({
@@ -237,7 +248,7 @@ export function CalendarView({
             className="gap-1.5"
           >
             <Inbox className="w-3.5 h-3.5" />
-            Unscheduled ({unscheduledTasks.length})
+            Off-view ({offViewTotal})
           </Button>
           <CategoryFilter
             categories={allCategories}
