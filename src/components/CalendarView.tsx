@@ -318,17 +318,20 @@ export function CalendarView({
           </DialogHeader>
 
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">{unschSelected.size}/{unscheduledTasks.length} selected</span>
+            <span className="text-muted-foreground">{unschSelected.size}/{unscheduledTasks.length + outsideWindowTasks.length} selected</span>
             <div className="flex items-center gap-2">
-              <button type="button" className="text-primary hover:underline" onClick={() => setUnschSelected(new Set(unscheduledTasks.map((t) => t.id)))}>Select all</button>
+              <button type="button" className="text-primary hover:underline" onClick={() => setUnschSelected(new Set([...unscheduledTasks, ...outsideWindowTasks].map((t) => t.id)))}>Select all</button>
               <span className="text-muted-foreground/40">·</span>
               <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => setUnschSelected(new Set())}>Clear</button>
             </div>
           </div>
 
           <div className="max-h-72 overflow-y-auto -mx-1 px-1 space-y-0.5 border-y py-2">
-            {unscheduledTasks.length === 0 && (
-              <div className="text-xs text-muted-foreground text-center py-6">No unscheduled tasks.</div>
+            {unscheduledTasks.length === 0 && outsideWindowTasks.length === 0 && (
+              <div className="text-xs text-muted-foreground text-center py-6">Nothing off-view.</div>
+            )}
+            {unscheduledTasks.length > 0 && (
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground px-2 pt-1 pb-1">Unscheduled</div>
             )}
             {unscheduledTasks.map((t) => {
               const active = unschSelected.has(t.id);
@@ -355,6 +358,40 @@ export function CalendarView({
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                   <span className="text-sm truncate flex-1 min-w-0">{t.name}</span>
                   <span className="text-[11px] text-muted-foreground truncate max-w-[120px] shrink-0">{t.category}</span>
+                </button>
+              );
+            })}
+            {outsideWindowTasks.length > 0 && (
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground px-2 pt-3 pb-1">Scheduled outside this view</div>
+            )}
+            {outsideWindowTasks.map((t) => {
+              const active = unschSelected.has(t.id);
+              const color = getCategoryColor?.(t.category) || "hsl(var(--muted-foreground))";
+              const dLabel = t.dueDate
+                ? new Date(t.dueDate + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+                : "";
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => toggleUnschId(t.id)}
+                  className={cn(
+                    "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors",
+                    active ? "bg-primary/10 hover:bg-primary/15" : "hover:bg-muted/40"
+                  )}
+                >
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center",
+                      active ? "bg-primary border-primary" : "border-muted-foreground/40 bg-transparent"
+                    )}
+                  >
+                    {active && <CheckIcon className="w-2.5 h-2.5 text-primary-foreground" />}
+                  </span>
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  <span className="text-sm truncate flex-1 min-w-0">{t.name}</span>
+                  <span className="text-[11px] text-muted-foreground shrink-0">{dLabel}</span>
                 </button>
               );
             })}
