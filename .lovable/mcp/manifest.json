@@ -231,10 +231,6 @@
                 "not-important-not-urgent"
               ]
             },
-            "category": {
-              "description": "DEPRECATED. Replaces the task's project with a subproject having this name under the task's current parent (or a new top-level project). Prefer `project_id`/`project_path`.",
-              "type": "string"
-            },
             "due_date": {
               "description": "YYYY-MM-DD, or null to clear.",
               "anyOf": [
@@ -283,6 +279,19 @@
               "anyOf": [
                 {
                   "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "assigned_to": {
+              "description": "Reassign the task to a user id (owner or collaborator on the project), or null to unassign.",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                 },
                 {
                   "type": "null"

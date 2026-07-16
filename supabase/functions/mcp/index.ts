@@ -220,12 +220,12 @@ var update_task_default = defineTool3({
       "not-important-urgent",
       "not-important-not-urgent"
     ]).optional().describe("Move task to a different Eisenhower quadrant."),
-    category: z4.string().optional().describe("DEPRECATED. Replaces the task's project with a subproject having this name under the task's current parent (or a new top-level project). Prefer `project_id`/`project_path`."),
     due_date: z4.string().nullable().optional().describe("YYYY-MM-DD, or null to clear."),
     due_time: z4.string().nullable().optional().describe("HH:MM (24h), or null to clear."),
     status: z4.enum(["open", "done"]).optional().describe("Set to 'done' to complete, 'open' to reopen."),
     project_id: z4.string().uuid().nullable().optional().describe("Associate with a project, or null to detach."),
     project_path: z4.string().nullable().optional().describe("Alternative to project_id: '/'-separated project path; missing nodes are created."),
+    assigned_to: z4.string().uuid().nullable().optional().describe("Reassign the task to a user id (owner or collaborator on the project), or null to unassign."),
     attachments: z4.array(attachmentSchema).optional().describe("Attachments to add or replace. Use kind='link' with URL, or kind='file' with an existing storage path."),
     attachments_mode: z4.enum(["append", "replace"]).optional().describe("How to apply `attachments`: 'append' (default) adds to existing, 'replace' overwrites the full list.")
   },

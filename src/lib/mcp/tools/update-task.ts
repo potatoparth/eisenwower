@@ -21,10 +21,6 @@ export default defineTool({
       ])
       .optional()
       .describe("Move task to a different Eisenhower quadrant."),
-    category: z
-      .string()
-      .optional()
-      .describe("DEPRECATED. Replaces the task's project with a subproject having this name under the task's current parent (or a new top-level project). Prefer `project_id`/`project_path`."),
     due_date: z.string().nullable().optional().describe("YYYY-MM-DD, or null to clear."),
     due_time: z.string().nullable().optional().describe("HH:MM (24h), or null to clear."),
     status: z.enum(["open", "done"]).optional().describe("Set to 'done' to complete, 'open' to reopen."),
@@ -34,6 +30,12 @@ export default defineTool({
       .nullable()
       .optional()
       .describe("Alternative to project_id: '/'-separated project path; missing nodes are created."),
+    assigned_to: z
+      .string()
+      .uuid()
+      .nullable()
+      .optional()
+      .describe("Reassign the task to a user id (owner or collaborator on the project), or null to unassign."),
     attachments: z
       .array(attachmentSchema)
       .optional()
