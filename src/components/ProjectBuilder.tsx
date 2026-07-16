@@ -821,7 +821,7 @@ export function ProjectBuilder({
                         onSelectTask?.(t);
                       }}
                       className={cn(
-                        "w-full text-left flex items-center gap-3 bg-card rounded-xl border border-border p-3 hover:border-primary/50 transition-colors cursor-pointer",
+                        "group w-full text-left flex items-center gap-3 bg-card rounded-xl border border-border p-3 hover:border-primary/50 transition-colors cursor-pointer",
                         isSelectMode && isSelected && "ring-2 ring-primary bg-primary/5"
                       )}
                     >
