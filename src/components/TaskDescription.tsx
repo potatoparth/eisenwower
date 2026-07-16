@@ -651,24 +651,22 @@ function AutoTextarea({
       className={cn(
         "block w-full resize-none bg-transparent border-0 text-sm leading-6 focus:outline-none placeholder:text-muted-foreground/60 p-0",
         strikethrough && "line-through text-muted-foreground",
-        hasLink && "invisible"
+        // When a rendered-link overlay is showing, make the textarea text
+        // invisible but keep the element itself interactive so users can
+        // click to focus (which reveals the raw markdown for editing) and
+        // drag to select.
+        hasLink && !focused && "text-transparent caret-transparent selection:bg-primary/30"
       )}
       style={{ overflow: "hidden" }}
       />
-      {hasLink && (
+      {hasLink && !focused && (
         <div
-          onMouseDown={(e) => {
-            // Focus the textarea when the user clicks empty space, but let
-            // link clicks navigate normally.
-            const target = e.target as HTMLElement;
-            if (target.tagName === "A") return;
-            e.preventDefault();
-            localRef.current?.focus();
-            const end = value.length;
-            localRef.current?.setSelectionRange(end, end);
-          }}
+          aria-hidden
           className={cn(
-            "absolute inset-0 text-sm leading-6 whitespace-pre-wrap break-words cursor-text",
+            // The overlay is purely visual: pointer-events pass through to the
+            // textarea underneath (so click-to-focus and drag-select work),
+            // except on rendered <a> links, which stay clickable.
+            "absolute inset-0 text-sm leading-6 whitespace-pre-wrap break-words pointer-events-none [&_a]:pointer-events-auto",
             strikethrough && "line-through text-muted-foreground"
           )}
         >

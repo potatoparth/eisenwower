@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pin, PinOff, Trash2, Palette, FolderKanban, ListChecks, Search, X, StickyNote, Check } from "lucide-react";
+import { Pin, PinOff, Trash2, Palette, FolderKanban, ListChecks, Search, X, StickyNote, Check, UserCircle2 } from "lucide-react";
 import { Note, NOTE_COLORS, noteColorFor } from "@/types/note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,9 @@ import { ProjectTemplate } from "@/types/project";
 import { cn } from "@/lib/utils";
 import { SelectionToolbar } from "@/components/SelectionToolbar";
 import { useSelectionOptional } from "@/hooks/useSelection";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useProjectAssignees, assigneeMap } from "@/hooks/useProjectAssignees";
+import { format, parseISO } from "date-fns";
 
 interface NotesViewProps {
   notes: Note[];
@@ -299,7 +302,11 @@ export function NoteComposer(props: ComposerProps) {
   const [category, setCategory] = useState(props.defaultCategory || "General");
   const [projectId, setProjectId] = useState(props.defaultProjectId || "");
   const [color, setColor] = useState<string>("default");
+  const [assignedTo, setAssignedTo] = useState<string>("");
   const containerRef = useRef<HTMLDivElement>(null);
+  const assignees = useProjectAssignees(projectId || null);
+  const assigneeNames = useMemo(() => assigneeMap(assignees), [assignees]);
+  const displayFor = (uid?: string) => (uid && assigneeNames.get(uid)) || "someone";
 
   // When entering edit mode, prefill from the note.
   useEffect(() => {
@@ -312,6 +319,7 @@ export function NoteComposer(props: ComposerProps) {
       setProjectId(props.editingNote.projectId || "");
       setColor(props.editingNote.color || "default");
       setDraftId(props.editingNote.id);
+      setAssignedTo(props.editingNote.assignedTo || "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.editingNote?.id]);
@@ -341,6 +349,7 @@ export function NoteComposer(props: ComposerProps) {
     setTitle(""); setContent(""); setColor("default"); setAttachments([]);
     setCategory(props.defaultCategory || "General");
     setProjectId(props.defaultProjectId || "");
+    setAssignedTo("");
     setOpen(false);
     setDraftId(crypto.randomUUID());
     props.onCancelEdit?.();
@@ -356,6 +365,7 @@ export function NoteComposer(props: ComposerProps) {
         projectId: projectId || undefined,
         color: color === "default" ? undefined : color,
         attachments,
+        assignedTo: assignedTo || undefined,
       });
     } else {
       props.onAddNote({
@@ -366,6 +376,7 @@ export function NoteComposer(props: ComposerProps) {
         projectId: projectId || undefined,
         color: color === "default" ? undefined : color,
         attachments,
+        assignedTo: assignedTo || undefined,
       });
     }
     reset();
@@ -422,6 +433,41 @@ export function NoteComposer(props: ComposerProps) {
                   onChange={setAttachments}
                   maxTotalBytes={MAX_NOTE_BYTES}
                 />
+              )}
+              {isEditing && props.editingNote && (
+                <div className="pt-2 border-t border-border/50 space-y-2">
+                  {projectId && (
+                    <div className="flex items-center gap-2">
+                      <UserCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
+                      <Select
+                        value={assignedTo || "__none__"}
+                        onValueChange={(v) => setAssignedTo(v === "__none__" ? "" : v)}
+                      >
+                        <SelectTrigger className="h-8 flex-1 rounded-lg bg-secondary/40 border-0 text-xs">
+                          <SelectValue placeholder="Unassigned" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">Unassigned</SelectItem>
+                          {assignees.map((a) => (
+                            <SelectItem key={a.userId} value={a.userId}>
+                              {a.displayName}{a.role === "owner" ? " (owner)" : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  <div className="text-[11px] text-muted-foreground space-y-0.5">
+                    <div>
+                      Created {format(parseISO(props.editingNote.createdAt), "MMM d, yyyy 'at' h:mm a")}
+                      {props.editingNote.createdBy && <> · by {displayFor(props.editingNote.createdBy)}</>}
+                    </div>
+                    <div>
+                      Updated {format(parseISO(props.editingNote.updatedAt), "MMM d, yyyy 'at' h:mm a")}
+                      {props.editingNote.updatedBy && <> · by {displayFor(props.editingNote.updatedBy)}</>}
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -578,7 +624,14 @@ function NoteCard(props: CardProps) {
               Unassigned
             </span>
           )}
+          {note.assignedTo && (
+            <NoteAssigneeChip projectId={note.projectId} userId={note.assignedTo} />
+          )}
         </div>
+
+        {(note.createdBy || note.updatedBy) && note.projectId && (
+          <NoteAuthorship note={note} />
+        )}
 
         <div className="flex items-center gap-0.5 mt-2 opacity-90">
           <Button
@@ -741,6 +794,31 @@ function NoteAttachmentPreview({ attachments }: { attachments: TaskAttachment[] 
           <span className="truncate max-w-[10rem]">{a.name}</span>
         </span>
       ))}
+    </div>
+  );
+}
+
+function NoteAssigneeChip({ projectId, userId }: { projectId?: string; userId: string }) {
+  const assignees = useProjectAssignees(projectId || null);
+  const name = assigneeMap(assignees).get(userId);
+  if (!name) return null;
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 border border-border/60 text-muted-foreground">
+      <UserCircle2 className="w-3 h-3" />
+      {name}
+    </span>
+  );
+}
+
+function NoteAuthorship({ note }: { note: Note }) {
+  const assignees = useProjectAssignees(note.projectId || null);
+  const nameFor = (uid?: string) => (uid && assigneeMap(assignees).get(uid)) || null;
+  const updatedName = nameFor(note.updatedBy);
+  const createdName = nameFor(note.createdBy);
+  if (!updatedName && !createdName) return null;
+  return (
+    <div className="mt-1.5 text-[10px] text-muted-foreground/80 leading-tight">
+      {updatedName ? `Updated by ${updatedName}` : `Created by ${createdName}`}
     </div>
   );
 }
