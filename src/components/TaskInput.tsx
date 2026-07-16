@@ -459,7 +459,10 @@ export function TaskInput({
                           })
                           .filter((x): x is { value: string; label: string } => !!x)}
                         value={projectId}
-                        onSelect={setProjectId}
+                        onSelect={(id) => {
+                          setProjectId(id);
+                          setAssignedTo("");
+                        }}
                         ariaLabel="Recent projects"
                       />
                       {/* Fade edge so users see the row is horizontally scrollable */}
