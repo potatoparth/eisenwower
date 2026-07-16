@@ -8,6 +8,7 @@ type NoteRow = {
   id: string; user_id: string; title: string; content: string;
   project_id: string | null; color: string | null; pinned: boolean; sort_order: number;
   created_at: string; updated_at: string; attachments: unknown;
+  created_by?: string | null; updated_by?: string | null; assigned_to?: string | null;
 };
 
 const fromRow = (r: NoteRow): Note => ({
@@ -24,6 +25,9 @@ const fromRow = (r: NoteRow): Note => ({
   updatedAt: r.updated_at,
   userId: r.user_id,
   attachments: Array.isArray(r.attachments) ? (r.attachments as TaskAttachment[]) : [],
+  createdBy: r.created_by || undefined,
+  updatedBy: r.updated_by || undefined,
+  assignedTo: r.assigned_to || undefined,
 });
 
 export function useNotes(userId?: string) {
@@ -101,6 +105,7 @@ export function useNotes(userId?: string) {
     if (updates.pinned !== undefined) payload.pinned = updates.pinned;
     if (updates.sortOrder !== undefined) payload.sort_order = updates.sortOrder;
     if (updates.attachments !== undefined) payload.attachments = JSON.parse(JSON.stringify(updates.attachments)) as Json;
+    if (updates.assignedTo !== undefined) (payload as Record<string, unknown>).assigned_to = updates.assignedTo || null;
     supabase.from("notes").update(payload).eq("id", id).then(({ error }) => { if (error) load(); });
   }, [userId, load]);
 
