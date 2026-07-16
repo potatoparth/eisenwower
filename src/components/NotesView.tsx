@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pin, PinOff, Trash2, Palette, FolderKanban, ListChecks, Search, X, StickyNote, Check } from "lucide-react";
+import { Pin, PinOff, Trash2, Palette, FolderKanban, ListChecks, Search, X, StickyNote, Check, UserCircle2 } from "lucide-react";
 import { Note, NOTE_COLORS, noteColorFor } from "@/types/note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,9 @@ import { ProjectTemplate } from "@/types/project";
 import { cn } from "@/lib/utils";
 import { SelectionToolbar } from "@/components/SelectionToolbar";
 import { useSelectionOptional } from "@/hooks/useSelection";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useProjectAssignees, assigneeMap } from "@/hooks/useProjectAssignees";
+import { format, parseISO } from "date-fns";
 
 interface NotesViewProps {
   notes: Note[];
