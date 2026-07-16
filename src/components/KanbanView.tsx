@@ -301,6 +301,8 @@ export function KanbanView({
                 variant="stacked"
                 getProjectName={getProjectName}
                 getAssigneeName={getAssigneeName}
+                getUserName={getUserName}
+                currentUserId={currentUserId}
               />
             </div>
           ))}
@@ -437,6 +439,8 @@ export function KanbanView({
                       variant="stacked"
                       getProjectName={getProjectName}
                       getAssigneeName={getAssigneeName}
+                getUserName={getUserName}
+                currentUserId={currentUserId}
                     />
                   ))}
                 </div>
