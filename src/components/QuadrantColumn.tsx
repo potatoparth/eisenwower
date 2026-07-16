@@ -106,8 +106,8 @@ export function QuadrantColumn({
         className="p-3 sm:p-4 sm:pb-2 flex-shrink-0 cursor-pointer select-none"
         onClick={() => setExpanded((v) => !v)}
       >
-        <div className="flex items-center gap-2">
-          <div className="flex min-w-0 shrink-0 items-center gap-2">
+        <div className="hidden lg:grid items-center gap-2" style={{ gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)" }}>
+          <div className="flex min-w-0 items-center gap-2 justify-self-start">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: accentVar }} />
             <h3 className="font-semibold text-sm sm:text-base text-foreground tracking-tight truncate">
               {quadrant.title}
@@ -117,22 +117,8 @@ export function QuadrantColumn({
                 className="inline-flex items-center justify-center tabular-nums flex-shrink-0"
                 style={
                   quadrant.id === "important-urgent" && openTasks.length > 10
-                    ? {
-                        backgroundColor: "hsl(var(--destructive) / 0.15)",
-                        color: "hsl(var(--destructive))",
-                        fontSize: 11,
-                        fontWeight: 600,
-                        borderRadius: 20,
-                        padding: "2px 8px",
-                      }
-                    : {
-                        backgroundColor: accentBadgeBg,
-                        color: accentVar,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        borderRadius: 20,
-                        padding: "2px 8px",
-                      }
+                    ? { backgroundColor: "hsl(var(--destructive) / 0.15)", color: "hsl(var(--destructive))", fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "2px 8px" }
+                    : { backgroundColor: accentBadgeBg, color: accentVar, fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "2px 8px" }
                 }
                 aria-label={`${openTasks.length} tasks`}
               >
@@ -144,10 +130,55 @@ export function QuadrantColumn({
           <div
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
-            className="mx-1 hidden min-w-[12rem] max-w-[22rem] flex-1 lg:block rounded-full"
+            className="w-[18rem] xl:w-[22rem] rounded-full justify-self-center"
             style={{ boxShadow: `inset 0 0 0 1px ${accentVar}` }}
           >
             {addTaskInput}
+          </div>
+
+          <div className="flex items-center gap-1 justify-self-end">
+            <button
+              onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
+              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-card/50"
+              title={expanded ? "Collapse" : "Expand"}
+            >
+              {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+            <span onClick={(e) => e.stopPropagation()} className="inline-flex">
+              <SelectionToolbar compact getAllIds={() => tasks.map((t) => t.id)} />
+            </span>
+            {onExpand && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onExpand(); }}
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-card/50 transition-all"
+                title="Focus mode"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile / tablet header */}
+        <div className="flex lg:hidden items-center gap-2">
+          <div className="flex min-w-0 shrink-0 items-center gap-2">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: accentVar }} />
+            <h3 className="font-semibold text-sm sm:text-base text-foreground tracking-tight truncate">
+              {quadrant.title}
+            </h3>
+            {openTasks.length > 0 && (
+              <span
+                className="inline-flex items-center justify-center tabular-nums flex-shrink-0"
+                style={
+                  quadrant.id === "important-urgent" && openTasks.length > 10
+                    ? { backgroundColor: "hsl(var(--destructive) / 0.15)", color: "hsl(var(--destructive))", fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "2px 8px" }
+                    : { backgroundColor: accentBadgeBg, color: accentVar, fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "2px 8px" }
+                }
+                aria-label={`${openTasks.length} tasks`}
+              >
+                {openTasks.length}
+              </span>
+            )}
           </div>
 
           <div className="ml-auto flex shrink-0 items-center gap-1">
@@ -181,9 +212,6 @@ export function QuadrantColumn({
             )}
           </div>
         </div>
-        {quadrant.subtitle && (
-          <p className="hidden sm:block text-[11px] sm:text-xs text-muted-foreground mt-0.5 ml-[16px]">{quadrant.subtitle}</p>
-        )}
       </div>
 
       {/* Task Input - inline in the header on desktop, below only on smaller screens */}
