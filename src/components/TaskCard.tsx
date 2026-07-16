@@ -239,13 +239,12 @@ export function TaskCard({
             </span>
           )}
 
-          {/* Assignee badge — only ever show the assignee. If nobody is
-              explicitly assigned, fall back to the creator. Hide when it's
-              the viewer themself. */}
+          {/* Assignee badge — always show the assignee (falling back to the
+              creator) so rows stay visually consistent whether the task is
+              yours or someone else's. */}
           {(() => {
             const assignee = task.assignedTo ?? task.userId ?? task.createdBy;
             if (!assignee) return null;
-            if (viewerId && assignee === viewerId) return null;
             return <AssigneeBadge userId={assignee} hintName={getUserName?.(assignee) ?? getAssigneeName?.(assignee)} />;
           })()}
 
