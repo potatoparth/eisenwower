@@ -139,6 +139,9 @@ export function useTasks(userId?: string) {
       status: "open", createdAt: now, updatedAt: now, kanbanColumn: "todo",
       projectId: options?.projectId,
       userId: userId,
+      createdBy: userId,
+      updatedBy: userId,
+      assignedTo: userId,
       recurrence: options?.recurrence ?? "none",
       recurrenceDays: options?.recurrenceDays ?? [],
       recurrenceTime: options?.recurrenceTime ?? "22:00",
@@ -159,6 +162,7 @@ export function useTasks(userId?: string) {
         recurrence_time: optimistic.recurrenceTime,
         is_recurring_instance: optimistic.isRecurringInstance,
         recurring_template_id: optimistic.recurringTemplateId || null,
+        assigned_to: userId,
       }).then(({ error }) => { if (error) loadTasks(); });
     }
     return optimistic;
