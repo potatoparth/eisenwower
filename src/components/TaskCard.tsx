@@ -196,15 +196,20 @@ export function TaskCard({
             </span>
           )}
 
-          {/* Owner badge — appears when the task was created by someone else. */}
-          {task.createdBy && currentUserId && task.createdBy !== currentUserId && (
-            <UserBadge
-              userId={task.createdBy}
-              name={getUserName?.(task.createdBy)}
-              size="xs"
-              title={`Created by ${getUserName?.(task.createdBy) ?? "someone"}`}
-            />
-          )}
+          {/* Owner badge — appears when the task belongs to someone else
+              (visible when "view all tasks" is on for shared projects). */}
+          {(() => {
+            const ownerId = task.userId ?? task.createdBy;
+            if (!ownerId || !currentUserId || ownerId === currentUserId) return null;
+            return (
+              <UserBadge
+                userId={ownerId}
+                name={getUserName?.(ownerId)}
+                size="xs"
+                title={`Owned by ${getUserName?.(ownerId) ?? "someone"}`}
+              />
+            );
+          })()}
 
           {/* Drag handle - shown on hover */}
           <span
