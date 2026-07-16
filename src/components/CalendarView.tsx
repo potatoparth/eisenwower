@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef } from "react";
-import { ChevronRight, ChevronLeft, GripVertical, Check as CheckIcon, Inbox, MoveVertical, Plus } from "lucide-react";
+import { ChevronRight, ChevronLeft, GripVertical, Check as CheckIcon, Inbox, MoveVertical, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -45,18 +46,19 @@ export function CalendarView({
   const anchor = useMemo(() => addDays(today, dayOffset), [today, dayOffset]);
   const dayDates = useMemo(() => [anchor, addDays(anchor, 1), addDays(anchor, 2)], [anchor]);
 
-  // Category filter (multi-select)
-  const allCategories = useMemo(() => {
-    const s = new Set<string>();
-    tasks.forEach((t) => { if (t.category?.trim()) s.add(t.category.trim()); });
-    return Array.from(s).sort((a, b) => a.localeCompare(b));
-  }, [tasks]);
-  const [checkedCats, setCheckedCats] = useState<Set<string> | null>(null); // null = all
-  const activeCats = checkedCats ?? new Set(allCategories);
-  const visibleTasks = useMemo(
-    () => tasks.filter((t) => activeCats.has(t.category)),
-    [tasks, activeCats]
-  );
+  // Search filter (task name / description). No client-side category gate — the
+  // global FilterBar handles that, and gating on a derived category label used
+  // to hide teammate tasks whose leaf-project label wasn't enriched here.
+  const [search, setSearch] = useState("");
+  const visibleTasks = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return tasks;
+    return tasks.filter(
+      (t) =>
+        t.name.toLowerCase().includes(q) ||
+        (t.description || "").toLowerCase().includes(q)
+    );
+  }, [tasks, search]);
 
   // Collapsed state per section (unscheduled lives in a separate dialog now)
   const sectionKeys = useMemo(
@@ -241,6 +243,25 @@ export function CalendarView({
           </Button>
         </div>
         <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search tasks…"
+              className="h-8 pl-8 pr-7 w-44 sm:w-56 text-sm"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                aria-label="Clear search"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
           <Button
             variant="outline"
             size="sm"
@@ -255,6 +276,11 @@ export function CalendarView({
 
       {/* Sections (unscheduled lives in the popup, not inline) */}
       <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
+        {search.trim() && visibleTasks.length === 0 && (
+          <div className="text-sm text-muted-foreground text-center py-6">
+            0 results for "{search.trim()}"
+          </div>
+        )}
         {(() => {
           const renderSection = (key: string) => {
             const items = buckets.get(key) ?? [];
