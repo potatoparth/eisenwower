@@ -18,7 +18,7 @@ type Row = {
   email: string | null;
   avatar_url: string | null;
   badge_color: string | null;
-  badge_gradient: BadgeGradient | null;
+  badge_gradient: unknown;
 };
 
 const cache = new Map<string, UserProfileInfo>();
@@ -40,7 +40,7 @@ async function fetchIds(ids: string[]): Promise<void> {
     .from("profiles")
     .select("user_id,display_name,email,avatar_url,badge_color,badge_gradient")
     .in("user_id", ids);
-  const rows = (data as Row[] | null) || [];
+  const rows = ((data as unknown) as Row[] | null) || [];
   await Promise.all(rows.map(async (r) => {
     const info: UserProfileInfo = {
       userId: r.user_id,
@@ -48,7 +48,7 @@ async function fetchIds(ids: string[]): Promise<void> {
       avatarUrl: r.avatar_url,
       avatarSignedUrl: r.avatar_url ? await signAvatar(r.avatar_url) : null,
       badgeColor: r.badge_color,
-      badgeGradient: r.badge_gradient,
+      badgeGradient: (r.badge_gradient as BadgeGradient | null) ?? null,
     };
     cache.set(r.user_id, info);
   }));
