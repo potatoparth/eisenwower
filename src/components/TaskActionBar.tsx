@@ -194,10 +194,9 @@ export function TaskActionBar({
             recentProjectIds={recentProjectIds}
           />
         )}
-        </div>
       </div>
-      {/* Row 2: selection toolbar (left) + action buttons (right) */}
-      <div className="flex w-full items-center justify-between gap-2">
+      {/* Selection + actions: below on mobile, inline on desktop */}
+      <div className="flex w-full md:w-auto items-center justify-between md:justify-end gap-1">
         <div className="min-w-0">
           {selection ? (
             <SelectionToolbar getAllIds={() => tasks.map((t) => t.id)} />
