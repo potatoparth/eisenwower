@@ -219,6 +219,57 @@ export function BulkActionBar({
           </AlertDialogContent>
         </AlertDialog>
       )}
+      {onBulkArchive && (
+        <Button
+          size="sm"
+          variant="secondary"
+          className="rounded-full gap-1.5 px-2 sm:px-3"
+          title="Archive selected tasks"
+          onClick={() => {
+            onBulkArchive(Array.from(selectedIds));
+            clear();
+          }}
+        >
+          <Archive className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Archive</span>
+        </Button>
+      )}
+      {onBulkDelete && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="rounded-full gap-1.5 px-2 sm:px-3"
+              title="Delete selected tasks permanently"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Delete</span>
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Delete {count} task{count === 1 ? "" : "s"}?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently remove the selected {count === 1 ? "task" : "tasks"}. This cannot be undone. If you might need them later, use Archive instead.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>No</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  onBulkDelete(Array.from(selectedIds));
+                  clear();
+                }}
+              >
+                Yes, delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
       <Button
         variant="ghost"
         size="icon"
