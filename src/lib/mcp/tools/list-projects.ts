@@ -28,6 +28,15 @@ export default defineTool({
       .eq("user_id", uid);
     const collaboratorRoleByProject = new Map((collabs ?? []).map((c) => [c.project_id as string, c.role as string]));
     const byId = new Map(rows.map((r) => [r.id, r] as const));
+    const rootOf = (id: string): string => {
+      let cur: string | null | undefined = id;
+      const seen = new Set<string>();
+      while (cur && byId.get(cur)?.parent_id && !seen.has(cur)) {
+        seen.add(cur);
+        cur = byId.get(cur)?.parent_id;
+      }
+      return cur ?? id;
+    };
     const ancestorsOf = (id: string): string[] => {
       const chain: string[] = [];
       let cur: string | null | undefined = id;
@@ -50,7 +59,7 @@ export default defineTool({
         chain.unshift(row.name);
         cur = row.parent_id;
       }
-      const root = chain.length ? rows.find((row) => row.name === chain[0] && row.parent_id === null) : undefined;
+      const root = byId.get(rootOf(r.id));
       const access = root?.user_id === uid || r.user_id === uid
         ? "owner"
         : (ancestorsOf(r.id).map((id) => collaboratorRoleByProject.get(id)).find(Boolean) ?? "viewer");

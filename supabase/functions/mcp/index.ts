@@ -49,6 +49,7 @@ function toErr(message) {
 
 // src/lib/mcp/projectResolver.ts
 async function resolveProjectPath(sb, userId, path, create = false) {
+  void userId;
   if (!path?.trim()) return { projectId: null, created: [] };
   const parts = path.split("/").map((s) => s.trim()).filter(Boolean);
   if (parts.length === 0) return { projectId: null, created: [] };
@@ -78,6 +79,7 @@ async function resolveProjectPath(sb, userId, path, create = false) {
   return { projectId: currentId, created };
 }
 async function descendantProjectIds(sb, userId, rootId) {
+  void userId;
   const { data, error } = await sb.from("project_templates").select("id,parent_id");
   if (error) throw new Error(error.message);
   const rows = data ?? [];
@@ -406,6 +408,15 @@ var list_projects_default = defineTool8({
     const { data: collabs } = await sb.from("project_collaborators").select("project_id,role").eq("user_id", uid);
     const collaboratorRoleByProject = new Map((collabs ?? []).map((c) => [c.project_id, c.role]));
     const byId = new Map(rows.map((r) => [r.id, r]));
+    const rootOf = (id) => {
+      let cur = id;
+      const seen = /* @__PURE__ */ new Set();
+      while (cur && byId.get(cur)?.parent_id && !seen.has(cur)) {
+        seen.add(cur);
+        cur = byId.get(cur)?.parent_id;
+      }
+      return cur ?? id;
+    };
     const ancestorsOf = (id) => {
       const chain = [];
       let cur = id;
@@ -428,7 +439,7 @@ var list_projects_default = defineTool8({
         chain.unshift(row.name);
         cur = row.parent_id;
       }
-      const root = chain.length ? rows.find((row) => row.name === chain[0] && row.parent_id === null) : void 0;
+      const root = byId.get(rootOf(r.id));
       const access = root?.user_id === uid || r.user_id === uid ? "owner" : ancestorsOf(r.id).map((id) => collaboratorRoleByProject.get(id)).find(Boolean) ?? "viewer";
       return { ...r, path: chain.join(" / "), access };
     });
