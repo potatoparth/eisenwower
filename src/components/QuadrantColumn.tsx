@@ -4,7 +4,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Maximize2, ChevronDown, ChevronUp } from "lucide-react";
+import { Maximize2, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import type { TaskAddOptions, TaskInputPickerProps } from "@/components/TaskInput";
@@ -12,6 +12,7 @@ import { TaskCard } from "./TaskCard";
 import { TaskInput } from "./TaskInput";
 import { cn } from "@/lib/utils";
 import { SelectionToolbar } from "@/components/SelectionToolbar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface QuadrantColumnProps {
   quadrant: QuadrantInfo;
@@ -90,6 +91,33 @@ export function QuadrantColumn({
     />
   );
 
+  const addTaskButton = (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-white shadow-sm transition-transform hover:scale-105 active:scale-95"
+          style={{ backgroundColor: accentVar }}
+          title={`Add to ${quadrant.title}`}
+          aria-label={`Add to ${quadrant.title}`}
+        >
+          <Plus className="h-4 w-4" strokeWidth={2.5} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="center"
+        sideOffset={8}
+        className="w-[22rem] p-2"
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        {addTaskInput}
+      </PopoverContent>
+    </Popover>
+  );
+
   return (
     <div
       ref={setNodeRef}
@@ -127,15 +155,8 @@ export function QuadrantColumn({
             )}
           </div>
 
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="quadrant-add-pill w-[18rem] xl:w-[22rem] rounded-full justify-self-center bg-card/30"
-            style={{
-              boxShadow: `inset 0 0 0 2px hsl(var(--quadrant-${quadrant.color}) / 0.75)`,
-            }}
-          >
-            {addTaskInput}
+          <div className="justify-self-center">
+            {addTaskButton}
           </div>
 
           <div className="flex items-center gap-1 justify-self-end">
@@ -216,18 +237,9 @@ export function QuadrantColumn({
         </div>
       </div>
 
-      {/* Task Input - inline in the header on desktop, below only on smaller screens */}
-      <div
-        className="px-2 sm:px-3 pb-2 flex-shrink-0 lg:hidden"
-      >
-        <div
-          className="quadrant-add-pill rounded-full bg-card/30"
-          style={{
-            boxShadow: `inset 0 0 0 2px hsl(var(--quadrant-${quadrant.color}) / 0.75)`,
-          }}
-        >
-          {addTaskInput}
-        </div>
+      {/* Add button - shown below header on smaller screens */}
+      <div className="px-2 sm:px-3 pb-2 flex-shrink-0 lg:hidden flex justify-center">
+        {addTaskButton}
       </div>
 
       {/* Tasks */}
