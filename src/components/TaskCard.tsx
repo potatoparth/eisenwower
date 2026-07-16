@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, Trash2, GripVertical, Repeat } from "lucide-react";
+import { Check, Trash2, GripVertical, Repeat, Archive } from "lucide-react";
 import { Task, Quadrant, QuadrantInfo, QUADRANT_MAP } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { format, isToday, isTomorrow, isPast, parseISO } from "date-fns";
 import { useSelectionOptional } from "@/hooks/useSelection";
+import { useTaskActionsOptional } from "@/hooks/useTaskActions";
 
 interface TaskCardProps {
   task: Task;
@@ -32,6 +33,7 @@ export function TaskCard({
 }: TaskCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const sel = useSelectionOptional();
+  const taskActions = useTaskActionsOptional();
   const isSelectMode = !!sel?.selectMode;
   const isSelected = !!sel?.has(task.id);
 
@@ -192,9 +194,24 @@ export function TaskCard({
               "p-0.5 rounded text-muted-foreground hover:text-destructive transition-all",
               isHovered ? "opacity-100" : "opacity-0"
             )}
+            title="Delete"
           >
             <Trash2 className="w-3 h-3" />
           </button>
+
+          {/* Archive Button */}
+          {taskActions?.archiveTask && (
+            <button
+              onClick={(e) => { e.stopPropagation(); taskActions.archiveTask?.(task.id); }}
+              className={cn(
+                "p-0.5 rounded text-muted-foreground hover:text-primary transition-all",
+                isHovered ? "opacity-100" : "opacity-0"
+              )}
+              title="Archive"
+            >
+              <Archive className="w-3 h-3" />
+            </button>
+          )}
         </div>
       </div>
     </div>
