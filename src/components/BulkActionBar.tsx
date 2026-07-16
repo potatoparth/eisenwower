@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, CalendarClock, Zap, Trash2, LayoutGrid, Plus, ArrowRight } from "lucide-react";
+import { X, CalendarClock, Zap, Trash2, LayoutGrid, Plus, ArrowRight, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -27,6 +27,8 @@ interface Props {
   onAddToSprint?: (ids: string[]) => void;
   /** Permanently delete the selected tasks. */
   onBulkDelete?: (ids: string[]) => void;
+  /** Archive the selected tasks (soft-delete — recoverable from Archived list). */
+  onBulkArchive?: (ids: string[]) => void;
   /** Kanban add flow. */
   boards?: KanbanBoard[];
   columnsByBoard?: Record<string, KanbanColumn[]>;
@@ -47,7 +49,7 @@ interface Props {
  * mode. Currently exposes a single bulk action: Reschedule.
  */
 export function BulkActionBar({
-  onBulkReschedule, onAddToSprint, onBulkDelete,
+  onBulkReschedule, onAddToSprint, onBulkDelete, onBulkArchive,
   boards = [], columnsByBoard = {}, onAddToNewKanban, onAddToExistingKanban,
   onBulkSetCategory, onBulkSetProject,
   categories = [], projects = [], onCreateCategory, onCreateProject,
