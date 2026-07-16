@@ -73,6 +73,10 @@ export function TaskDetailDialog({
   const [recurrence, setRecurrence] = useState<Recurrence>(task.recurrence ?? "none");
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>(task.recurrenceDays ?? []);
 
+  const assignees = useProjectAssignees(task.projectId);
+  const nameMap = assigneeMap(assignees);
+  const displayFor = (uid?: string) => (uid ? (nameMap.get(uid) || "Someone") : "—");
+
   useEffect(() => {
     setName(task.name);
     setDescription(task.description || "");
