@@ -276,6 +276,11 @@ export function CalendarView({
 
       {/* Sections (unscheduled lives in the popup, not inline) */}
       <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
+        {search.trim() && visibleTasks.length === 0 && (
+          <div className="text-sm text-muted-foreground text-center py-6">
+            0 results for "{search.trim()}"
+          </div>
+        )}
         {(() => {
           const renderSection = (key: string) => {
             const items = buckets.get(key) ?? [];
