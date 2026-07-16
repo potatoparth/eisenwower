@@ -175,7 +175,7 @@ export function MatrixView({
   return (
     <div className={cn("flex flex-col min-h-0", showCompact ? "h-auto" : "h-full")}>
       {/* Global action bar (search, select, archive, reschedule, add task). Always shown. */}
-      <div className="mb-3 w-full flex-shrink-0">
+      <div className="mb-6 max-w-2xl mx-auto w-full flex-shrink-0">
         <TaskActionBar
           tasks={allTasks}
           onSelectTask={onSelectTask}
