@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, CalendarClock, Zap, Trash2, LayoutGrid, Plus, ArrowRight, Archive } from "lucide-react";
+import { X, CalendarClock, Zap, Trash2, LayoutGrid, Plus, ArrowRight, Archive, MoreHorizontal, FolderTree } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -101,139 +101,93 @@ export function BulkActionBar({
     setSelectMode(false);
   };
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [projMoveOpen, setProjMoveOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  type ActionItem = {
+    key: string;
+    label: string;
+    icon: React.ReactNode;
+    onSelect: () => void;
+    destructive?: boolean;
+    accent?: boolean;
+  };
+  const items: ActionItem[] = [];
+  if (onAddToSprint) items.push({
+    key: "sprint", label: "Add to sprint", icon: <Zap className="w-4 h-4" />,
+    onSelect: () => { onAddToSprint(Array.from(selectedIds)); clear(); setSelectMode(false); },
+  });
+  items.push({
+    key: "reschedule", label: "Reschedule…", icon: <CalendarClock className="w-4 h-4" />, accent: true,
+    onSelect: () => { setMenuOpen(false); setPickerOpen(true); },
+  });
+  if (showKanban) items.push({
+    key: "kanban", label: "Add to Kanban…", icon: <LayoutGrid className="w-4 h-4" />,
+    onSelect: () => { setMenuOpen(false); setKanbanMenuOpen(true); },
+  });
+  if (onBulkSetProject) items.push({
+    key: "project", label: "Move to project…", icon: <FolderTree className="w-4 h-4" />,
+    onSelect: () => { setMenuOpen(false); setProjMoveOpen(true); },
+  });
+  if (onBulkArchive) items.push({
+    key: "archive", label: "Archive", icon: <Archive className="w-4 h-4" />,
+    onSelect: () => { onBulkArchive(Array.from(selectedIds)); clear(); setMenuOpen(false); },
+  });
+  if (onBulkDelete) items.push({
+    key: "delete", label: "Delete permanently", icon: <Trash2 className="w-4 h-4" />, destructive: true,
+    onSelect: () => { setMenuOpen(false); setConfirmDelete(true); },
+  });
+
   return (
     <>
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 sm:gap-2 rounded-full border border-border bg-card/95 backdrop-blur px-2 sm:px-3 py-2 shadow-lg max-w-[calc(100vw-1rem)]">
-      <span className="text-xs font-medium px-1 sm:px-2 tabular-nums whitespace-nowrap">
-        {count}<span className="hidden sm:inline"> selected</span>
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full border border-border bg-card/95 backdrop-blur px-3 py-2 shadow-lg max-w-[calc(100vw-1rem)]">
+      <span className="text-xs font-medium px-1 tabular-nums whitespace-nowrap">
+        {count} selected
       </span>
-      {onAddToSprint && (
-        <Button
-          size="sm"
-          variant="secondary"
-          className="rounded-full gap-1.5 px-2 sm:px-3"
-          onClick={() => {
-            onAddToSprint(Array.from(selectedIds));
-            clear();
-            setSelectMode(false);
-          }}
-        >
-          <Zap className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Add to sprint</span>
-        </Button>
-      )}
-      <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+      <Popover open={menuOpen} onOpenChange={setMenuOpen}>
         <PopoverTrigger asChild>
-          <Button size="sm" className="rounded-full gap-1.5 px-2 sm:px-3">
-            <CalendarClock className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Reschedule</span>
+          <Button size="sm" className="rounded-full gap-1.5 px-3">
+            <MoreHorizontal className="w-3.5 h-3.5" />
+            Actions
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="center" className="w-[min(22rem,92vw)] p-3">
-          <div className="text-xs font-medium text-muted-foreground mb-2">
-            New deadline for {count} task{count === 1 ? "" : "s"}
+        <PopoverContent
+          align="center"
+          side="top"
+          sideOffset={8}
+          className="w-60 p-1.5 rounded-2xl border-border/60 bg-popover/80 backdrop-blur-xl shadow-2xl"
+        >
+          <div className="px-2 py-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
+            {count} task{count === 1 ? "" : "s"} selected
           </div>
-          <DateTimePicker value={date} onChange={(v) => { setDate(v); apply(v); }} placeholder="Pick deadline…" />
+          <div className="flex flex-col">
+            {items.map((it) => (
+              <button
+                key={it.key}
+                type="button"
+                onClick={it.onSelect}
+                className={cn(
+                  "flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm transition-colors text-left",
+                  it.destructive
+                    ? "text-destructive hover:bg-destructive/10"
+                    : it.accent
+                      ? "text-foreground hover:bg-primary/10"
+                      : "text-foreground hover:bg-accent"
+                )}
+              >
+                <span className={cn(
+                  "flex h-7 w-7 items-center justify-center rounded-md",
+                  it.destructive ? "bg-destructive/10" : it.accent ? "bg-primary/15" : "bg-secondary/60"
+                )}>
+                  {it.icon}
+                </span>
+                <span className="flex-1">{it.label}</span>
+              </button>
+            ))}
+          </div>
         </PopoverContent>
       </Popover>
-      {showKanban && (
-        <Popover open={kanbanMenuOpen} onOpenChange={setKanbanMenuOpen}>
-          <PopoverTrigger asChild>
-            <Button size="sm" variant="secondary" className="rounded-full gap-1.5 px-2 sm:px-3">
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Add to Kanban</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="center" className="w-56 p-2">
-            <div className="flex flex-col gap-1">
-              {canAddNew && onAddToNewKanban && (
-                <Button variant="ghost" size="sm" className="justify-start gap-2"
-                  onClick={() => { setKanbanMenuOpen(false); setNewKanbanOpen(true); }}>
-                  <Plus className="w-3.5 h-3.5" /> Add to new Kanban
-                </Button>
-              )}
-              {onAddToExistingKanban && (
-                <Button variant="ghost" size="sm" className="justify-start gap-2"
-                  disabled={boards.length === 0}
-                  onClick={() => { setKanbanMenuOpen(false); setExistingKanbanOpen(true); }}>
-                  <ArrowRight className="w-3.5 h-3.5" /> Add to existing Kanban
-                </Button>
-              )}
-              {!canAddNew && (
-                <div className="text-[11px] text-muted-foreground px-2 py-1">
-                  Max {MAX_KANBAN_BOARDS} boards reached
-                </div>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
-      )}
-      {onBulkSetProject && (
-        <div className="hidden sm:block">
-          <ProjectTreePicker
-            projects={projects}
-            value={null}
-            onChange={(id) => {
-              onBulkSetProject(Array.from(selectedIds), id ?? null);
-              clear(); setSelectMode(false);
-            }}
-            onCreate={onCreateProject}
-            placeholder="Move to project…"
-            compact
-          />
-        </div>
-      )}
-      {onBulkArchive && (
-        <Button
-          size="sm"
-          variant="secondary"
-          className="rounded-full gap-1.5 px-2 sm:px-3"
-          title="Archive selected tasks"
-          onClick={() => {
-            onBulkArchive(Array.from(selectedIds));
-            clear();
-          }}
-        >
-          <Archive className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Archive</span>
-        </Button>
-      )}
-      {onBulkDelete && (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              size="sm"
-              variant="destructive"
-              className="rounded-full gap-1.5 px-2 sm:px-3"
-              title="Delete selected tasks permanently"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Delete</span>
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                Delete {count} task{count === 1 ? "" : "s"}?
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently remove the selected {count === 1 ? "task" : "tasks"}. This cannot be undone. If you might need them later, use Archive instead.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>No</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  onBulkDelete(Array.from(selectedIds));
-                  clear();
-                }}
-              >
-                Yes, delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
       <Button
         variant="ghost"
         size="icon"
@@ -244,6 +198,100 @@ export function BulkActionBar({
         <X className="w-4 h-4" />
       </Button>
     </div>
+
+    {/* Reschedule popover — anchored to viewport center */}
+    <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+      <PopoverTrigger asChild>
+        <span className="fixed bottom-16 left-1/2 -translate-x-1/2 h-0 w-0" aria-hidden />
+      </PopoverTrigger>
+      <PopoverContent align="center" className="w-[min(22rem,92vw)] p-3">
+        <div className="text-xs font-medium text-muted-foreground mb-2">
+          New deadline for {count} task{count === 1 ? "" : "s"}
+        </div>
+        <DateTimePicker value={date} onChange={(v) => { setDate(v); apply(v); }} placeholder="Pick deadline…" />
+      </PopoverContent>
+    </Popover>
+
+    {/* Kanban submenu */}
+    <Popover open={kanbanMenuOpen} onOpenChange={setKanbanMenuOpen}>
+      <PopoverTrigger asChild>
+        <span className="fixed bottom-16 left-1/2 -translate-x-1/2 h-0 w-0" aria-hidden />
+      </PopoverTrigger>
+      <PopoverContent align="center" className="w-60 p-2">
+        <div className="flex flex-col gap-1">
+          {canAddNew && onAddToNewKanban && (
+            <Button variant="ghost" size="sm" className="justify-start gap-2"
+              onClick={() => { setKanbanMenuOpen(false); setNewKanbanOpen(true); }}>
+              <Plus className="w-3.5 h-3.5" /> Add to new Kanban
+            </Button>
+          )}
+          {onAddToExistingKanban && (
+            <Button variant="ghost" size="sm" className="justify-start gap-2"
+              disabled={boards.length === 0}
+              onClick={() => { setKanbanMenuOpen(false); setExistingKanbanOpen(true); }}>
+              <ArrowRight className="w-3.5 h-3.5" /> Add to existing Kanban
+            </Button>
+          )}
+          {!canAddNew && (
+            <div className="text-[11px] text-muted-foreground px-2 py-1">
+              Max {MAX_KANBAN_BOARDS} boards reached
+            </div>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+
+    {/* Move-to-project popover */}
+    {onBulkSetProject && (
+      <Popover open={projMoveOpen} onOpenChange={setProjMoveOpen}>
+        <PopoverTrigger asChild>
+          <span className="fixed bottom-16 left-1/2 -translate-x-1/2 h-0 w-0" aria-hidden />
+        </PopoverTrigger>
+        <PopoverContent align="center" className="w-[min(20rem,92vw)] p-2">
+          <div className="text-xs font-medium text-muted-foreground mb-2 px-1">
+            Move {count} task{count === 1 ? "" : "s"} to…
+          </div>
+          <ProjectTreePicker
+            projects={projects}
+            value={null}
+            onChange={(id) => {
+              onBulkSetProject(Array.from(selectedIds), id ?? null);
+              setProjMoveOpen(false);
+              clear(); setSelectMode(false);
+            }}
+            onCreate={onCreateProject}
+            placeholder="Pick a project…"
+          />
+        </PopoverContent>
+      </Popover>
+    )}
+
+    {/* Confirm delete */}
+    {onBulkDelete && (
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {count} task{count === 1 ? "" : "s"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the selected {count === 1 ? "task" : "tasks"}. This cannot be undone. If you might need them later, use Archive instead.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onBulkDelete(Array.from(selectedIds));
+                clear();
+              }}
+            >
+              Yes, delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )}
 
     {/* New Kanban board dialog */}
     <Dialog open={newKanbanOpen} onOpenChange={setNewKanbanOpen}>
