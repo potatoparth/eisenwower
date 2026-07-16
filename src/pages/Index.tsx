@@ -584,6 +584,8 @@ const Index = () => {
                 }}
                 getCategoryColor={getCategoryColor}
                 deadlineThresholdDays={settings.deadlineThresholdDays}
+                getProjectName={getProjectName}
+                getAssigneeName={getAssigneeName}
               />
             </motion.div>
           )}
