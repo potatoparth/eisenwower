@@ -455,7 +455,7 @@
       {
         "name": "create_note",
         "title": "Create note",
-        "description": "Create a note for the signed-in user.",
+        "description": "Create a note. Notes can live inside a project (including shared projects the user can edit) and be assigned to a collaborator.",
         "annotations": {
           "readOnlyHint": false
         },
@@ -472,10 +472,6 @@
               "description": "Markdown / plain text body.",
               "type": "string"
             },
-            "category": {
-              "description": "DEPRECATED. Treated as subproject-name under `project_path`/`project_id`.",
-              "type": "string"
-            },
             "project_id": {
               "description": "Attach to a specific project id.",
               "type": "string",
@@ -489,6 +485,12 @@
             "pinned": {
               "description": "Pin to the top.",
               "type": "boolean"
+            },
+            "assigned_to": {
+              "description": "Assign the note to a user id (owner or collaborator on the project). Defaults to the caller.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
           },
           "required": [
