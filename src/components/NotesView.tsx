@@ -302,7 +302,11 @@ export function NoteComposer(props: ComposerProps) {
   const [category, setCategory] = useState(props.defaultCategory || "General");
   const [projectId, setProjectId] = useState(props.defaultProjectId || "");
   const [color, setColor] = useState<string>("default");
+  const [assignedTo, setAssignedTo] = useState<string>("");
   const containerRef = useRef<HTMLDivElement>(null);
+  const assignees = useProjectAssignees(projectId || null);
+  const assigneeNames = useMemo(() => assigneeMap(assignees), [assignees]);
+  const displayFor = (uid?: string) => (uid && assigneeNames.get(uid)) || "someone";
 
   // When entering edit mode, prefill from the note.
   useEffect(() => {
@@ -315,6 +319,7 @@ export function NoteComposer(props: ComposerProps) {
       setProjectId(props.editingNote.projectId || "");
       setColor(props.editingNote.color || "default");
       setDraftId(props.editingNote.id);
+      setAssignedTo(props.editingNote.assignedTo || "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.editingNote?.id]);
@@ -344,6 +349,7 @@ export function NoteComposer(props: ComposerProps) {
     setTitle(""); setContent(""); setColor("default"); setAttachments([]);
     setCategory(props.defaultCategory || "General");
     setProjectId(props.defaultProjectId || "");
+    setAssignedTo("");
     setOpen(false);
     setDraftId(crypto.randomUUID());
     props.onCancelEdit?.();
@@ -359,6 +365,7 @@ export function NoteComposer(props: ComposerProps) {
         projectId: projectId || undefined,
         color: color === "default" ? undefined : color,
         attachments,
+        assignedTo: assignedTo || undefined,
       });
     } else {
       props.onAddNote({
@@ -369,6 +376,7 @@ export function NoteComposer(props: ComposerProps) {
         projectId: projectId || undefined,
         color: color === "default" ? undefined : color,
         attachments,
+        assignedTo: assignedTo || undefined,
       });
     }
     reset();
