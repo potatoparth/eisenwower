@@ -778,6 +778,7 @@ const Index = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </TaskActionsProvider>
     </div>
   );
 };
