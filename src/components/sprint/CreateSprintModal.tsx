@@ -80,7 +80,7 @@ export function CreateSprintModal({ open, onClose, onLockIn, seedTasks }: Props)
     if (!open) return;
     if (seedTasks && seedTasks.length > 0) {
       setTasks(
-        seedTasks.slice(0, 5).map((t) => ({
+        seedTasks.map((t) => ({
           id: crypto.randomUUID(),
           title: t.title.length > 0 ? t.title[0].toUpperCase() + t.title.slice(1) : t.title,
         })),
@@ -93,7 +93,7 @@ export function CreateSprintModal({ open, onClose, onLockIn, seedTasks }: Props)
 
   const addTask = () => {
     const raw = taskInput.trim();
-    if (!raw || tasks.length >= 5) return;
+    if (!raw) return;
     const cap = raw[0].toUpperCase() + raw.slice(1);
     setTasks((p) => [...p, { id: crypto.randomUUID(), title: cap }]);
     setTaskInput("");
@@ -115,7 +115,7 @@ export function CreateSprintModal({ open, onClose, onLockIn, seedTasks }: Props)
     // Flush any task typed but not yet added with Enter.
     let finalTasks = tasks;
     const pending = taskInput.trim();
-    if (pending && finalTasks.length < 5) {
+    if (pending) {
       const cap = pending[0].toUpperCase() + pending.slice(1);
       finalTasks = [...finalTasks, { id: crypto.randomUUID(), title: cap }];
       setTasks(finalTasks);
@@ -311,7 +311,7 @@ export function CreateSprintModal({ open, onClose, onLockIn, seedTasks }: Props)
         <div className="mb-9">
           <div className="flex items-center justify-between">
             <Label>Tasks</Label>
-            <span className="font-mono" style={{ fontSize: 12, color: labelColor }}>{tasks.length}/5</span>
+            <span className="font-mono" style={{ fontSize: 12, color: labelColor }}>{tasks.length}</span>
           </div>
           <div className="mt-4 flex gap-2">
             <input
@@ -319,8 +319,7 @@ export function CreateSprintModal({ open, onClose, onLockIn, seedTasks }: Props)
               value={taskInput}
               onChange={(e) => onTaskInputChange(e.target.value)}
               onKeyDown={onTaskKey}
-              disabled={tasks.length >= 5}
-              placeholder={tasks.length >= 5 ? "Max 5 tasks" : "Add a task and press Enter"}
+              placeholder="Add a task and press Enter"
               className="flex-1 rounded-xl outline-none"
               style={{
                 fontSize: 15,
@@ -333,7 +332,7 @@ export function CreateSprintModal({ open, onClose, onLockIn, seedTasks }: Props)
             />
             <button
               onClick={addTask}
-              disabled={tasks.length >= 5 || !taskInput.trim()}
+              disabled={!taskInput.trim()}
               className="grid place-items-center rounded-xl px-4 transition disabled:opacity-30"
               style={{ border: `0.5px solid ${borderColor}`, color: bodyColor }}
               aria-label="Add task"
