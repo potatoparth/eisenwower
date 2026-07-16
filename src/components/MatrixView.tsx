@@ -175,7 +175,7 @@ export function MatrixView({
   return (
     <div className={cn("flex flex-col min-h-0", showCompact ? "h-auto" : "h-full")}>
       {/* Global Task Input */}
-      <div className="mb-3 max-w-2xl mx-auto w-full flex-shrink-0">
+      <div className="mb-3 w-full flex-shrink-0">
         <TaskActionBar
           tasks={allTasks}
           onSelectTask={onSelectTask}
