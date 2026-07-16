@@ -54,6 +54,8 @@ interface KanbanViewProps {
   taskInputProps?: TaskInputPickerProps;
   getCategoryColor?: (name: string) => string | undefined;
   deadlineThresholdDays?: number;
+  getProjectName?: (id: string) => string | undefined;
+  getAssigneeName?: (id: string) => string | undefined;
 }
 
 /** Which Default-board column a task belongs to, derived from status/due date. */
@@ -92,6 +94,7 @@ export function KanbanView({
   onQuickAdd,
   taskInputProps,
   getCategoryColor, deadlineThresholdDays = 2,
+  getProjectName, getAssigneeName,
 }: KanbanViewProps) {
   const [activeBoardId, setActiveBoardId] = useState<string>(DEFAULT_BOARD_ID);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -279,9 +282,11 @@ export function KanbanView({
                 onToggleStatus={onToggleStatus}
                 onDelete={isDefault ? onDeleteTask : (id) => onRemoveItem(activeBoardId, id)}
                 onTaskClick={onTaskClick}
-                showQuadrantBadge
                 getCategoryColor={getCategoryColor}
                 deadlineThresholdDays={deadlineThresholdDays}
+                variant="stacked"
+                getProjectName={getProjectName}
+                getAssigneeName={getAssigneeName}
               />
             </div>
           ))}
@@ -413,9 +418,11 @@ export function KanbanView({
                       onToggleStatus={onToggleStatus}
                       onDelete={isDefault ? onDeleteTask : (id) => onRemoveItem(activeBoardId, id)}
                       onTaskClick={(t) => { setExpandedColumnKey(null); onTaskClick?.(t); }}
-                      showQuadrantBadge
                       getCategoryColor={getCategoryColor}
                       deadlineThresholdDays={deadlineThresholdDays}
+                      variant="stacked"
+                      getProjectName={getProjectName}
+                      getAssigneeName={getAssigneeName}
                     />
                   ))}
                 </div>
