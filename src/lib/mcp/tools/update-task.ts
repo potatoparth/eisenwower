@@ -46,44 +46,19 @@ export default defineTool({
       .describe("How to apply `attachments`: 'append' (default) adds to existing, 'replace' overwrites the full list."),
   },
   annotations: { readOnlyHint: false, idempotentHint: true },
-  handler: async ({ task_id, attachments, attachments_mode, project_path, category, ...fields }, ctx) => {
+  handler: async ({ task_id, attachments, attachments_mode, project_path, ...fields }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
     const patch: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(fields)) {
       if (v !== undefined) patch[k] = v;
     }
     const sb = supabaseForUser(ctx);
-    // project_path takes precedence over category as a project resolver.
     if (project_path !== undefined) {
       if (project_path === null || project_path === "") {
         patch.project_id = null;
       } else {
         const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, true);
         patch.project_id = projectId;
-      }
-    } else if (category !== undefined) {
-      // Load current parent to place the new subproject under it.
-      const { data: current } = await sb.from("tasks").select("project_id").eq("id", task_id).single();
-      const currentProjectId = (current?.project_id as string | null) ?? null;
-      let parentId: string | null = null;
-      if (currentProjectId) {
-        const { data: cp } = await sb.from("project_templates").select("parent_id").eq("id", currentProjectId).single();
-        parentId = (cp?.parent_id as string | null) ?? null;
-      }
-      if (!category || category === "General") {
-        patch.project_id = parentId;
-      } else {
-        const { data: all } = await sb.from("project_templates").select("id,name,parent_id").eq("user_id", ctx.getUserId());
-        const existing = (all ?? []).find((p) => (p.parent_id ?? null) === parentId && (p.name as string).toLowerCase() === category.toLowerCase());
-        if (existing) patch.project_id = existing.id as string;
-        else {
-          const { data: created, error: cErr } = await sb
-            .from("project_templates")
-            .insert({ user_id: ctx.getUserId(), name: category, parent_id: parentId })
-            .select("id").single();
-          if (cErr) return toErr(cErr.message);
-          patch.project_id = created.id as string;
-        }
       }
     }
     if (attachments !== undefined) {

@@ -230,7 +230,7 @@ var update_task_default = defineTool3({
     attachments_mode: z4.enum(["append", "replace"]).optional().describe("How to apply `attachments`: 'append' (default) adds to existing, 'replace' overwrites the full list.")
   },
   annotations: { readOnlyHint: false, idempotentHint: true },
-  handler: async ({ task_id, attachments, attachments_mode, project_path, category, ...fields }, ctx) => {
+  handler: async ({ task_id, attachments, attachments_mode, project_path, ...fields }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
     const patch = {};
     for (const [k, v] of Object.entries(fields)) {
@@ -243,26 +243,6 @@ var update_task_default = defineTool3({
       } else {
         const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, true);
         patch.project_id = projectId;
-      }
-    } else if (category !== void 0) {
-      const { data: current } = await sb.from("tasks").select("project_id").eq("id", task_id).single();
-      const currentProjectId = current?.project_id ?? null;
-      let parentId = null;
-      if (currentProjectId) {
-        const { data: cp } = await sb.from("project_templates").select("parent_id").eq("id", currentProjectId).single();
-        parentId = cp?.parent_id ?? null;
-      }
-      if (!category || category === "General") {
-        patch.project_id = parentId;
-      } else {
-        const { data: all } = await sb.from("project_templates").select("id,name,parent_id").eq("user_id", ctx.getUserId());
-        const existing = (all ?? []).find((p) => (p.parent_id ?? null) === parentId && p.name.toLowerCase() === category.toLowerCase());
-        if (existing) patch.project_id = existing.id;
-        else {
-          const { data: created, error: cErr } = await sb.from("project_templates").insert({ user_id: ctx.getUserId(), name: category, parent_id: parentId }).select("id").single();
-          if (cErr) return toErr(cErr.message);
-          patch.project_id = created.id;
-        }
       }
     }
     if (attachments !== void 0) {
