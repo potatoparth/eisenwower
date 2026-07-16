@@ -9,6 +9,7 @@ import { ProjectTemplatesDialog } from "@/components/ProjectTemplatesDialog";
 import { Task, Quadrant, QuadrantInfo } from "@/types/task";
 import { QUADRANT_MAP } from "@/types/task";
 import { useSelectionOptional } from "@/hooks/useSelection";
+import { useTaskActionsOptional } from "@/hooks/useTaskActions";
 import { Note, noteColorFor } from "@/types/note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
