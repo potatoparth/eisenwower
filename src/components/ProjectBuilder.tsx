@@ -431,15 +431,26 @@ export function ProjectBuilder({
     <div className="flex flex-col lg:min-h-0 gap-3 h-full">
       <div className="flex items-center justify-between gap-2 px-1">
         <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Projects</h2>
-        {onAddPreset && onUpdatePreset && onDeletePreset && (
+        <div className="flex items-center gap-0.5">
+          {onAddPreset && onUpdatePreset && onDeletePreset && (
+            <Button
+              variant="ghost" size="sm"
+              className="h-7 px-2 rounded-lg gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+              onClick={() => setTemplatesOpen(true)}
+            >
+              <LayoutTemplate className="w-3.5 h-3.5" /> Templates
+            </Button>
+          )}
           <Button
-            variant="ghost" size="sm"
-            className="h-7 px-2 rounded-lg gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-            onClick={() => setTemplatesOpen(true)}
+            variant="ghost" size="icon"
+            className="hidden lg:inline-flex h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground"
+            onClick={() => setRailHidden(true)}
+            title="Hide sidebar"
+            aria-label="Hide sidebar"
           >
-            <LayoutTemplate className="w-3.5 h-3.5" /> Templates
+            <PanelLeftClose className="w-3.5 h-3.5" />
           </Button>
-        )}
+        </div>
       </div>
 
       {!showNewProject && (
