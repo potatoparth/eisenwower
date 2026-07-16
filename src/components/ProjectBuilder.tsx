@@ -858,6 +858,14 @@ export function ProjectBuilder({
                           {t.dueDate && <span>• due {t.dueDate}</span>}
                         </div>
                       </div>
+                      {t.createdBy && t.createdBy !== currentUserId && (
+                        <UserBadge
+                          userId={t.createdBy}
+                          name={getUserName?.(t.createdBy)}
+                          size="sm"
+                          title={`Created by ${getUserName?.(t.createdBy) ?? "someone"}`}
+                        />
+                      )}
                       {canEdit && onDeleteMatrixTask && (
                         <Button
                           size="icon"
