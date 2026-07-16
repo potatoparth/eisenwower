@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Calendar, AlertCircle, FolderKanban, ChevronLeft, ChevronRight, Check, PanelRightClose } from "lucide-react";
+import { X, Calendar, AlertCircle, FolderKanban, ChevronLeft, ChevronRight, Check, PanelRightClose, UserCircle2 } from "lucide-react";
 import { Task, Quadrant, QuadrantInfo, Recurrence } from "@/types/task";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,14 @@ import { TaskDescription } from "@/components/TaskDescription";
 import { ProjectTreePicker } from "@/components/ProjectTreePicker";
 import { TaskAttachments } from "@/components/TaskAttachments";
 import { RecentChipStrip } from "@/components/RecentChipStrip";
+import { useProjectAssignees, assigneeMap } from "@/hooks/useProjectAssignees";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TaskDetailPanelProps {
   task: Task;
@@ -42,6 +50,10 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
   const [projectId, setProjectId] = useState<string | undefined>(task.projectId);
   const [recurrence, setRecurrence] = useState<Recurrence>(task.recurrence ?? "none");
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>(task.recurrenceDays ?? []);
+
+  const assignees = useProjectAssignees(task.projectId);
+  const nameMap = assigneeMap(assignees);
+  const displayFor = (uid?: string) => (uid ? (nameMap.get(uid) || "Someone") : "—");
 
   useEffect(() => {
     setName(task.name);
