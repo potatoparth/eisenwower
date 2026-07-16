@@ -624,7 +624,14 @@ function NoteCard(props: CardProps) {
               Unassigned
             </span>
           )}
+          {note.assignedTo && (
+            <NoteAssigneeChip projectId={note.projectId} userId={note.assignedTo} />
+          )}
         </div>
+
+        {(note.createdBy || note.updatedBy) && note.projectId && (
+          <NoteAuthorship note={note} />
+        )}
 
         <div className="flex items-center gap-0.5 mt-2 opacity-90">
           <Button
