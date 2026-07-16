@@ -163,7 +163,11 @@ export function TaskActionBar({
               className="p-1 w-[min(32rem,90vw)] max-h-80 overflow-y-auto"
               onOpenAutoFocus={(e) => e.preventDefault()}
             >
-              {matches.map((t) => (
+              {matches.length === 0 ? (
+                <div className="px-3 py-4 text-center text-xs text-muted-foreground">
+                  0 results found for “{query.trim()}”
+                </div>
+              ) : matches.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => { onSelectTask(t); exitSearch(); }}
