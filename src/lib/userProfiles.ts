@@ -25,6 +25,25 @@ const inflight = new Map<string, Promise<void>>();
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
+let currentUserId: string | null = null;
+export function setCurrentUserId(id: string | null) {
+  if (currentUserId === id) return;
+  currentUserId = id;
+  emit();
+}
+export function getCurrentUserId(): string | null {
+  return currentUserId;
+}
+export function useCurrentUserId(): string | null {
+  const [v, setV] = useState<string | null>(currentUserId);
+  useEffect(() => {
+    const h = () => setV(currentUserId);
+    listeners.add(h);
+    return () => { listeners.delete(h); };
+  }, []);
+  return v;
+}
+
 async function signAvatar(path: string): Promise<string | null> {
   if (!path) return null;
   // If already an absolute URL, use as-is.
