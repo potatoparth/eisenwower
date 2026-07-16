@@ -244,6 +244,9 @@ export function TaskCard({
           {(() => {
             const ownerId = task.userId ?? task.createdBy;
             if (!ownerId || !viewerId || ownerId === viewerId) return null;
+            // If the task is assigned to the viewer, don't surface the owner
+            // badge — the viewer is the responsible person now.
+            if (task.assignedTo && task.assignedTo === viewerId) return null;
             return <OwnerBadge ownerId={ownerId} hintName={getUserName?.(ownerId)} />;
           })()}
 
