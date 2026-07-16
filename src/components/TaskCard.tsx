@@ -196,6 +196,16 @@ export function TaskCard({
             </span>
           )}
 
+          {/* Owner badge — appears when the task was created by someone else. */}
+          {task.createdBy && currentUserId && task.createdBy !== currentUserId && (
+            <UserBadge
+              userId={task.createdBy}
+              name={getUserName?.(task.createdBy)}
+              size="xs"
+              title={`Created by ${getUserName?.(task.createdBy) ?? "someone"}`}
+            />
+          )}
+
           {/* Drag handle - shown on hover */}
           <span
             className={cn(
