@@ -40,9 +40,13 @@ interface TaskDetailPanelProps {
   onCreateProject?: (name: string, parentId?: string | null) => string;
   recentCategories?: string[];
   recentProjectIds?: string[];
+  /** Fallback resolver for user ids that aren't project collaborators. */
+  getUserName?: (id: string) => string | undefined;
+  /** Current viewer's user id; used to render "You" instead of their name. */
+  currentUserId?: string;
 }
 
-export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose, getCategoryColor, projects = [], quadrants, quadrantMap, categories = [], navTasks = [], onNavigate, onToggleStatus, onSwitchToDialog, onCreateCategory, onCreateProject, recentCategories = [], recentProjectIds = [] }: TaskDetailPanelProps) {
+export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose, getCategoryColor, projects = [], quadrants, quadrantMap, categories = [], navTasks = [], onNavigate, onToggleStatus, onSwitchToDialog, onCreateCategory, onCreateProject, recentCategories = [], recentProjectIds = [], getUserName, currentUserId }: TaskDetailPanelProps) {
   const [name, setName] = useState(task.name);
   const [description, setDescription] = useState(task.description || "");
   const [dueDate, setDueDate] = useState(task.dueDate || "");
@@ -53,7 +57,11 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
 
   const assignees = useProjectAssignees(task.projectId);
   const nameMap = assigneeMap(assignees);
-  const displayFor = (uid?: string) => (uid ? (nameMap.get(uid) || "Someone") : "—");
+  const displayFor = (uid?: string) => {
+    if (!uid) return "—";
+    if (uid === currentUserId) return "you";
+    return nameMap.get(uid) || getUserName?.(uid) || "Someone";
+  };
 
   useEffect(() => {
     setName(task.name);
