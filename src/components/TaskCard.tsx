@@ -239,25 +239,13 @@ export function TaskCard({
             </span>
           )}
 
-          {/* Owner badge — appears when the task belongs to someone else
-              (visible when "view all tasks" is on for shared projects). */}
+          {/* Assignee badge — only ever show the assignee. If nobody is
+              explicitly assigned, fall back to the creator. Hide when it's
+              the viewer themself. */}
           {(() => {
-            const ownerId = task.userId ?? task.createdBy;
-            if (!ownerId || !viewerId || ownerId === viewerId) return null;
-            // If the task is assigned to the viewer, don't surface the owner
-            // badge — the viewer is the responsible person now.
-            if (task.assignedTo && task.assignedTo === viewerId) return null;
-            return <OwnerBadge ownerId={ownerId} hintName={getUserName?.(ownerId)} />;
-          })()}
-
-          {/* Assignee badge — appears when the task is assigned to someone
-              other than you (and other than the owner already shown). */}
-          {(() => {
-            const ownerId = task.userId ?? task.createdBy;
-            const assignee = task.assignedTo;
+            const assignee = task.assignedTo ?? task.userId ?? task.createdBy;
             if (!assignee) return null;
             if (viewerId && assignee === viewerId) return null;
-            if (ownerId && assignee === ownerId) return null;
             return <AssigneeBadge userId={assignee} hintName={getUserName?.(assignee) ?? getAssigneeName?.(assignee)} />;
           })()}
 
