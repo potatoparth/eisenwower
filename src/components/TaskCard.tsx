@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, Trash2, GripVertical, Repeat, Archive } from "lucide-react";
+import { Check, Trash2, GripVertical, Repeat, Archive, FolderKanban, UserCircle2 } from "lucide-react";
 import { Task, Quadrant, QuadrantInfo, QUADRANT_MAP } from "@/types/task";
 import { cn } from "@/lib/utils";
 import { format, isToday, isTomorrow, isPast, parseISO } from "date-fns";
@@ -18,6 +18,9 @@ interface TaskCardProps {
   getCategoryColor?: (name: string) => string | undefined;
   deadlineThresholdDays?: number;
   quadrantMap?: Record<Quadrant, QuadrantInfo>;
+  variant?: "row" | "stacked";
+  getProjectName?: (id: string) => string | undefined;
+  getAssigneeName?: (id: string) => string | undefined;
 }
 
 export function TaskCard({
@@ -30,6 +33,9 @@ export function TaskCard({
   getCategoryColor,
   deadlineThresholdDays = 2,
   quadrantMap,
+  variant = "row",
+  getProjectName,
+  getAssigneeName,
 }: TaskCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const sel = useSelectionOptional();
@@ -68,6 +74,10 @@ export function TaskCard({
 
   const categoryColor = getCategoryColor?.(task.category);
 
+  const projectName = task.projectId ? getProjectName?.(task.projectId) : undefined;
+  const assigneeName = task.assignedTo ? getAssigneeName?.(task.assignedTo) : undefined;
+  const stacked = variant === "stacked";
+
   const getBadgeClass = () => {
     const colorMap = { 1: "quadrant-badge-1", 2: "quadrant-badge-2", 3: "quadrant-badge-3", 4: "quadrant-badge-4" };
     return colorMap[quadrantInfo.color];
@@ -80,7 +90,8 @@ export function TaskCard({
       {...(isSelectMode ? {} : attributes)}
       {...(isSelectMode ? {} : listeners)}
       className={cn(
-        "task-card px-3 py-1.5 group cursor-grab active:cursor-grabbing select-none",
+        "task-card px-3 group cursor-grab active:cursor-grabbing select-none",
+        stacked ? "py-2" : "py-1.5",
         isDone && "opacity-40",
         isSortableDragging && "opacity-50",
         isDragging && "shadow-medium",
@@ -140,7 +151,7 @@ export function TaskCard({
 
         {/* Inline meta indicators */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          {task.category && task.category !== "General" && (
+          {!stacked && task.category && task.category !== "General" && (
             <span
               className="text-[10px] px-1.5 py-0.5 rounded-md font-medium"
               style={
@@ -154,11 +165,11 @@ export function TaskCard({
             </span>
           )}
 
-          {task.recurrence && task.recurrence !== "none" && (
+          {!stacked && task.recurrence && task.recurrence !== "none" && (
             <Repeat className="w-3 h-3 text-muted-foreground" style={{ opacity: 0.45 }} />
           )}
 
-          {task.dueDate && (
+          {!stacked && task.dueDate && (
             <span
               className={cn(
                 "text-[10px] px-1.5 py-0.5 rounded-md font-medium",
@@ -214,6 +225,54 @@ export function TaskCard({
           </button>
         </div>
       </div>
+
+      {stacked && (projectName || task.dueDate || (task.recurrence && task.recurrence !== "none") || assigneeName || (task.category && task.category !== "General")) && (
+        <div className="mt-1.5 pl-[26px] flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground">
+          {projectName && (
+            <span className="inline-flex items-center gap-1 min-w-0 max-w-[45%] truncate" title={projectName}>
+              <FolderKanban className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">{projectName}</span>
+            </span>
+          )}
+          {task.category && task.category !== "General" && (
+            <span
+              className="px-1.5 py-0.5 rounded-md font-medium"
+              style={
+                categoryColor
+                  ? { backgroundColor: `${categoryColor}22`, color: categoryColor }
+                  : { backgroundColor: "hsl(var(--secondary))", color: "hsl(var(--muted-foreground))" }
+              }
+              title={task.category}
+            >
+              {task.category}
+            </span>
+          )}
+          {task.dueDate && (
+            <span
+              className={cn(
+                "px-1.5 py-0.5 rounded-md font-medium",
+                isOverdueTask && !isDone && "text-destructive line-through bg-destructive/10",
+                isDueToday && !isOverdueTask && !isDone && "text-amber-600 dark:text-amber-400 bg-amber-500/10",
+                !isOverdueTask && !isDueToday && "text-muted-foreground bg-secondary/60"
+              )}
+            >
+              {formatDueDate(task.dueDate)}
+            </span>
+          )}
+          {task.recurrence && task.recurrence !== "none" && (
+            <span className="inline-flex items-center gap-1" title={`Repeats ${task.recurrence}`}>
+              <Repeat className="w-3 h-3" />
+              <span className="capitalize">{task.recurrence}</span>
+            </span>
+          )}
+          {assigneeName && (
+            <span className="inline-flex items-center gap-1 ml-auto" title={`Assigned to ${assigneeName}`}>
+              <UserCircle2 className="w-3 h-3" />
+              <span className="truncate max-w-[120px]">{assigneeName}</span>
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
