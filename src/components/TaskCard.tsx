@@ -9,6 +9,20 @@ import { useSelectionOptional } from "@/hooks/useSelection";
 import { useTaskActionsOptional } from "@/hooks/useTaskActions";
 import { UserBadge } from "@/components/UserBadge";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserProfile } from "@/lib/userProfiles";
+
+function OwnerBadge({ ownerId, hintName }: { ownerId: string; hintName?: string }) {
+  const profile = useUserProfile(ownerId);
+  const name = hintName || profile?.name;
+  return (
+    <UserBadge
+      userId={ownerId}
+      name={name}
+      size="xs"
+      title={`Owned by ${name ?? "someone"}`}
+    />
+  );
+}
 
 interface TaskCardProps {
   task: Task;
@@ -217,14 +231,7 @@ export function TaskCard({
           {(() => {
             const ownerId = task.userId ?? task.createdBy;
             if (!ownerId || !viewerId || ownerId === viewerId) return null;
-            return (
-              <UserBadge
-                userId={ownerId}
-                name={getUserName?.(ownerId)}
-                size="xs"
-                title={`Owned by ${getUserName?.(ownerId) ?? "someone"}`}
-              />
-            );
+            return <OwnerBadge ownerId={ownerId} hintName={getUserName?.(ownerId)} />;
           })()}
 
           {/* Drag handle - shown on hover */}
