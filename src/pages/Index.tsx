@@ -743,6 +743,8 @@ const Index = () => {
           onSwitchToDialog={() => updateSettings({ taskDetailView: "popup" })}
           onCreateCategory={handleCreateCategory}
           onCreateProject={handleCreateProject}
+          getUserName={getUserName}
+          currentUserId={currentUserId}
         />
       )}
       {selectedTask && !useSidebarDetail && (
@@ -764,6 +766,8 @@ const Index = () => {
           onToggleStatus={(id) => toggleStatus(id)}
           onCreateCategory={handleCreateCategory}
           onCreateProject={handleCreateProject}
+          getUserName={getUserName}
+          currentUserId={currentUserId}
         />
       )}
 
