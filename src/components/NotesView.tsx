@@ -307,7 +307,12 @@ export function NoteComposer(props: ComposerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const assignees = useProjectAssignees(projectId || null);
   const assigneeNames = useMemo(() => assigneeMap(assignees), [assignees]);
-  const displayFor = (uid?: string) => (uid && assigneeNames.get(uid)) || "someone";
+  const { currentUser, users } = useAuth();
+  const displayFor = (uid?: string) => {
+    if (!uid) return "someone";
+    if (uid === currentUser?.id) return "you";
+    return assigneeNames.get(uid) || users.find(u => u.id === uid)?.username || "someone";
+  };
 
   // When entering edit mode, prefill from the note.
   useEffect(() => {
@@ -801,7 +806,11 @@ function NoteAttachmentPreview({ attachments }: { attachments: TaskAttachment[] 
 
 function NoteAssigneeChip({ projectId, userId }: { projectId?: string; userId: string }) {
   const assignees = useProjectAssignees(projectId || null);
-  const name = assigneeMap(assignees).get(userId);
+  const { currentUser, users } = useAuth();
+  const name =
+    (userId === currentUser?.id && currentUser?.username) ||
+    assigneeMap(assignees).get(userId) ||
+    users.find(u => u.id === userId)?.username;
   if (!name) return null;
   return (
     <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 border border-border/60 text-muted-foreground">
@@ -813,7 +822,16 @@ function NoteAssigneeChip({ projectId, userId }: { projectId?: string; userId: s
 
 function NoteAuthorship({ note }: { note: Note }) {
   const assignees = useProjectAssignees(note.projectId || null);
-  const nameFor = (uid?: string) => (uid && assigneeMap(assignees).get(uid)) || null;
+  const { currentUser, users } = useAuth();
+  const nameFor = (uid?: string) => {
+    if (!uid) return null;
+    if (uid === currentUser?.id) return "you";
+    return (
+      assigneeMap(assignees).get(uid) ||
+      users.find(u => u.id === uid)?.username ||
+      null
+    );
+  };
   const updatedName = nameFor(note.updatedBy);
   const createdName = nameFor(note.createdBy);
   if (!updatedName && !createdName) return null;
