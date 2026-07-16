@@ -70,24 +70,28 @@ const fromRow = (row: TaskRow): Task => ({
   archivedAt: row.archived_at || undefined,
 });
 
-const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => ({
-  name: updates.name,
-  description: updates.description ?? null,
-  quadrant: updates.quadrant,
-  due_date: updates.dueDate ?? null,
-  due_time: updates.dueTime ?? null,
-  status: updates.status,
-  deadline_threshold_override: updates.deadlineThresholdOverride ?? null,
-  kanban_column: updates.kanbanColumn ?? null,
-  project_id: updates.projectId ?? null,
-  recurrence: updates.recurrence ?? undefined,
-  recurrence_days: updates.recurrenceDays ?? undefined,
-  recurrence_time: updates.recurrenceTime ?? undefined,
-  is_recurring_instance: updates.isRecurringInstance ?? undefined,
-  recurring_template_id: updates.recurringTemplateId ?? undefined,
-  attachments: updates.attachments ? (JSON.parse(JSON.stringify(updates.attachments)) as never) : undefined,
-  sort_order: updates.sortOrder,
-});
+// Only include keys the caller explicitly set. Using `?? null` for every field
+// would wipe columns like project_id/description on partial updates (e.g. toggleStatus).
+const toUpdate = (updates: Partial<Omit<Task, "id" | "createdAt">>) => {
+  const out: Record<string, unknown> = {};
+  if ("name" in updates) out.name = updates.name;
+  if ("description" in updates) out.description = updates.description ?? null;
+  if ("quadrant" in updates) out.quadrant = updates.quadrant;
+  if ("dueDate" in updates) out.due_date = updates.dueDate ?? null;
+  if ("dueTime" in updates) out.due_time = updates.dueTime ?? null;
+  if ("status" in updates) out.status = updates.status;
+  if ("deadlineThresholdOverride" in updates) out.deadline_threshold_override = updates.deadlineThresholdOverride ?? null;
+  if ("kanbanColumn" in updates) out.kanban_column = updates.kanbanColumn ?? null;
+  if ("projectId" in updates) out.project_id = updates.projectId ?? null;
+  if ("recurrence" in updates) out.recurrence = updates.recurrence;
+  if ("recurrenceDays" in updates) out.recurrence_days = updates.recurrenceDays;
+  if ("recurrenceTime" in updates) out.recurrence_time = updates.recurrenceTime;
+  if ("isRecurringInstance" in updates) out.is_recurring_instance = updates.isRecurringInstance;
+  if ("recurringTemplateId" in updates) out.recurring_template_id = updates.recurringTemplateId ?? null;
+  if ("attachments" in updates) out.attachments = updates.attachments ? JSON.parse(JSON.stringify(updates.attachments)) : [];
+  if ("sortOrder" in updates) out.sort_order = updates.sortOrder;
+  return out;
+};
 
 export function useTasks(userId?: string) {
   const [tasks, setTasksState] = useState<Task[]>([]);
