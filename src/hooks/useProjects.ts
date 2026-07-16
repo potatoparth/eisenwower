@@ -39,12 +39,32 @@ export function useProjects(userId?: string) {
       supabase.from("project_tasks").select("*").order("sort_order", { ascending: true }),
       supabase.from("project_collaborators").select("project_id, role").eq("user_id", userId),
     ]);
-    const roleByProject: Record<string, ProjectRole> = {};
-    ((collabRows || []) as Array<{ project_id: string; role: string }>).forEach((r) => {
-      roleByProject[r.project_id] = r.role as ProjectRole;
+    const rows = (projectRows || []) as ProjectRow[];
+    // Build parent map for tree walks.
+    const parentOf = new Map<string, string | null>();
+    rows.forEach((r) => parentOf.set(r.id, r.parent_id));
+    const rootOf = (id: string): string => {
+      let cur: string | null = id;
+      const seen = new Set<string>();
+      while (cur && parentOf.get(cur) && !seen.has(cur)) {
+        seen.add(cur);
+        cur = parentOf.get(cur) ?? null;
+      }
+      return cur ?? id;
+    };
+    // Determine role at each root: owner (row.user_id) wins, else collaborator role.
+    const rootRole: Record<string, ProjectRole> = {};
+    rows.forEach((row) => {
+      if (row.parent_id === null && row.user_id === userId) rootRole[row.id] = "owner";
     });
-    ((projectRows || []) as ProjectRow[]).forEach((row) => {
-      if (row.user_id === userId) roleByProject[row.id] = "owner";
+    ((collabRows || []) as Array<{ project_id: string; role: string }>).forEach((r) => {
+      if (!rootRole[r.project_id]) rootRole[r.project_id] = r.role as ProjectRole;
+    });
+    // Propagate root role to every descendant in the tree.
+    const roleByProject: Record<string, ProjectRole> = {};
+    rows.forEach((row) => {
+      const role = rootRole[rootOf(row.id)];
+      if (role) roleByProject[row.id] = role;
     });
     setRoles(roleByProject);
     const tasksByProject = new Map<string, ProjectTask[]>();
