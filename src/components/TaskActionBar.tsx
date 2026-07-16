@@ -133,8 +133,8 @@ export function TaskActionBar({
   );
 
   return (
-    <div className="flex w-full flex-col gap-2">
-      <div className="min-w-0 w-full">
+    <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="min-w-0 order-2 sm:order-none sm:flex-1">
         {searchMode ? (
           <Popover open={open && query.trim().length > 0} onOpenChange={setOpen}>
             <PopoverAnchor asChild>
@@ -194,15 +194,15 @@ export function TaskActionBar({
           />
         )}
       </div>
-      <div className="flex w-full items-center justify-between gap-2">
-        <div className="min-w-0">
+      <div className="flex w-full items-center justify-between gap-2 order-1 sm:order-none sm:w-auto sm:contents">
+        <div className="min-w-0 sm:order-first">
           {selection ? (
             <SelectionToolbar getAllIds={() => tasks.map((t) => t.id)} />
           ) : (
             <span />
           )}
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 sm:order-last">
 
       {/* Reschedule overdue */}
       <Popover open={rescheduleOpen} onOpenChange={setRescheduleOpen}>
