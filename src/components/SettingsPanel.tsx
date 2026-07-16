@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { ChevronDown, RotateCcw, Palette, Eye, Clock, Tag, Users, LogOut, Trash2, User, Sliders, LayoutGrid } from "lucide-react";
+import { useRef, useState } from "react";
+import { ChevronDown, RotateCcw, Palette, Eye, Clock, Tag, Users, LogOut, Trash2, User, Sliders, LayoutGrid, Upload, X, Sparkles } from "lucide-react";
 import { AppSettings, DEFAULT_QUADRANT_ACCENTS, UserAccount } from "@/types/settings";
+import { UserBadge } from "@/components/UserBadge";
+import { toast } from "@/hooks/use-toast";
 import { QUADRANTS, Quadrant } from "@/types/task";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,12 +30,34 @@ interface SettingsPanelProps {
   onDeleteUser: (id: string) => void;
   allCategories?: string[];
   onUpdateDisplayName?: (name: string) => Promise<{ success: boolean; error?: string }>;
+  onUpdateBadgeAppearance?: (patch: {
+    badgeColor?: string | null;
+    badgeGradient?: { from: string; to: string; angle?: number } | null;
+  }) => Promise<{ success: boolean; error?: string }>;
+  onUploadAvatar?: (file: File) => Promise<{ success: boolean; error?: string }>;
+  onRemoveAvatar?: () => Promise<{ success: boolean; error?: string }>;
 }
 
 const GLOBAL_COLOR_PRESETS = [
   "#6D28D9", "#7C3AED", "#2563EB", "#0891B2", "#059669",
   "#16A34A", "#CA8A04", "#EA580C", "#DC2626", "#DB2777",
   "#9333EA", "#0F172A",
+];
+
+const BADGE_COLOR_PRESETS = [
+  "#6D28D9", "#2563EB", "#059669", "#CA8A04", "#DC2626",
+  "#DB2777", "#0891B2", "#EA580C", "#16A34A", "#0F172A",
+];
+
+const BADGE_GRADIENT_PRESETS: { from: string; to: string; angle?: number }[] = [
+  { from: "#6D28D9", to: "#EC4899" },
+  { from: "#2563EB", to: "#22D3EE" },
+  { from: "#F97316", to: "#EF4444" },
+  { from: "#10B981", to: "#3B82F6" },
+  { from: "#F59E0B", to: "#DB2777" },
+  { from: "#0F172A", to: "#6366F1" },
+  { from: "#14B8A6", to: "#8B5CF6" },
+  { from: "#F43F5E", to: "#8B5CF6" },
 ];
 
 const VIEW_LIST: { id: keyof NonNullable<AppSettings["enabledViews"]>; label: string }[] = [
@@ -80,11 +104,20 @@ export function SettingsPanel({
   onDeleteUser,
   allCategories = [],
   onUpdateDisplayName,
+  onUpdateBadgeAppearance,
+  onUploadAvatar,
+  onRemoveAvatar,
 }: SettingsPanelProps) {
   const [newCatName, setNewCatName] = useState("");
   const [newCatColor, setNewCatColor] = useState("#7a8599");
   const [usernameDraft, setUsernameDraft] = useState(currentUser?.username || "");
   const [savingName, setSavingName] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [badgeMode, setBadgeMode] = useState<"color" | "gradient">(
+    currentUser?.badgeGradient ? "gradient" : "color"
+  );
+  const [gradFrom, setGradFrom] = useState(currentUser?.badgeGradient?.from || "#6D28D9");
+  const [gradTo, setGradTo] = useState(currentUser?.badgeGradient?.to || "#EC4899");
   const initialMode: "light" | "dark" =
     typeof document !== "undefined" && document.documentElement.classList.contains("dark")
       ? "dark"
@@ -115,6 +148,146 @@ export function SettingsPanel({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-3">
+          {/* Profile badge */}
+          <Section icon={Sparkles} title="Profile badge" defaultOpen>
+            <div className="flex items-center gap-3">
+              {currentUser && (
+                <UserBadge
+                  userId={currentUser.id}
+                  name={currentUser.username}
+                  size="md"
+                  className="!w-14 !h-14 !text-xl"
+                />
+              )}
+              <div className="flex flex-col gap-1.5">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    e.currentTarget.value = "";
+                    if (!f || !onUploadAvatar) return;
+                    const res = await onUploadAvatar(f);
+                    if (!res.success) toast({ title: "Upload failed", description: res.error, variant: "destructive" });
+                    else toast({ title: "Photo updated" });
+                  }}
+                />
+                <Button size="sm" variant="outline" className="rounded-lg gap-1.5" onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="w-3.5 h-3.5" /> Upload photo
+                </Button>
+                {currentUser?.avatarUrl && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="rounded-lg gap-1.5 text-muted-foreground"
+                    onClick={async () => { if (onRemoveAvatar) await onRemoveAvatar(); }}
+                  >
+                    <X className="w-3.5 h-3.5" /> Remove
+                  </Button>
+                )}
+              </div>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Max 200KB. Square images look best.</p>
+
+            <div className="pt-2 border-t space-y-2">
+              <p className="text-xs font-medium text-foreground">Badge style (when no photo)</p>
+              <div className="inline-flex p-0.5 rounded-lg bg-secondary text-[11px] font-medium">
+                {(["color", "gradient"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setBadgeMode(m)}
+                    className={cn(
+                      "px-2.5 py-1 rounded-md transition-all capitalize",
+                      badgeMode === m ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+
+              {badgeMode === "color" ? (
+                <>
+                  <div className="grid grid-cols-10 gap-1.5">
+                    {BADGE_COLOR_PRESETS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => onUpdateBadgeAppearance?.({ badgeColor: c, badgeGradient: null })}
+                        className={cn(
+                          "w-7 h-7 rounded-full border-2 transition-all",
+                          currentUser?.badgeColor?.toLowerCase() === c.toLowerCase() && !currentUser?.badgeGradient
+                            ? "border-foreground scale-110"
+                            : "border-transparent hover:scale-110"
+                        )}
+                        style={{ backgroundColor: c }}
+                        aria-label={c}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={currentUser?.badgeColor || "#6D28D9"}
+                      onChange={(e) => onUpdateBadgeAppearance?.({ badgeColor: e.target.value, badgeGradient: null })}
+                      className="w-9 h-9 rounded-lg border cursor-pointer"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => onUpdateBadgeAppearance?.({ badgeColor: null, badgeGradient: null })}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-4 gap-2">
+                    {BADGE_GRADIENT_PRESETS.map((g, i) => {
+                      const active = currentUser?.badgeGradient?.from === g.from && currentUser?.badgeGradient?.to === g.to;
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => onUpdateBadgeAppearance?.({ badgeGradient: g, badgeColor: null })}
+                          className={cn(
+                            "h-10 rounded-lg border-2 transition-all",
+                            active ? "border-foreground scale-105" : "border-transparent hover:scale-105"
+                          )}
+                          style={{ background: `linear-gradient(${g.angle ?? 135}deg, ${g.from}, ${g.to})` }}
+                          aria-label={`Gradient ${i + 1}`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <div className="flex flex-col items-center gap-1">
+                      <input type="color" value={gradFrom} onChange={(e) => setGradFrom(e.target.value)} className="w-8 h-8 rounded-lg border cursor-pointer" />
+                      <span className="text-[9px] text-muted-foreground">From</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <input type="color" value={gradTo} onChange={(e) => setGradTo(e.target.value)} className="w-8 h-8 rounded-lg border cursor-pointer" />
+                      <span className="text-[9px] text-muted-foreground">To</span>
+                    </div>
+                    <div
+                      className="h-10 flex-1 rounded-lg border border-border"
+                      style={{ background: `linear-gradient(135deg, ${gradFrom}, ${gradTo})` }}
+                    />
+                    <Button
+                      size="sm"
+                      className="rounded-lg"
+                      onClick={() => onUpdateBadgeAppearance?.({ badgeGradient: { from: gradFrom, to: gradTo }, badgeColor: null })}
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </Section>
+
           {/* Display name */}
           <Section icon={User} title="Display name">
             <div className="flex gap-2">
