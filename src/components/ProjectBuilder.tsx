@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, ChevronRight, ChevronDown, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate, ChevronsDownUp, ChevronsUpDown, PanelLeft, CornerLeftUp, Users2 } from "lucide-react";
+import { Plus, Trash2, ChevronRight, ChevronDown, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate, ChevronsDownUp, ChevronsUpDown, PanelLeft, PanelLeftClose, CornerLeftUp, Users2 } from "lucide-react";
+import { UserBadge } from "@/components/UserBadge";
 import { ProjectTemplate, ProjectTask, ProjectTemplatePreset, PresetTask } from "@/types/project";
 import { buildProjectTree, flattenProjectTree, indexProjectNodes, getDescendantIds, wouldCreateCycle, searchProjectTree } from "@/lib/projectTree";
 import { ShareProjectDialog } from "@/components/ShareProjectDialog";
@@ -61,6 +62,10 @@ interface ProjectBuilderProps {
   onAddPreset?: (name: string, description?: string, tasks?: PresetTask[]) => Promise<ProjectTemplatePreset | null> | ProjectTemplatePreset | null;
   onUpdatePreset?: (id: string, updates: Partial<Omit<ProjectTemplatePreset, "id" | "createdAt">>) => void;
   onDeletePreset?: (id: string) => void;
+  /** Resolves display names for arbitrary user ids (project owners, task creators). */
+  getUserName?: (id: string) => string | undefined;
+  /** Current viewer's user id so we can skip badges for their own rows. */
+  currentUserId?: string;
 }
 
 export function ProjectBuilder({
@@ -73,6 +78,7 @@ export function ProjectBuilder({
   archivedTasks, onUnarchiveTask, onDeleteArchivedTask,
   getProjectRole,
   templatePresets = [], onAddPreset, onUpdatePreset, onDeletePreset,
+  getUserName, currentUserId,
 }: ProjectBuilderProps) {
   const sel = useSelectionOptional();
   const isSelectMode = !!sel?.selectMode;
@@ -95,6 +101,7 @@ export function ProjectBuilder({
   const [dropTargetId, setDropTargetId] = useState<string | "__root__" | null>(null);
   const [treeQuery, setTreeQuery] = useState("");
   const [mobileRailOpen, setMobileRailOpen] = useState(false);
+  const [railHidden, setRailHidden] = useState(false);
   const [editingProjectName, setEditingProjectName] = useState(false);
   const [projectNameDraft, setProjectNameDraft] = useState("");
 
