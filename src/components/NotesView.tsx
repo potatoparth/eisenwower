@@ -395,7 +395,8 @@ export function NoteComposer(props: ComposerProps) {
       <div
         ref={containerRef}
         className={cn(
-          "w-full max-w-xl rounded-2xl border border-border shadow-sm transition-shadow",
+          "w-full max-w-xl rounded-2xl border border-border shadow-sm transition-shadow flex flex-col",
+          open && "max-h-[85vh]",
           open && "shadow-lg"
         )}
         style={{ backgroundColor: bg }}
@@ -408,9 +409,9 @@ export function NoteComposer(props: ComposerProps) {
             Take a note…
           </button>
         ) : (
-          <div className="flex flex-col">
+          <div className="flex flex-col min-h-0 flex-1">
             {/* Body */}
-            <div className="px-4 pt-4 pb-3 space-y-3">
+            <div className="px-4 pt-4 pb-3 space-y-3 overflow-y-auto flex-1 min-h-0">
               <div
                 className="sticky top-0 z-20 -mx-4 px-4 pt-2 pb-1 rounded-t-2xl"
                 style={{ backgroundColor: bg }}
@@ -478,7 +479,7 @@ export function NoteComposer(props: ComposerProps) {
             </div>
 
             {/* Footer bar */}
-            <div className="px-3 py-2.5 bg-muted/40 border-t border-border/60 flex items-center gap-2 rounded-b-2xl">
+            <div className="px-3 py-2.5 bg-muted/40 border-t border-border/60 flex items-center gap-2 rounded-b-2xl flex-shrink-0">
               <div className="flex items-center gap-1 flex-wrap">
                 <ProjectTreePicker
                   projects={props.projects}
