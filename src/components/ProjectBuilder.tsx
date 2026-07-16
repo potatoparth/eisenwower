@@ -210,6 +210,8 @@ export function ProjectBuilder({
     const showDirectRow = hasChildren && directCount > 0;
     const directActive = selectedProjectId === p.id && directOnly;
     const canEditThis = (getProjectRole?.(p.id) ?? "owner") !== "viewer";
+    const roleThis = getProjectRole?.(p.id);
+    const sharedWithMe = roleThis === "editor" || roleThis === "viewer";
     const isDragTarget = dropTargetId === p.id;
     const invalidDrop =
       dragProjectId != null &&
@@ -288,6 +290,15 @@ export function ProjectBuilder({
           >
             {p.name}
           </button>
+          {sharedWithMe && (
+            <span
+              className="flex-shrink-0 text-muted-foreground/80"
+              title={`Shared with you · ${roleThis}`}
+              aria-label="Shared project"
+            >
+              <Users2 className="w-3.5 h-3.5" />
+            </span>
+          )}
           <span
             className={cn(
               "text-[11px] tabular-nums px-1.5 py-0.5 rounded-md flex-shrink-0",
