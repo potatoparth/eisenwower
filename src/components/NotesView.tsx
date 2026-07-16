@@ -797,3 +797,28 @@ function NoteAttachmentPreview({ attachments }: { attachments: TaskAttachment[] 
     </div>
   );
 }
+
+function NoteAssigneeChip({ projectId, userId }: { projectId?: string; userId: string }) {
+  const assignees = useProjectAssignees(projectId || null);
+  const name = assigneeMap(assignees).get(userId);
+  if (!name) return null;
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 border border-border/60 text-muted-foreground">
+      <UserCircle2 className="w-3 h-3" />
+      {name}
+    </span>
+  );
+}
+
+function NoteAuthorship({ note }: { note: Note }) {
+  const assignees = useProjectAssignees(note.projectId || null);
+  const nameFor = (uid?: string) => (uid && assigneeMap(assignees).get(uid)) || null;
+  const updatedName = nameFor(note.updatedBy);
+  const createdName = nameFor(note.createdBy);
+  if (!updatedName && !createdName) return null;
+  return (
+    <div className="mt-1.5 text-[10px] text-muted-foreground/80 leading-tight">
+      {updatedName ? `Updated by ${updatedName}` : `Created by ${createdName}`}
+    </div>
+  );
+}
