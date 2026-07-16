@@ -174,7 +174,8 @@ export function MatrixView({
 
   return (
     <div className={cn("flex flex-col min-h-0", showCompact ? "h-auto" : "h-full")}>
-      {/* Global Task Input */}
+      {/* Global Task Input - compact/mobile only. Desktop add pills live inside quadrant headers. */}
+      {showCompact && (
       <div className="mb-3 w-full flex-shrink-0">
         <TaskActionBar
           tasks={allTasks}
@@ -196,6 +197,7 @@ export function MatrixView({
           recentProjectIds={recentProjectIds}
         />
       </div>
+      )}
 
       {/* Compact 2x2 tiles */}
       {showCompact ? (
