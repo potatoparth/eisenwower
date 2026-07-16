@@ -3,7 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { UserAccount } from "@/types/settings";
-import { primeUserProfile, refreshUserProfile, type BadgeGradient } from "@/lib/userProfiles";
+import { primeUserProfile, refreshUserProfile, setCurrentUserId, type BadgeGradient } from "@/lib/userProfiles";
 import { supabase as sb } from "@/integrations/supabase/client";
 
 type AuthResult = { success: boolean; error?: string };
@@ -59,8 +59,10 @@ export function useAuth() {
     if (!user) {
       setCurrentUser(null);
       setUsers([]);
+      setCurrentUserId(null);
       return;
     }
+    setCurrentUserId(user.id);
 
     const { data: profile } = await supabase
       .from("profiles")
