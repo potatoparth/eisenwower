@@ -126,7 +126,7 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-5">
+      <div className="flex-1 overflow-y-auto p-4 space-y-5 min-h-0">
         {/* Task name */}
         <div className="space-y-1.5 sticky top-0 z-20 bg-card -mx-4 px-4 pt-1 pb-3 -mt-4">
           <label className="text-xs font-medium text-muted-foreground text-center block">Task Name</label>
@@ -331,6 +331,15 @@ export function TaskDetailPanel({ task, deadlineThresholdDays, onUpdate, onClose
             Status: {task.status === "done" ? "Done" : "Open"}
           </p>
         </div>
+      </div>
+      {/* Sticky footer */}
+      <div className="flex-shrink-0 border-t bg-card/95 backdrop-blur px-4 py-3 flex items-center justify-end gap-2">
+        <Button variant="ghost" size="sm" onClick={onClose} className="h-9 rounded-lg">
+          Close
+        </Button>
+        <Button size="sm" onClick={() => { handleSave(); onClose(); }} className="h-9 rounded-lg gap-1.5">
+          <Check className="w-4 h-4" /> Save
+        </Button>
       </div>
     </div>
   );
