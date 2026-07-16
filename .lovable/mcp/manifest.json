@@ -514,7 +514,7 @@
       {
         "name": "list_projects",
         "title": "List projects",
-        "description": "List the signed-in user's projects (project templates). Each row includes `parent_id` and a computed breadcrumb `path` (root-first, '/'-joined). Projects form a tree — a project with `parent_id` set is a subproject of that parent.",
+        "description": "List projects the signed-in user owns AND projects shared with them. Each row includes `parent_id`, a computed breadcrumb `path`, and `access` = 'owner' | 'editor' | 'viewer'. Projects form a tree — a project with `parent_id` set is a subproject of that parent.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,

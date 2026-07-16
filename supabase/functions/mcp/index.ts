@@ -391,16 +391,20 @@ import { z as z9 } from "npm:zod@^4.4.3";
 var list_projects_default = defineTool8({
   name: "list_projects",
   title: "List projects",
-  description: "List the signed-in user's projects (project templates). Each row includes `parent_id` and a computed breadcrumb `path` (root-first, '/'-joined). Projects form a tree \u2014 a project with `parent_id` set is a subproject of that parent.",
+  description: "List projects the signed-in user owns AND projects shared with them. Each row includes `parent_id`, a computed breadcrumb `path`, and `access` = 'owner' | 'editor' | 'viewer'. Projects form a tree \u2014 a project with `parent_id` set is a subproject of that parent.",
   inputSchema: {
     limit: z9.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ limit }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
-    const { data, error } = await supabaseForUser(ctx).from("project_templates").select("id,name,description,parent_id,sort_order,created_at,updated_at").order("updated_at", { ascending: false }).limit(limit ?? 50);
+    const sb = supabaseForUser(ctx);
+    const uid = ctx.getUserId();
+    const { data, error } = await sb.from("project_templates").select("id,user_id,name,description,parent_id,sort_order,created_at,updated_at").order("updated_at", { ascending: false }).limit(limit ?? 50);
     if (error) return toErr(error.message);
     const rows = data ?? [];
+    const { data: collabs } = await sb.from("project_collaborators").select("project_id,role").eq("user_id", uid);
+    const roleByProject = new Map((collabs ?? []).map((c) => [c.project_id, c.role]));
     const byId = new Map(rows.map((r) => [r.id, r]));
     const withPath = rows.map((r) => {
       const chain = [];
@@ -413,7 +417,8 @@ var list_projects_default = defineTool8({
         chain.unshift(row.name);
         cur = row.parent_id;
       }
-      return { ...r, path: chain.join(" / ") };
+      const access = r.user_id === uid ? "owner" : roleByProject.get(r.id) ?? "viewer";
+      return { ...r, path: chain.join(" / "), access };
     });
     return {
       content: [{ type: "text", text: JSON.stringify(withPath) }],
