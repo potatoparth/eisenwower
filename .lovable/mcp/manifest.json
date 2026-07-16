@@ -19,7 +19,7 @@
       {
         "name": "list_tasks",
         "title": "List tasks",
-        "description": "List the signed-in user's Eisenhower Matrix tasks. Optionally filter by status, quadrant, or category.",
+        "description": "List Eisenhower Matrix tasks the signed-in user owns or has access to via shared projects. Filter by status, quadrant, project, assignee, or archived state. Results include authorship metadata (created_by, updated_by, assigned_to) and archived_at.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -57,9 +57,19 @@
               "description": "Alternative to project_id: '/'-separated project path.",
               "type": "string"
             },
-            "category": {
-              "description": "DEPRECATED. Filters tasks whose immediate project has this leaf name.",
-              "type": "string"
+            "assigned_to": {
+              "description": "Filter to tasks assigned to this user id.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "include_archived": {
+              "description": "Include archived (completed & recycled) tasks. Default false — archived tasks are hidden.",
+              "type": "boolean"
+            },
+            "only_archived": {
+              "description": "Return ONLY archived tasks (archived_at is not null).",
+              "type": "boolean"
             },
             "limit": {
               "description": "Max rows (default 50).",
