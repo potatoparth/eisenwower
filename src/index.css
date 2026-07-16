@@ -492,3 +492,8 @@ body.sprint-immersive header .bg-secondary button[aria-pressed="true"] {
   background: rgba(255, 255, 255, 0.18) !important;
   color: #fff;
 }
+
+/* Matrix quadrant "Add to…" pill: brighter placeholder for better contrast */
+.quadrant-add-pill input::placeholder {
+  color: hsl(var(--foreground) / 0.6) !important;
+}
