@@ -15,7 +15,6 @@ export interface UserProfileInfo {
 type Row = {
   user_id: string;
   display_name: string | null;
-  email: string | null;
   avatar_url: string | null;
   badge_color: string | null;
   badge_gradient: unknown;
@@ -37,14 +36,14 @@ async function signAvatar(path: string): Promise<string | null> {
 async function fetchIds(ids: string[]): Promise<void> {
   if (!ids.length) return;
   const { data } = await supabase
-    .from("profiles")
-    .select("user_id,display_name,email,avatar_url,badge_color,badge_gradient")
+    .from("profiles_public")
+    .select("user_id,display_name,avatar_url,badge_color,badge_gradient")
     .in("user_id", ids);
   const rows = ((data as unknown) as Row[] | null) || [];
   await Promise.all(rows.map(async (r) => {
     const info: UserProfileInfo = {
       userId: r.user_id,
-      name: r.display_name || (r.email ? r.email.split("@")[0] : "User"),
+      name: r.display_name || "User",
       avatarUrl: r.avatar_url,
       avatarSignedUrl: r.avatar_url ? await signAvatar(r.avatar_url) : null,
       badgeColor: r.badge_color,
