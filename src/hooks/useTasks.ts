@@ -182,7 +182,8 @@ export function useTasks(userId?: string) {
       });
     });
     if (userId) {
-      supabase.from("tasks").update(toUpdate(updates)).eq("id", id).then(({ error }) => { if (error) loadTasks(); });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      supabase.from("tasks").update(toUpdate(updates) as any).eq("id", id).then(({ error }) => { if (error) loadTasks(); });
       if (propagateIds.length) {
         const propagateUpdates: Partial<Omit<Task, "id" | "createdAt">> = {
           name: updates.name, description: updates.description,
