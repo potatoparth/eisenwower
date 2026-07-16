@@ -467,22 +467,23 @@ export function ProjectBuilder({
 
       {!treeQuery && allParentIds.length > 0 && (
         <div className="flex items-center gap-1 px-1">
-          <Button
-            variant="ghost" size="sm"
-            className="h-6 px-1.5 rounded-md gap-1 text-[10px] text-muted-foreground hover:text-foreground"
-            onClick={expandAllProjects}
-            title="Expand all"
-          >
-            <ChevronsUpDown className="w-3 h-3" /> Expand
-          </Button>
-          <Button
-            variant="ghost" size="sm"
-            className="h-6 px-1.5 rounded-md gap-1 text-[10px] text-muted-foreground hover:text-foreground"
-            onClick={collapseAllProjects}
-            title="Collapse all"
-          >
-            <ChevronsDownUp className="w-3 h-3" /> Collapse
-          </Button>
+          {(() => {
+            const allCollapsed = collapsedProjectIds.size >= allParentIds.length;
+            return (
+              <Button
+                variant="ghost" size="sm"
+                className="h-6 px-1.5 rounded-md gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                onClick={allCollapsed ? expandAllProjects : collapseAllProjects}
+                title={allCollapsed ? "Expand all" : "Collapse all"}
+              >
+                {allCollapsed ? (
+                  <><ChevronsUpDown className="w-3 h-3" /> Expand all</>
+                ) : (
+                  <><ChevronsDownUp className="w-3 h-3" /> Collapse all</>
+                )}
+              </Button>
+            );
+          })()}
         </div>
       )}
 
