@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { useUserProfile, type BadgeGradient } from "@/lib/userProfiles";
+import { useUserProfile, useCurrentUserId, type BadgeGradient } from "@/lib/userProfiles";
 
 /**
  * Deterministic HSL color derived from a user id, so the same person always
@@ -50,10 +50,14 @@ interface UserBadgeProps {
   color?: string | null;
   /** Override gradient. */
   gradient?: BadgeGradient | null;
+  /** Show badge even when userId is the current logged-in user. Defaults to false. */
+  showSelf?: boolean;
 }
 
-export function UserBadge({ userId, name, size = "xs", className, title, avatarUrl, color, gradient }: UserBadgeProps) {
+export function UserBadge({ userId, name, size = "xs", className, title, avatarUrl, color, gradient, showSelf = false }: UserBadgeProps) {
   const profile = useUserProfile(userId);
+  const meId = useCurrentUserId();
+  if (!showSelf && userId && meId && userId === meId) return null;
   const effAvatar = avatarUrl ?? profile?.avatarSignedUrl ?? null;
   const effColor = color ?? profile?.badgeColor ?? null;
   const effGradient = gradient ?? profile?.badgeGradient ?? null;
