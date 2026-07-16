@@ -142,7 +142,8 @@ export function TaskCard({
         {/* Task name */}
         <span
           className={cn(
-            "leading-tight flex-1 min-w-0 truncate text-sm",
+            "leading-tight flex-1 min-w-0 text-sm",
+            stacked ? "whitespace-normal break-words" : "truncate",
             isDone && "line-through text-muted-foreground"
           )}
         >
@@ -226,14 +227,8 @@ export function TaskCard({
         </div>
       </div>
 
-      {stacked && (projectName || task.dueDate || (task.recurrence && task.recurrence !== "none") || assigneeName || (task.category && task.category !== "General")) && (
+      {stacked && (task.dueDate || (task.recurrence && task.recurrence !== "none") || assigneeName || (task.category && task.category !== "General")) && (
         <div className="mt-1.5 pl-[26px] flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground">
-          {projectName && (
-            <span className="inline-flex items-center gap-1 min-w-0 max-w-[45%] truncate" title={projectName}>
-              <FolderKanban className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate">{projectName}</span>
-            </span>
-          )}
           {task.category && task.category !== "General" && (
             <span
               className="px-1.5 py-0.5 rounded-md font-medium"
