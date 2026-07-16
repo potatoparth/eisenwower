@@ -24,6 +24,19 @@ function OwnerBadge({ ownerId, hintName }: { ownerId: string; hintName?: string 
   );
 }
 
+function AssigneeBadge({ userId, hintName }: { userId: string; hintName?: string }) {
+  const profile = useUserProfile(userId);
+  const name = hintName || profile?.name;
+  return (
+    <UserBadge
+      userId={userId}
+      name={name}
+      size="xs"
+      title={`Assigned to ${name ?? "someone"}`}
+    />
+  );
+}
+
 interface TaskCardProps {
   task: Task;
   onToggleStatus: (id: string) => void;
@@ -232,6 +245,17 @@ export function TaskCard({
             const ownerId = task.userId ?? task.createdBy;
             if (!ownerId || !viewerId || ownerId === viewerId) return null;
             return <OwnerBadge ownerId={ownerId} hintName={getUserName?.(ownerId)} />;
+          })()}
+
+          {/* Assignee badge — appears when the task is assigned to someone
+              other than you (and other than the owner already shown). */}
+          {(() => {
+            const ownerId = task.userId ?? task.createdBy;
+            const assignee = task.assignedTo;
+            if (!assignee) return null;
+            if (viewerId && assignee === viewerId) return null;
+            if (ownerId && assignee === ownerId) return null;
+            return <AssigneeBadge userId={assignee} hintName={getUserName?.(assignee) ?? getAssigneeName?.(assignee)} />;
           })()}
 
           {/* Drag handle - shown on hover */}
