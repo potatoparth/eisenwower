@@ -1,6 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Task, Quadrant, TaskStatus, Recurrence, TaskAttachment } from "@/types/task";
+import { toast } from "@/hooks/use-toast";
+
+function notifyError(action: string, error: { message?: string } | null) {
+  if (!error) return;
+  const msg = error.message || "";
+  const permission =
+    /permission denied|row-level security|violates row-level/i.test(msg);
+  toast({
+    title: permission ? "You don't have permission" : `Couldn't ${action}`,
+    description: permission
+      ? "Ask the project owner to grant you Editor access."
+      : msg || undefined,
+    variant: "destructive",
+  });
+}
 
 function computeNextOccurrence(template: Task): string | undefined {
   const rec = template.recurrence ?? "none";
@@ -195,7 +210,13 @@ export function useTasks(userId?: string) {
     });
     if (userId) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      supabase.from("tasks").update(toUpdate(updates) as any).eq("id", id).then(({ error }) => { if (error) loadTasks(); });
+      supabase.from("tasks").update(toUpdate(updates) as any).eq("id", id).select("id").then(({ data, error }) => {
+        if (error) { notifyError("update task", error); loadTasks(); return; }
+        if (!data || data.length === 0) {
+          notifyError("update task", { message: "permission denied" });
+          loadTasks();
+        }
+      });
       if (propagateIds.length) {
         const propagateUpdates: Partial<Omit<Task, "id" | "createdAt">> = {
           name: updates.name, description: updates.description,
@@ -209,7 +230,7 @@ export function useTasks(userId?: string) {
         ) as Record<string, unknown>;
         if (Object.keys(payload).length) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          supabase.from("tasks").update(payload as any).in("id", propagateIds).then(({ error }) => { if (error) loadTasks(); });
+          supabase.from("tasks").update(payload as any).in("id", propagateIds).then(({ error }) => { if (error) { notifyError("update recurring tasks", error); loadTasks(); } });
         }
       }
     }
@@ -235,7 +256,10 @@ export function useTasks(userId?: string) {
       return prev.filter(t => t.id !== id);
     });
     if (moved) setArchivedTasks(prev => [{ ...moved!, archivedAt: now }, ...prev]);
-    if (userId) supabase.from("tasks").update({ archived_at: now }).eq("id", id).then(({ error }) => { if (error) loadTasks(); });
+    if (userId) supabase.from("tasks").update({ archived_at: now }).eq("id", id).select("id").then(({ data, error }) => {
+      if (error) { notifyError("archive task", error); loadTasks(); return; }
+      if (!data || data.length === 0) { notifyError("archive task", { message: "permission denied" }); loadTasks(); }
+    });
   }, [userId, loadTasks]);
 
   const archiveDoneTasks = useCallback(() => {
