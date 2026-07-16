@@ -57,6 +57,8 @@ interface KanbanViewProps {
   deadlineThresholdDays?: number;
   getProjectName?: (id: string) => string | undefined;
   getAssigneeName?: (id: string) => string | undefined;
+  getUserName?: (id: string) => string | undefined;
+  currentUserId?: string;
 }
 
 /** Which Default-board column a task belongs to, derived from status/due date. */
@@ -96,6 +98,7 @@ export function KanbanView({
   taskInputProps,
   getCategoryColor, deadlineThresholdDays = 2,
   getProjectName, getAssigneeName,
+  getUserName, currentUserId,
 }: KanbanViewProps) {
   const [activeBoardId, setActiveBoardId] = useState<string>(DEFAULT_BOARD_ID);
   const [activeId, setActiveId] = useState<string | null>(null);
