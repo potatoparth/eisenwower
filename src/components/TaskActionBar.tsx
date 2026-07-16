@@ -133,15 +133,15 @@ export function TaskActionBar({
   );
 
   return (
-    <div className="flex w-full flex-col gap-2 md:flex-row md:items-center md:gap-2">
-      {/* Selection controls: below on mobile (left side of button row), left on desktop */}
-      <div className="order-2 min-w-0 md:order-1 md:flex-shrink-0">
+    <div className="mx-auto flex w-full max-w-2xl flex-wrap items-center gap-2 md:flex-nowrap">
+      {/* Selection controls: left of the input on desktop, left side below input on mobile */}
+      <div className="order-2 min-w-0 flex-shrink-0 md:order-1">
         {selection ? (
           <SelectionToolbar getAllIds={() => tasks.map((t) => t.id)} />
         ) : null}
       </div>
-      {/* Input: on top on mobile (full width), middle on desktop (flex-grow) */}
-      <div className="order-1 w-full min-w-0 md:order-2 md:flex-1">
+      {/* Input: full row on mobile, centered between controls on desktop */}
+      <div className="order-1 min-w-0 flex-[0_0_100%] md:order-2 md:flex-1 md:basis-0">
         {searchMode ? (
           <Popover open={open && query.trim().length > 0} onOpenChange={setOpen}>
             <PopoverAnchor asChild>
@@ -201,8 +201,8 @@ export function TaskActionBar({
           />
         )}
       </div>
-      {/* Action buttons: below on mobile (right side of button row), right on desktop */}
-      <div className="order-3 flex items-center gap-1 md:flex-shrink-0 ml-auto md:ml-0">
+      {/* Action buttons: right side below input on mobile, right of the input on desktop */}
+      <div className="order-3 ml-auto flex flex-shrink-0 items-center gap-1 md:ml-0">
 
       {/* Reschedule overdue */}
       <Popover open={rescheduleOpen} onOpenChange={setRescheduleOpen}>
