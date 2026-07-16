@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { format, isToday, isTomorrow, isPast, parseISO } from "date-fns";
 import { useSelectionOptional } from "@/hooks/useSelection";
 import { useTaskActionsOptional } from "@/hooks/useTaskActions";
+import { UserBadge } from "@/components/UserBadge";
 
 interface TaskCardProps {
   task: Task;
@@ -21,6 +22,10 @@ interface TaskCardProps {
   variant?: "row" | "stacked";
   getProjectName?: (id: string) => string | undefined;
   getAssigneeName?: (id: string) => string | undefined;
+  /** Resolve any user id → display name (creators, assignees). */
+  getUserName?: (id: string) => string | undefined;
+  /** Current viewer's user id; used to hide "someone else's" badge on your own tasks. */
+  currentUserId?: string;
 }
 
 export function TaskCard({
@@ -36,6 +41,8 @@ export function TaskCard({
   variant = "row",
   getProjectName,
   getAssigneeName,
+  getUserName,
+  currentUserId,
 }: TaskCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const sel = useSelectionOptional();
