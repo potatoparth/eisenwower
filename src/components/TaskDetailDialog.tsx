@@ -113,8 +113,8 @@ export function TaskDetailDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-[640px] rounded-2xl p-0 overflow-hidden backdrop-blur-xl">
-        <DialogHeader className="px-3 pt-3 pb-2 flex flex-row items-center justify-between space-y-0 gap-2">
+      <DialogContent className="max-w-[640px] max-h-[90vh] rounded-2xl p-0 overflow-hidden backdrop-blur-xl flex flex-col">
+        <DialogHeader className="px-3 pt-3 pb-2 flex flex-row items-center justify-between space-y-0 gap-2 flex-shrink-0 border-b">
           <DialogTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(var(--quadrant-${qInfo.color}))` }} />
             {qInfo.title}
@@ -138,7 +138,7 @@ export function TaskDetailDialog({
           </div>
         </DialogHeader>
 
-        <div className="px-5 pb-5 space-y-4">
+        <div className="px-5 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="sm" onClick={() => prevTask && onNavigate?.(prevTask)} disabled={!prevTask} className="h-8 w-8 p-0 rounded-lg flex-shrink-0" title="Previous task">
               <ChevronLeft className="w-4 h-4" />
@@ -340,6 +340,14 @@ export function TaskDetailDialog({
               Status: {task.status === "done" ? "Done" : "Open"}
             </p>
           </div>
+        </div>
+        <div className="flex-shrink-0 border-t bg-card/95 backdrop-blur px-5 py-3 flex items-center justify-end gap-2">
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-9 rounded-lg">
+            Close
+          </Button>
+          <Button size="sm" onClick={() => { save(); onClose(); }} className="h-9 rounded-lg gap-1.5">
+            <Check className="w-4 h-4" /> Save
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
