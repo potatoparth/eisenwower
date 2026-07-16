@@ -314,18 +314,18 @@ import { z as z7 } from "npm:zod@^4.4.3";
 var list_notes_default = defineTool6({
   name: "list_notes",
   title: "List notes",
-  description: "List the signed-in user's notes.",
+  description: "List notes the signed-in user owns or has access to via shared projects. Results include authorship metadata (created_by, updated_by, assigned_to).",
   inputSchema: {
     project_id: z7.string().uuid().optional().describe("Filter by project id (includes descendants)."),
     project_path: z7.string().optional().describe("Alternative to project_id: '/'-separated project path."),
-    category: z7.string().optional().describe("DEPRECATED. Filters notes whose immediate project leaf name matches."),
+    assigned_to: z7.string().uuid().optional().describe("Filter to notes assigned to this user id."),
     limit: z7.number().int().min(1).max(200).optional().describe("Max rows (default 50).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ project_id, project_path, category, limit }, ctx) => {
+  handler: async ({ project_id, project_path, assigned_to, limit }, ctx) => {
     if (!ctx.isAuthenticated()) return unauthenticated();
     const sb = supabaseForUser(ctx);
-    let q = sb.from("notes").select("id,title,content,project_id,pinned,color,created_at,updated_at").order("updated_at", { ascending: false }).limit(limit ?? 50);
+    let q = sb.from("notes").select("id,user_id,title,content,project_id,pinned,color,attachments,assigned_to,created_by,updated_by,created_at,updated_at").order("updated_at", { ascending: false }).limit(limit ?? 50);
     let filterProjectId = project_id ?? null;
     if (!filterProjectId && project_path) {
       const { projectId } = await resolveProjectPath(sb, ctx.getUserId(), project_path, false);
@@ -335,15 +335,10 @@ var list_notes_default = defineTool6({
       const ids = await descendantProjectIds(sb, ctx.getUserId(), filterProjectId);
       q = q.in("project_id", ids);
     }
+    if (assigned_to) q = q.eq("assigned_to", assigned_to);
     const { data, error } = await q;
     if (error) return toErr(error.message);
-    let rows = data ?? [];
-    if (category) {
-      const { data: projs } = await sb.from("project_templates").select("id,name").eq("user_id", ctx.getUserId());
-      const nameById = new Map((projs ?? []).map((p) => [p.id, p.name.toLowerCase()]));
-      const wanted = category.toLowerCase();
-      rows = rows.filter((n) => n.project_id && nameById.get(n.project_id) === wanted);
-    }
+    const rows = data ?? [];
     return {
       content: [{ type: "text", text: JSON.stringify(rows) }],
       structuredContent: { notes: rows }

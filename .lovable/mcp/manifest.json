@@ -418,7 +418,7 @@
       {
         "name": "list_notes",
         "title": "List notes",
-        "description": "List the signed-in user's notes.",
+        "description": "List notes the signed-in user owns or has access to via shared projects. Results include authorship metadata (created_by, updated_by, assigned_to).",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
@@ -438,9 +438,11 @@
               "description": "Alternative to project_id: '/'-separated project path.",
               "type": "string"
             },
-            "category": {
-              "description": "DEPRECATED. Filters notes whose immediate project leaf name matches.",
-              "type": "string"
+            "assigned_to": {
+              "description": "Filter to notes assigned to this user id.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
             "limit": {
               "description": "Max rows (default 50).",
