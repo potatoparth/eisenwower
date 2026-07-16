@@ -78,7 +78,7 @@ const Index = () => {
 
   const {
     tasks: rawTasks, archivedTasks: rawArchivedTasks, addTask, updateTask: rawUpdateTask,
-    deleteTask, archiveDoneTasks, unarchiveTask, moveTask, toggleStatus, getCategories, setTasks,
+    deleteTask, archiveTask, archiveDoneTasks, unarchiveTask, moveTask, toggleStatus, getCategories, setTasks,
   } = useTasks(currentUser?.id);
 
   const kanban = useKanbanBoards(currentUser?.id);
