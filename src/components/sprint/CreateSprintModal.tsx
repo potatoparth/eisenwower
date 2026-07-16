@@ -108,12 +108,22 @@ export function CreateSprintModal({ open, onClose, onLockIn, seedTasks }: Props)
     setTaskInput(v.length > 0 ? v[0].toUpperCase() + v.slice(1) : v);
   };
 
-  const canLock = tasks.length > 0 && (noTimer || duration > 0);
+  const canLock =
+    (tasks.length > 0 || taskInput.trim().length > 0) && (noTimer || duration > 0);
 
   const handleLock = () => {
-    if (!canLock) return;
+    // Flush any task typed but not yet added with Enter.
+    let finalTasks = tasks;
+    const pending = taskInput.trim();
+    if (pending && finalTasks.length < 5) {
+      const cap = pending[0].toUpperCase() + pending.slice(1);
+      finalTasks = [...finalTasks, { id: crypto.randomUUID(), title: cap }];
+      setTasks(finalTasks);
+      setTaskInput("");
+    }
+    if (finalTasks.length === 0 || (!noTimer && duration <= 0)) return;
     const finalTitle = title.trim() || generateDefaultTitle();
-    onLockIn({ title: finalTitle, duration, tasks, noTimer, atmosphere });
+    onLockIn({ title: finalTitle, duration, tasks: finalTasks, noTimer, atmosphere });
   };
 
   // Drag reorder
