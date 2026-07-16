@@ -82,6 +82,7 @@ export function ProjectBuilder({
   getUserName, currentUserId,
 }: ProjectBuilderProps) {
   const sel = useSelectionOptional();
+  const taskActions = useTaskActionsOptional();
   const isSelectMode = !!sel?.selectMode;
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [directOnly, setDirectOnly] = useState(false);
