@@ -3,6 +3,8 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { UserAccount } from "@/types/settings";
+import { primeUserProfile, refreshUserProfile, type BadgeGradient } from "@/lib/userProfiles";
+import { supabase as sb } from "@/integrations/supabase/client";
 
 type AuthResult = { success: boolean; error?: string };
 
@@ -11,6 +13,9 @@ interface ProfileRow {
   email: string;
   display_name: string | null;
   created_at: string;
+  avatar_url?: string | null;
+  badge_color?: string | null;
+  badge_gradient?: unknown;
 }
 
 interface RoleRow {
@@ -24,6 +29,9 @@ const toAccount = (profile: ProfileRow, role?: "admin" | "user"): UserAccount =>
   username: profile.display_name || profile.email,
   role: role || "user",
   createdAt: profile.created_at,
+  avatarUrl: profile.avatar_url ?? null,
+  badgeColor: profile.badge_color ?? null,
+  badgeGradient: (profile.badge_gradient as BadgeGradient | null) ?? null,
 });
 
 const getDisplayName = (user: User | null) => {
@@ -56,7 +64,7 @@ export function useAuth() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("user_id,email,display_name,created_at")
+      .select("user_id,email,display_name,created_at,avatar_url,badge_color,badge_gradient")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -73,19 +81,33 @@ export function useAuth() {
       created_at: user.created_at,
     };
 
-    setCurrentUser(toAccount((profile as ProfileRow | null) || fallbackProfile, role));
+    const account = toAccount(((profile as unknown) as ProfileRow | null) || fallbackProfile, role);
+    // Sign avatar URL for immediate render.
+    if (account.avatarUrl) {
+      const { data: signed } = await sb.storage.from("avatars").createSignedUrl(account.avatarUrl, 60 * 60 * 6);
+      account.avatarSignedUrl = signed?.signedUrl ?? null;
+    }
+    primeUserProfile({
+      userId: account.id,
+      name: account.username,
+      avatarUrl: account.avatarUrl ?? null,
+      avatarSignedUrl: account.avatarSignedUrl ?? null,
+      badgeColor: account.badgeColor ?? null,
+      badgeGradient: account.badgeGradient ?? null,
+    });
+    setCurrentUser(account);
   }, []);
 
   const loadUsers = useCallback(async (isAdmin: boolean) => {
     if (!isAdmin) return;
 
     const [{ data: profiles }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("user_id,email,display_name,created_at").order("created_at", { ascending: true }),
+      supabase.from("profiles").select("user_id,email,display_name,created_at,avatar_url,badge_color,badge_gradient").order("created_at", { ascending: true }),
       supabase.from("user_roles").select("user_id,role"),
     ]);
 
     const roleByUser = new Map((roles as RoleRow[] | null)?.map((row) => [row.user_id, row.role]) || []);
-    setUsers(((profiles as ProfileRow[] | null) || []).map((profile) => toAccount(profile, roleByUser.get(profile.user_id))));
+    setUsers((((profiles as unknown) as ProfileRow[] | null) || []).map((profile) => toAccount(profile, roleByUser.get(profile.user_id))));
   }, []);
 
   useEffect(() => {
@@ -170,8 +192,57 @@ export function useAuth() {
 
     setCurrentUser(prev => prev ? { ...prev, username: trimmed } : prev);
     setUsers(prev => prev.map(u => u.id === authUser.id ? { ...u, username: trimmed } : u));
+    primeUserProfile({ userId: authUser.id, name: trimmed });
     return { success: true };
   }, [authUser]);
+
+  const updateBadgeAppearance = useCallback(async (patch: {
+    badgeColor?: string | null;
+    badgeGradient?: BadgeGradient | null;
+  }): Promise<AuthResult> => {
+    if (!authUser) return { success: false, error: "Not signed in" };
+    const payload: { badge_color?: string | null; badge_gradient?: BadgeGradient | null } = {};
+    if ("badgeColor" in patch) payload.badge_color = patch.badgeColor;
+    if ("badgeGradient" in patch) payload.badge_gradient = patch.badgeGradient;
+    const { error } = await supabase
+      .from("profiles")
+      .update(payload as never)
+      .eq("user_id", authUser.id);
+    if (error) return { success: false, error: error.message };
+    setCurrentUser(prev => prev ? { ...prev, ...patch } : prev);
+    primeUserProfile({ userId: authUser.id, ...patch });
+    return { success: true };
+  }, [authUser]);
+
+  const uploadAvatar = useCallback(async (file: File): Promise<AuthResult> => {
+    if (!authUser) return { success: false, error: "Not signed in" };
+    if (file.size > 200 * 1024) return { success: false, error: "Image must be 200KB or smaller." };
+    if (!file.type.startsWith("image/")) return { success: false, error: "File must be an image." };
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const path = `${authUser.id}/avatar-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, {
+      cacheControl: "3600", upsert: false, contentType: file.type,
+    });
+    if (upErr) return { success: false, error: upErr.message };
+    const { error: dbErr } = await supabase.from("profiles").update({ avatar_url: path }).eq("user_id", authUser.id);
+    if (dbErr) return { success: false, error: dbErr.message };
+    const { data: signed } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 6);
+    const signedUrl = signed?.signedUrl ?? null;
+    setCurrentUser(prev => prev ? { ...prev, avatarUrl: path, avatarSignedUrl: signedUrl } : prev);
+    primeUserProfile({ userId: authUser.id, avatarUrl: path, avatarSignedUrl: signedUrl });
+    await refreshUserProfile(authUser.id);
+    return { success: true };
+  }, [authUser]);
+
+  const removeAvatar = useCallback(async (): Promise<AuthResult> => {
+    if (!authUser) return { success: false, error: "Not signed in" };
+    const path = currentUser?.avatarUrl;
+    if (path) await supabase.storage.from("avatars").remove([path]);
+    await supabase.from("profiles").update({ avatar_url: null }).eq("user_id", authUser.id);
+    setCurrentUser(prev => prev ? { ...prev, avatarUrl: null, avatarSignedUrl: null } : prev);
+    primeUserProfile({ userId: authUser.id, avatarUrl: null, avatarSignedUrl: null });
+    return { success: true };
+  }, [authUser, currentUser?.avatarUrl]);
 
   return useMemo(() => ({
     session,
@@ -187,5 +258,8 @@ export function useAuth() {
     logout,
     deleteUser,
     updateDisplayName,
-  }), [session, authUser, currentUser, users, isInitialized, isAdmin, signup, login, loginWithGoogle, logout, deleteUser, updateDisplayName]);
+    updateBadgeAppearance,
+    uploadAvatar,
+    removeAvatar,
+  }), [session, authUser, currentUser, users, isInitialized, isAdmin, signup, login, loginWithGoogle, logout, deleteUser, updateDisplayName, updateBadgeAppearance, uploadAvatar, removeAvatar]);
 }

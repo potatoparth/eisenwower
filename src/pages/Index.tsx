@@ -45,6 +45,7 @@ const Index = () => {
   const {
     currentUser, users, isInitialized, needsSetup, isAdmin,
     signup, login, loginWithGoogle, logout, deleteUser, updateDisplayName,
+    updateBadgeAppearance, uploadAvatar, removeAvatar,
   } = useAuth();
 
   const {
@@ -785,6 +786,9 @@ const Index = () => {
           users={users} isAdmin={isAdmin} onLogout={logout} onDeleteUser={deleteUser}
           allCategories={getCategories()}
           onUpdateDisplayName={updateDisplayName}
+          onUpdateBadgeAppearance={updateBadgeAppearance}
+          onUploadAvatar={uploadAvatar}
+          onRemoveAvatar={removeAvatar}
         />
       )}
 

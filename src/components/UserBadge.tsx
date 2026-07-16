@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useUserProfile, type BadgeGradient } from "@/lib/userProfiles";
 
 /**
  * Deterministic HSL color derived from a user id, so the same person always
@@ -28,26 +29,53 @@ interface UserBadgeProps {
   size?: "xs" | "sm" | "md";
   className?: string;
   title?: string;
+  /** Override avatar (skips profile lookup). */
+  avatarUrl?: string | null;
+  /** Override solid badge color. */
+  color?: string | null;
+  /** Override gradient. */
+  gradient?: BadgeGradient | null;
 }
 
-export function UserBadge({ userId, name, size = "xs", className, title }: UserBadgeProps) {
-  const { bg, fg } = colorForUserId(userId);
+export function UserBadge({ userId, name, size = "xs", className, title, avatarUrl, color, gradient }: UserBadgeProps) {
+  const profile = useUserProfile(userId);
+  const effAvatar = avatarUrl ?? profile?.avatarSignedUrl ?? null;
+  const effColor = color ?? profile?.badgeColor ?? null;
+  const effGradient = gradient ?? profile?.badgeGradient ?? null;
+  const effName = name ?? profile?.name;
+  const hash = colorForUserId(userId);
+  const background = effGradient
+    ? `linear-gradient(${effGradient.angle ?? 135}deg, ${effGradient.from}, ${effGradient.to})`
+    : (effColor || hash.bg);
   const sizing =
     size === "md" ? "w-6 h-6 text-[11px]" :
     size === "sm" ? "w-5 h-5 text-[10px]" :
                     "w-4 h-4 text-[9px]";
+  const pxSize = size === "md" ? 24 : size === "sm" ? 20 : 16;
+  if (effAvatar) {
+    return (
+      <img
+        src={effAvatar}
+        alt={effName || "User"}
+        title={title ?? effName ?? "User"}
+        width={pxSize}
+        height={pxSize}
+        className={cn("rounded-full object-cover flex-shrink-0", sizing, className)}
+      />
+    );
+  }
   return (
     <span
-      aria-label={name || "User"}
-      title={title ?? name ?? "User"}
+      aria-label={effName || "User"}
+      title={title ?? effName ?? "User"}
       className={cn(
         "inline-flex items-center justify-center rounded-full font-semibold leading-none select-none flex-shrink-0",
         sizing,
         className,
       )}
-      style={{ backgroundColor: bg, color: fg }}
+      style={{ background, color: hash.fg }}
     >
-      {initialFor(name)}
+      {initialFor(effName)}
     </span>
   );
 }

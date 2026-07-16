@@ -104,4 +104,8 @@ export interface UserAccount {
   username: string;
   role: "admin" | "user";
   createdAt: string;
+  avatarUrl?: string | null;
+  avatarSignedUrl?: string | null;
+  badgeColor?: string | null;
+  badgeGradient?: { from: string; to: string; angle?: number } | null;
 }
