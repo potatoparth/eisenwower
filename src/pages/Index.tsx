@@ -597,6 +597,8 @@ const Index = () => {
                 deadlineThresholdDays={settings.deadlineThresholdDays}
                 getProjectName={getProjectName}
                 getAssigneeName={getAssigneeName}
+                getUserName={getUserName}
+                currentUserId={currentUserId}
               />
             </motion.div>
           )}
