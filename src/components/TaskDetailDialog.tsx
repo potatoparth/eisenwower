@@ -45,6 +45,8 @@ interface TaskDetailDialogProps {
   onCreateProject?: (name: string, parentId?: string | null) => string;
   recentCategories?: string[];
   recentProjectIds?: string[];
+  getUserName?: (id: string) => string | undefined;
+  currentUserId?: string;
 }
 
 export function TaskDetailDialog({
@@ -64,6 +66,8 @@ export function TaskDetailDialog({
   onCreateProject,
   recentCategories = [],
   recentProjectIds = [],
+  getUserName,
+  currentUserId,
 }: TaskDetailDialogProps) {
   const [name, setName] = useState(task.name);
   const [description, setDescription] = useState(task.description || "");
@@ -75,7 +79,11 @@ export function TaskDetailDialog({
 
   const assignees = useProjectAssignees(task.projectId);
   const nameMap = assigneeMap(assignees);
-  const displayFor = (uid?: string) => (uid ? (nameMap.get(uid) || "Someone") : "—");
+  const displayFor = (uid?: string) => {
+    if (!uid) return "—";
+    if (uid === currentUserId) return "you";
+    return nameMap.get(uid) || getUserName?.(uid) || "Someone";
+  };
 
   useEffect(() => {
     setName(task.name);
