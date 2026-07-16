@@ -617,13 +617,61 @@ var add_task_to_kanban_default = defineTool14({
   }
 });
 
+// src/lib/mcp/tools/archive-task.ts
+import { defineTool as defineTool15 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z16 } from "npm:zod@^4.4.3";
+var archive_task_default = defineTool15({
+  name: "archive_task",
+  title: "Archive task",
+  description: "Archive or unarchive a task. Archived tasks are hidden from default lists but kept for history (use list_tasks with only_archived=true to see them).",
+  inputSchema: {
+    task_id: z16.string().uuid().describe("Task id."),
+    archived: z16.boolean().optional().describe("true (default) to archive, false to restore.")
+  },
+  annotations: { readOnlyHint: false, idempotentHint: true },
+  handler: async ({ task_id, archived }, ctx) => {
+    if (!ctx.isAuthenticated()) return unauthenticated();
+    const archived_at = archived === false ? null : (/* @__PURE__ */ new Date()).toISOString();
+    const { data, error } = await supabaseForUser(ctx).from("tasks").update({ archived_at }).eq("id", task_id).select().single();
+    if (error) return toErr(error.message);
+    return {
+      content: [{ type: "text", text: archived_at ? `Archived task ${task_id}` : `Restored task ${task_id}` }],
+      structuredContent: { task: data }
+    };
+  }
+});
+
+// src/lib/mcp/tools/list-project-collaborators.ts
+import { defineTool as defineTool16 } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { z as z17 } from "npm:zod@^4.4.3";
+var list_project_collaborators_default = defineTool16({
+  name: "list_project_collaborators",
+  title: "List project collaborators",
+  description: "List everyone who can act on a given project (owner plus invited collaborators) with their role. Use the returned user ids as `assigned_to` when creating or updating tasks and notes.",
+  inputSchema: {
+    project_id: z17.string().uuid().describe("Project id (project_templates.id).")
+  },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ project_id }, ctx) => {
+    if (!ctx.isAuthenticated()) return unauthenticated();
+    const { data, error } = await supabaseForUser(ctx).rpc("list_project_assignees", {
+      _project_id: project_id
+    });
+    if (error) return toErr(error.message);
+    return {
+      content: [{ type: "text", text: JSON.stringify(data ?? []) }],
+      structuredContent: { members: data ?? [] }
+    };
+  }
+});
+
 // src/lib/mcp/index.ts
 var projectRef = "bvhwblwojecapnxivqnl";
 var mcp_default = defineMcp({
   name: "weizen-mcp",
   title: "Weizen",
   version: "0.1.0",
-  instructions: "Tools for the Weizen productivity app: read and manage the signed-in user's Eisenhower Matrix tasks and notes. Use list_tasks to see what's on their plate, create_task to add work into a specific quadrant, complete_task to mark items done, and list_notes / create_note for their notes.",
+  instructions: "Tools for the Weizen productivity app. Tasks live in an Eisenhower Matrix (four quadrants) and can be organized under a hierarchical project tree (projects have optional parent_ids and can be shared with collaborators as viewer/editor). Every task and note carries authorship metadata: created_by, updated_by, and assigned_to. Tasks also have an archived_at timestamp \u2014 completed tasks are archived rather than deleted, and list_tasks hides archived rows by default. Use list_projects to see owned + shared projects, list_project_collaborators to discover assignable users, list_tasks / create_task / update_task / complete_task / archive_task / delete_task for tasks, list_notes / create_note for notes, and list_kanban_boards / create_kanban_board / add_task_to_kanban for the user's custom kanban boards.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated"
@@ -642,7 +690,9 @@ var mcp_default = defineMcp({
     create_project_preset_default,
     list_kanban_boards_default,
     create_kanban_board_default,
-    add_task_to_kanban_default
+    add_task_to_kanban_default,
+    archive_task_default,
+    list_project_collaborators_default
   ]
 });
 
