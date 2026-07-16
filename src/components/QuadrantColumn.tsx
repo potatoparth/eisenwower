@@ -98,12 +98,12 @@ export function QuadrantColumn({
           type="button"
           onClick={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-white shadow-sm transition-transform hover:scale-105 active:scale-95"
-          style={{ backgroundColor: accentVar }}
+          className="inline-flex h-7 items-center gap-1 rounded-full border border-border/60 bg-transparent px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-card/50"
           title={`Add to ${quadrant.title}`}
           aria-label={`Add to ${quadrant.title}`}
         >
-          <Plus className="h-4 w-4" strokeWidth={2.5} />
+          <Plus className="h-3.5 w-3.5" strokeWidth={2.25} />
+          Add task
         </button>
       </PopoverTrigger>
       <PopoverContent
