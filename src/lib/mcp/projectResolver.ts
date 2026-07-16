@@ -14,13 +14,13 @@ export async function resolveProjectPath(
   path: string | undefined | null,
   create = false,
 ): Promise<{ projectId: string | null; created: string[] }> {
+  void userId;
   if (!path?.trim()) return { projectId: null, created: [] };
   const parts = path.split("/").map((s) => s.trim()).filter(Boolean);
   if (parts.length === 0) return { projectId: null, created: [] };
   const { data, error } = await sb
     .from("project_templates")
-    .select("id,name,parent_id")
-    .eq("user_id", userId);
+    .select("id,name,parent_id");
   if (error) throw new Error(error.message);
   const all = (data ?? []) as ProjectRow[];
   const created: string[] = [];
@@ -56,10 +56,10 @@ export async function descendantProjectIds(
   userId: string,
   rootId: string,
 ): Promise<string[]> {
+  void userId;
   const { data, error } = await sb
     .from("project_templates")
-    .select("id,parent_id")
-    .eq("user_id", userId);
+    .select("id,parent_id");
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as { id: string; parent_id: string | null }[];
   const childrenBy = new Map<string | null, string[]>();
@@ -83,10 +83,10 @@ export async function projectPathString(
   userId: string,
   projectId: string,
 ): Promise<string> {
+  void userId;
   const { data } = await sb
     .from("project_templates")
-    .select("id,name,parent_id")
-    .eq("user_id", userId);
+    .select("id,name,parent_id");
   const rows = (data ?? []) as ProjectRow[];
   const byId = new Map(rows.map((r) => [r.id, r] as const));
   const chain: string[] = [];

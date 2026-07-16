@@ -8,7 +8,9 @@ export interface ProjectTreeNode {
   children: ProjectTreeNode[];
 }
 
-/** Build a nested tree of the user's projects. Root nodes have no parent. */
+/** Build a nested tree of the user's projects. Rows whose parent is not visible
+ * to the current user are treated as roots, which keeps directly-shared
+ * subprojects visible even when their ancestors are outside the share scope. */
 export function buildProjectTree(projects: ProjectTemplate[]): ProjectTreeNode[] {
   const byId = new Map<string, ProjectTemplate>();
   projects.forEach((p) => byId.set(p.id, p));
@@ -31,7 +33,8 @@ export function buildProjectTree(projects: ProjectTemplate[]): ProjectTreeNode[]
       children: kids.map((c) => build(c, depth + 1, nextPath)),
     };
   };
-  const roots = (childrenByParent.get(null) || [])
+  const roots = projects
+    .filter((p) => !p.parentId || !byId.has(p.parentId))
     .slice()
     .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name));
   return roots.map((r) => build(r, 0, []));
