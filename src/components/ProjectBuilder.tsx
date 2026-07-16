@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, ChevronRight, ChevronDown, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate, ChevronsDownUp, ChevronsUpDown, PanelLeft, PanelLeftClose, CornerLeftUp, Users2 } from "lucide-react";
+import { Plus, Trash2, Archive, ChevronRight, ChevronDown, ArrowRight, ArrowDown, FolderOpen, Save, Edit2, Check, X, Link, Unlink, SquarePen, StickyNote, Search, Share2, Eye, LayoutTemplate, ChevronsDownUp, ChevronsUpDown, PanelLeft, PanelLeftClose, CornerLeftUp, Users2 } from "lucide-react";
 import { UserBadge } from "@/components/UserBadge";
 import { ProjectTemplate, ProjectTask, ProjectTemplatePreset, PresetTask } from "@/types/project";
 import { buildProjectTree, flattenProjectTree, indexProjectNodes, getDescendantIds, wouldCreateCycle, searchProjectTree } from "@/lib/projectTree";
