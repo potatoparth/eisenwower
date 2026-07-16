@@ -241,7 +241,7 @@ export function QuadrantColumn({
         }}
       >
         <SortableContext items={openTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-          {(expanded ? openTasks : openTasks.slice(0, 6)).map((task) => (
+          {openTasks.map((task) => (
             <TaskCard
               key={task.id}
               task={task}
@@ -253,14 +253,6 @@ export function QuadrantColumn({
             />
           ))}
         </SortableContext>
-        {!expanded && openTasks.length > 6 && (
-          <button
-            onClick={() => setExpanded(true)}
-            className="w-full text-[11px] text-muted-foreground hover:text-foreground py-1.5"
-          >
-            +{openTasks.length - 6} more — click to expand
-          </button>
-        )}
 
         {doneTasks.length > 0 && (
           <div className="pt-2 mt-auto">
