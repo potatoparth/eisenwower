@@ -11,13 +11,13 @@ export function useUserNames(userIds: string[]): Map<string, string> {
     let cancelled = false;
     (async () => {
       const { data } = await supabase
-        .from("profiles")
-        .select("user_id,display_name,email")
+        .from("profiles_public")
+        .select("user_id,display_name")
         .in("user_id", ids);
       if (cancelled) return;
       const m = new Map<string, string>();
-      (data || []).forEach((r: { user_id: string; display_name: string | null; email: string | null }) => {
-        m.set(r.user_id, r.display_name || (r.email ? r.email.split("@")[0] : "User"));
+      (data || []).forEach((r: { user_id: string; display_name: string | null }) => {
+        m.set(r.user_id, r.display_name || "User");
       });
       setMap(m);
     })();
