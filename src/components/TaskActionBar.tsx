@@ -442,7 +442,6 @@ export function TaskActionBar({
         </PopoverContent>
       </Popover>
         </div>
-      </div>
     </div>
   );
 }
