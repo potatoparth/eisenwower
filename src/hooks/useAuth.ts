@@ -201,10 +201,13 @@ export function useAuth() {
     badgeGradient?: BadgeGradient | null;
   }): Promise<AuthResult> => {
     if (!authUser) return { success: false, error: "Not signed in" };
-    const payload: Record<string, unknown> = {};
+    const payload: { badge_color?: string | null; badge_gradient?: BadgeGradient | null } = {};
     if ("badgeColor" in patch) payload.badge_color = patch.badgeColor;
     if ("badgeGradient" in patch) payload.badge_gradient = patch.badgeGradient;
-    const { error } = await supabase.from("profiles").update(payload).eq("user_id", authUser.id);
+    const { error } = await supabase
+      .from("profiles")
+      .update(payload as never)
+      .eq("user_id", authUser.id);
     if (error) return { success: false, error: error.message };
     setCurrentUser(prev => prev ? { ...prev, ...patch } : prev);
     primeUserProfile({ userId: authUser.id, ...patch });
