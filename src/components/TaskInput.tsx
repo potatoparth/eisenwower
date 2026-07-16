@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback, type ReactNode } from "react";
-import { Calendar, CornerDownLeft, FolderKanban, Zap } from "lucide-react";
+import { Calendar, CornerDownLeft, FolderKanban, UserCircle2, Zap } from "lucide-react";
 import { Quadrant, QUADRANTS, QuadrantInfo, Recurrence } from "@/types/task";
 import { ProjectTemplate } from "@/types/project";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@/lib/utils";
 import { RecentChipStrip as ChipStrip } from "@/components/RecentChipStrip";
+import { useProjectAssignees } from "@/hooks/useProjectAssignees";
 
 export interface TaskAddOptions {
   description?: string;
@@ -28,6 +29,7 @@ export interface TaskAddOptions {
   recurrence?: Recurrence;
   recurrenceDays?: number[];
   recurrenceTime?: string;
+  assignedTo?: string;
 }
 
 export type TaskInputPickerProps = Pick<
@@ -100,11 +102,23 @@ export function TaskInput({
   const [descOpen, setDescOpen] = useState(false);
   const [recurrence, setRecurrence] = useState<Recurrence>("none");
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
+  const [assignedTo, setAssignedTo] = useState("");
 
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // (Project selection now uses ProjectTreePicker.)
+  const selectedProjectForAssignees = projectId && projectId !== NO_PROJECT ? projectId : null;
+  const assignees = useProjectAssignees(selectedProjectForAssignees);
+
+  useEffect(() => {
+    if (!selectedProjectForAssignees) {
+      setAssignedTo("");
+      return;
+    }
+    if (assignedTo && assignees.length > 0 && !assignees.some((a) => a.userId === assignedTo)) {
+      setAssignedTo("");
+    }
+  }, [selectedProjectForAssignees, assignedTo, assignees]);
 
   const canComplete =
     Boolean(name.trim()) && Boolean(selectedQuadrant || defaultQuadrant);
@@ -120,6 +134,7 @@ export function TaskInput({
     setDescOpen(false);
     setRecurrence("none");
     setRecurrenceDays([]);
+    setAssignedTo("");
   };
 
   const beginDetails = () => {
@@ -165,6 +180,7 @@ export function TaskInput({
         !projectId || projectId === NO_PROJECT ? undefined : projectId,
       recurrence,
       recurrenceDays,
+      assignedTo: assignedTo || undefined,
     });
     setStep("name");
     setName("");
@@ -175,8 +191,9 @@ export function TaskInput({
     setIsFocused(false);
     setRecurrence("none");
     setRecurrenceDays([]);
+    setAssignedTo("");
     inputRef.current?.focus();
-  }, [name, selectedQuadrant, defaultQuadrant, projectId, description, dueDate, onAddTask, recurrence, recurrenceDays]);
+  }, [name, selectedQuadrant, defaultQuadrant, projectId, description, dueDate, onAddTask, recurrence, recurrenceDays, assignedTo]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -421,7 +438,10 @@ export function TaskInput({
                     <ProjectTreePicker
                       projects={projects}
                       value={projectId && projectId !== NO_PROJECT ? projectId : null}
-                      onChange={(id) => setProjectId(id ?? NO_PROJECT)}
+                      onChange={(id) => {
+                        setProjectId(id ?? NO_PROJECT);
+                        setAssignedTo("");
+                      }}
                       onCreate={onCreateProject}
                       placeholder="No project"
                       compact
@@ -444,6 +464,24 @@ export function TaskInput({
                       />
                       {/* Fade edge so users see the row is horizontally scrollable */}
                       <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-card to-transparent" />
+                    </div>
+                  )}
+                  {selectedProjectForAssignees && (
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <UserCircle2 className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                      <Select value={assignedTo || "__default__"} onValueChange={(v) => setAssignedTo(v === "__default__" ? "" : v)}>
+                        <SelectTrigger className="h-9 flex-1 min-w-0 rounded-xl bg-secondary/40 border-border/60 text-xs">
+                          <SelectValue placeholder="Assign" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__default__">Assign to creator</SelectItem>
+                          {assignees.map((a) => (
+                            <SelectItem key={a.userId} value={a.userId}>
+                              {a.displayName}{a.role === "owner" ? " (owner)" : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   )}
                 </div>

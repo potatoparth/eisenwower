@@ -130,6 +130,7 @@ export function useTasks(userId?: string) {
     description?: string; category?: string; dueDate?: string; dueTime?: string; projectId?: string;
     recurrence?: Recurrence; recurrenceDays?: number[]; recurrenceTime?: string;
     isRecurringInstance?: boolean; recurringTemplateId?: string;
+    assignedTo?: string;
   }): Task => {
     const now = new Date().toISOString();
     const optimistic: Task = {
@@ -141,7 +142,7 @@ export function useTasks(userId?: string) {
       userId: userId,
       createdBy: userId,
       updatedBy: userId,
-      assignedTo: userId,
+      assignedTo: options?.assignedTo ?? userId,
       recurrence: options?.recurrence ?? "none",
       recurrenceDays: options?.recurrenceDays ?? [],
       recurrenceTime: options?.recurrenceTime ?? "22:00",
@@ -162,7 +163,7 @@ export function useTasks(userId?: string) {
         recurrence_time: optimistic.recurrenceTime,
         is_recurring_instance: optimistic.isRecurringInstance,
         recurring_template_id: optimistic.recurringTemplateId || null,
-        assigned_to: userId,
+        assigned_to: optimistic.assignedTo || null,
       }).then(({ error }) => { if (error) loadTasks(); });
     }
     return optimistic;
