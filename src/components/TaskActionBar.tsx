@@ -141,7 +141,7 @@ export function TaskActionBar({
       )}
       <div className="min-w-0">
         {searchMode ? (
-          <Popover open={open && matches.length > 0} onOpenChange={setOpen}>
+          <Popover open={open && query.trim().length > 0} onOpenChange={setOpen}>
             <PopoverAnchor asChild>
               <div className="relative flex h-[50px] w-full items-center rounded-full border border-border/60 bg-secondary/40 px-5">
                 <Input
