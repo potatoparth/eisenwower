@@ -146,6 +146,7 @@ export function useTasks(userId?: string) {
     recurrence?: Recurrence; recurrenceDays?: number[]; recurrenceTime?: string;
     isRecurringInstance?: boolean; recurringTemplateId?: string;
     assignedTo?: string;
+    attachments?: TaskAttachment[];
   }): Task => {
     const now = new Date().toISOString();
     const optimistic: Task = {
@@ -163,6 +164,7 @@ export function useTasks(userId?: string) {
       recurrenceTime: options?.recurrenceTime ?? "22:00",
       isRecurringInstance: options?.isRecurringInstance ?? false,
       recurringTemplateId: options?.recurringTemplateId,
+      attachments: options?.attachments ?? [],
     };
     setTasksState(prev => [optimistic, ...prev]);
     if (userId) {
@@ -179,6 +181,9 @@ export function useTasks(userId?: string) {
         is_recurring_instance: optimistic.isRecurringInstance,
         recurring_template_id: optimistic.recurringTemplateId || null,
         assigned_to: optimistic.assignedTo || null,
+        attachments: optimistic.attachments && optimistic.attachments.length
+          ? JSON.parse(JSON.stringify(optimistic.attachments))
+          : [],
       }).then(({ error }) => { if (error) loadTasks(); });
     }
     return optimistic;

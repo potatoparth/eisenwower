@@ -20,6 +20,8 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@/lib/utils";
 import { RecentChipStrip as ChipStrip } from "@/components/RecentChipStrip";
 import { useProjectAssignees } from "@/hooks/useProjectAssignees";
+import { TaskAttachments } from "@/components/TaskAttachments";
+import { TaskAttachment } from "@/types/task";
 
 export interface TaskAddOptions {
   description?: string;
@@ -30,6 +32,7 @@ export interface TaskAddOptions {
   recurrenceDays?: number[];
   recurrenceTime?: string;
   assignedTo?: string;
+  attachments?: TaskAttachment[];
 }
 
 export type TaskInputPickerProps = Pick<
@@ -103,6 +106,11 @@ export function TaskInput({
   const [recurrence, setRecurrence] = useState<Recurrence>("none");
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
   const [assignedTo, setAssignedTo] = useState("");
+  const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
+  // Stable id used as the storage folder for attachments uploaded before the
+  // task row exists. Regenerated after each successful add so a new task gets
+  // its own folder.
+  const [draftTaskId, setDraftTaskId] = useState<string>(() => crypto.randomUUID());
 
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -135,6 +143,8 @@ export function TaskInput({
     setRecurrence("none");
     setRecurrenceDays([]);
     setAssignedTo("");
+    setAttachments([]);
+    setDraftTaskId(crypto.randomUUID());
   };
 
   const beginDetails = () => {
@@ -181,6 +191,7 @@ export function TaskInput({
       recurrence,
       recurrenceDays,
       assignedTo: assignedTo || undefined,
+      attachments: attachments.length ? attachments : undefined,
     });
     setStep("name");
     setName("");
@@ -192,8 +203,10 @@ export function TaskInput({
     setRecurrence("none");
     setRecurrenceDays([]);
     setAssignedTo("");
+    setAttachments([]);
+    setDraftTaskId(crypto.randomUUID());
     inputRef.current?.focus();
-  }, [name, selectedQuadrant, defaultQuadrant, projectId, description, dueDate, onAddTask, recurrence, recurrenceDays, assignedTo]);
+  }, [name, selectedQuadrant, defaultQuadrant, projectId, description, dueDate, onAddTask, recurrence, recurrenceDays, assignedTo, attachments]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -356,7 +369,18 @@ export function TaskInput({
               <p className="text-[11px] uppercase tracking-wide text-muted-foreground/70 mb-0.5">
                 New task
               </p>
-              <p className="text-sm font-medium truncate">{name || "Untitled"}</p>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Task name"
+                className="h-8 border-0 bg-transparent shadow-none p-0 text-sm font-medium focus-visible:ring-0 focus-visible:ring-offset-0"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && step === "details" && canComplete) {
+                    e.preventDefault();
+                    handleComplete();
+                  }
+                }}
+              />
             </div>
             {step === "details" && (
               <Button
@@ -406,6 +430,12 @@ export function TaskInput({
                     value={description}
                     onChange={setDescription}
                     placeholder="Description (optional)"
+                  />
+                  {/* Attachments */}
+                  <TaskAttachments
+                    taskId={draftTaskId}
+                    value={attachments}
+                    onChange={setAttachments}
                   />
                   {/* Deadline */}
                   <div className="flex items-center gap-1.5 min-w-0">
